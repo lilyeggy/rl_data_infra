@@ -1,0 +1,21 @@
+{
+  "seq_length": 512,
+  "micro_batch_size": 1,
+  "dtype": "bf16",
+  "initial_loss": 2.0639867782592773,
+  "grad_norm": 31.045751465893545,
+  "learning_rate": 0.0001,
+  "step_duration_s": 2.411,
+  "peak_allocated_gb": 88.67,
+  "peak_reserved_gb": 92.21,
+  "checksum_after_load_A": "c54d80b9fd3e827af35667ce322e10c91a5654f2513352e676e92126a932f0b4",
+  "checksum_after_step_B": "054bdd0213bee070cca8a27348e0c265c9335cddea02fb7dda84e9a5bf92fdd1",
+  "checksum_mutated_M": "139fbb06bfc6743d650350d2cec2b8aecfe6978d28eb3bb7d7f9924bda3a16c0",
+  "checksum_after_reload_C": "054bdd0213bee070cca8a27348e0c265c9335cddea02fb7dda84e9a5bf92fdd1",
+  "checksum_changed_after_step": true,
+  "checksum_restored_after_reload": true,
+  "recompute": "full/uniform",
+  "num_layers": 36,
+  "hidden_size": 2560,
+  "save_dir": "/data/day-01-workspace/models/qwen3-4b-instruct-2507-td"
+}

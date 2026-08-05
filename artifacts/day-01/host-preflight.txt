@@ -1,0 +1,35 @@
+===== date =====
+2026-08-05T14:17:16+0800 (CST)
+===== hostname =====
+server-desktop
+===== kernel =====
+Linux server-desktop 6.8.0-110-generic #110~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 27 12:43:08 UTC  x86_64 x86_64 x86_64 GNU/Linux
+===== cpu / ram =====
+cores: 192
+MemTotal:       263717104 kB
+MemAvailable:   245998688 kB
+SwapTotal:       2097148 kB
+===== disk =====
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme1n1    3.5T  319G  3.0T   10% /data
+/dev/nvme0n1p2  3.5T  2.5T  875G   74% /
+expect: data disk free >= 200GB
+===== gpu (nvidia-smi -L) =====
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Server Edition (UUID: GPU-4288d6c9-0384-25dc-1071-9bea701b9374)
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Server Edition (UUID: GPU-52776180-5d8e-460e-a121-86a1a23c05c5)
+===== gpu detail =====
+0, NVIDIA RTX PRO 6000 Blackwell Server Edition, GPU-4288d6c9-0384-25dc-1071-9bea701b9374, 97887 MiB, 12.0, 580.159.03
+1, NVIDIA RTX PRO 6000 Blackwell Server Edition, GPU-52776180-5d8e-460e-a121-86a1a23c05c5, 97887 MiB, 12.0, 580.159.03
+===== nvidia-smi CUDA version =====
+| NVIDIA-SMI 580.159.03             Driver Version: 580.159.03     CUDA Version: 13.0     |
+===== docker =====
+client: 29.1.3
+server: 29.1.3 (api 
+n/a (needs daemon access)
+data-root: /data/day-01-workspace/docker-root
+===== nvidia-container-toolkit =====
+cli-version: 1.19.1
+===== python toolchain =====
+Python 3.10.12
+uv 0.11.18 (x86_64-unknown-linux-gnu)
+git version 2.34.1

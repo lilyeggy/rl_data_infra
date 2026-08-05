@@ -1,0 +1,37 @@
+===== date =====
+2026-08-02T18:28:34+08:00
+===== toolchain =====
+python3: Python 3.10.12
+uv: uv 0.11.18 (x86_64-unknown-linux-gnu)
+git: git version 2.34.1
+driver: 580.159.03
+cuda (driver api): 12.0 compute cap; CUDA Version: 13.0
+===== polar =====
+f0e8343a7870abf6ec2366890f685881ceab92cb
+-- git status --short --
+-- git remote -v --
+origin	https://github.com/NVIDIA-NeMo/ProRL-Agent-Server (fetch)
+origin	https://github.com/NVIDIA-NeMo/ProRL-Agent-Server (push)
+===== slime =====
+bf14dc21f9500746447f2572d0692e981c4d2a7e
+-- git status --short --
+-- git remote -v --
+origin	https://github.com/THUDM/slime (fetch)
+origin	https://github.com/THUDM/slime (push)
+===== Megatron-LM =====
+1dcf0dafa884ad52ffb243625717a3471643e087
+-- git status --short --
+-- git remote -v --
+origin	https://gh-proxy.com/https://github.com/NVIDIA/Megatron-LM (fetch)
+origin	https://gh-proxy.com/https://github.com/NVIDIA/Megatron-LM (push)
+===== sglang =====
+28b095c01005d4a3a2a5b637b7d028b07fba31b2
+-- git status --short --
+-- git remote -v --
+origin	https://github.com/sgl-project/sglang (fetch)
+origin	https://github.com/sgl-project/sglang (push)
+===== pinned-by =====
+polar: stable branch (NVIDIA-NeMo/ProRL-Agent-Server)
+slime: v0.3.0 tag (pinned by polar stable src/slime_bridge/README.md)
+Megatron-LM: commit 1dcf0da (pinned by slime v0.3.0 docker/Dockerfile MEGATRON_COMMIT)
+sglang: v0.5.13 tag (pinned by polar stable README: uv pip install sglang==0.5.13)

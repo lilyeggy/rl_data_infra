@@ -1,0 +1,9 @@
+===== date =====
+2026-08-03T19:08:35+08:00
+===== container images (docker) =====
+nvcr.io/nvidia/cuda:13.0.1-base-ubuntu22.04 sha256:5543ce69b0d2d65b0c4ad978bd26f4cd67e4fccc629c262902ced0502e23cd7f
+
+===== notes =====
+docker.io (Docker Hub) 不可达，全部镜像从 nvcr.io (NGC) 拉取
+后续 Polar/Slime 官方镜像（slimerl/sglang 等）需从 NGC 或镜像代理获取，tag 待 4.5/4.6 阶段确定
+slime v0.3.0 docker/Dockerfile 引用的 SGLANG_IMAGE_TAG=v0.5.12.post1-cu129（见 slime 仓库 docker/Dockerfile）

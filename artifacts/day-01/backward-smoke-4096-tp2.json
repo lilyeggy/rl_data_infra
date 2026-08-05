@@ -1,0 +1,22 @@
+{
+  "seq_length": 4096,
+  "micro_batch_size": 1,
+  "dtype": "bf16",
+  "initial_loss": 11.51424789428711,
+  "grad_norm": 127.00894253703161,
+  "learning_rate": 0.0001,
+  "step_duration_s": 5.096,
+  "peak_allocated_gb": 82.83,
+  "peak_reserved_gb": 84.41,
+  "checksum_after_load_A": "9dbb935469a0d69684de2e6b6ce0a4338a279d7d6de2416a69099f71a1beb924",
+  "checksum_after_step_B": "fff7507e8e4427b7e9b88a2a08b2f70ac4b7ace52e7c070a757b388e52e1b73c",
+  "checksum_mutated_M": "98966d5c54ec1067a035ea6b07887e557f4011da1f0c49ff8c61751ba5f549c0",
+  "checksum_after_reload_C": "fff7507e8e4427b7e9b88a2a08b2f70ac4b7ace52e7c070a757b388e52e1b73c",
+  "checksum_changed_after_step": true,
+  "checksum_restored_after_reload": true,
+  "recompute": "full/uniform",
+  "num_layers": 36,
+  "hidden_size": 2560,
+  "tensor_model_parallel_size": 2,
+  "save_dir": "/data/day-01-workspace/models/qwen3-4b-instruct-2507-td-tp2"
+}

@@ -1,0 +1,94 @@
+===== date =====
+2026-08-05T14:17:16+0800 (CST)
+===== toolchain =====
+python3: Python 3.10.12
+uv: uv 0.11.18 (x86_64-unknown-linux-gnu)
+git: git version 2.34.1
+driver: 580.159.03
+| NVIDIA-SMI 580.159.03             Driver Version: 580.159.03     CUDA Version: 13.0     |
+
+===== upstream source checkouts (under /data/day-01-workspace/src) =====
+--- mbridge ---
+7f0fb3456f8ffe47599b5fd167b454605d85f932
+ref: branch=bridge describe=no tag
+-- git status --short --
+(clean)
+-- git remote -v --
+origin	https://github.com/radixark/Megatron-Bridge.git (fetch)
+origin	https://github.com/radixark/Megatron-Bridge.git (push)
+
+--- mbridge-iseekyan ---
+89eb10887887bc74853f89a4de258c0702932a1c
+ref: branch=<detached> describe=no tag
+-- git status --short --
+(clean)
+-- git remote -v --
+origin	https://github.com/ISEEKYAN/mbridge.git (fetch)
+origin	https://github.com/ISEEKYAN/mbridge.git (push)
+
+--- Megatron-LM ---
+1dcf0dafa884ad52ffb243625717a3471643e087
+ref: branch=<detached> describe=no tag
+-- git status --short --
+M  megatron/core/dist_checkpointing/strategies/common.py
+M  megatron/core/dist_checkpointing/strategies/torch.py
+M  megatron/core/distributed/distributed_data_parallel.py
+M  megatron/core/distributed/param_and_grad_buffer.py
+M  megatron/core/extensions/transformer_engine.py
+M  megatron/core/fusions/fused_mla_yarn_rope_apply.py
+M  megatron/core/inference/contexts/dynamic_context.py
+M  megatron/core/models/common/embeddings/rotary_pos_embedding.py
+M  megatron/core/models/gpt/gpt_layer_specs.py
+M  megatron/core/models/gpt/gpt_model.py
+M  megatron/core/optimizer/distrib_optimizer.py
+M  megatron/core/parallel_state.py
+M  megatron/core/pipeline_parallel/p2p_communication.py
+ M megatron/core/transformer/dot_product_attention.py
+M  megatron/core/transformer/moe/moe_utils.py
+M  megatron/core/transformer/moe/router.py
+M  megatron/core/transformer/multi_token_prediction.py
+M  megatron/core/transformer/transformer_config.py
+M  megatron/core/transformer/transformer_layer.py
+M  megatron/training/arguments.py
+M  megatron/training/tokenizer/tokenizer.py
+M  megatron/training/training.py
+-- dirty: local-patch-checksum (git diff HEAD | sha256sum) --
+2a2af7be500504307c1f5a12fdf574c8a066c6a7fdcf30b96d5ed7f0cc2ddd64  -
+-- git remote -v --
+origin	https://github.com/NVIDIA/Megatron-LM (fetch)
+origin	https://github.com/NVIDIA/Megatron-LM (push)
+
+--- polar ---
+f0e8343a7870abf6ec2366890f685881ceab92cb
+ref: branch=stable describe=no tag
+-- git status --short --
+(clean)
+-- git remote -v --
+origin	https://github.com/NVIDIA-NeMo/ProRL-Agent-Server (fetch)
+origin	https://github.com/NVIDIA-NeMo/ProRL-Agent-Server (push)
+
+--- sglang ---
+28b095c01005d4a3a2a5b637b7d028b07fba31b2
+ref: branch=<detached> describe=v0.5.13
+-- git status --short --
+(clean)
+-- git remote -v --
+origin	https://github.com/sgl-project/sglang (fetch)
+origin	https://github.com/sgl-project/sglang (push)
+
+--- slime ---
+bf14dc21f9500746447f2572d0692e981c4d2a7e
+ref: branch=<detached> describe=v0.3.0
+-- git status --short --
+(clean)
+-- git remote -v --
+origin	https://github.com/THUDM/slime (fetch)
+origin	https://github.com/THUDM/slime (push)
+
+===== hf cache model snapshot revisions =====
+models--Qwen--Qwen3-4B-Instruct-2507  cdbee75f17c01a7cc42f958dc650907174af0554
+models--Qwen--Qwen3.5-4B  851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+
+===== megatron patch details (from slime v0.3.0) =====
+slime megatron.patch: /data/day-01-workspace/src/slime/docker/patch/v0.5.12.post1/megatron.patch
+  sha256: 976fd8bbe1f4e386be97e35353efdbfb592dacaea9797c5a81ea324d3c2c5b77

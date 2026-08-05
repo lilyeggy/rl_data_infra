@@ -1,0 +1,16 @@
+===== date =====
+2026-08-05T14:17:20+0800 (CST)
+Day-01 路径规划（全部落数据盘 /data）
+source root:   /data/day-01-workspace/src
+  mbridge: /data/day-01-workspace/src/mbridge   (7f0fb34)
+  mbridge-iseekyan: /data/day-01-workspace/src/mbridge-iseekyan   (89eb108)
+  Megatron-LM: /data/day-01-workspace/src/Megatron-LM   (1dcf0da)
+  polar: /data/day-01-workspace/src/polar   (f0e8343a)
+  sglang: /data/day-01-workspace/src/sglang   (28b095c)
+  slime: /data/day-01-workspace/src/slime   (bf14dc21)
+rollout env:   /data/day-01-workspace/src/polar/.venv   (present)
+train env:     /data/day-01-workspace/src/slime/.venv   (present)
+hf cache:      /data/day-01-workspace/hf-cache   (present)
+model dir:     /data/day-01-workspace/models   (present)
+docker root:   /data/day-01-workspace/docker-root   (present)
+artifacts:     /data/day-01-workspace/artifacts

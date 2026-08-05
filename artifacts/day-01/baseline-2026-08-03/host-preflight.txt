@@ -1,0 +1,39 @@
+===== date =====
+2026-08-02T18:22:19+08:00
+===== os =====
+Ubuntu 22.04.5 LTS (Jammy Jellyfish)
+6.8.0-110-generic
+===== gpu (nvidia-smi) =====
+index, name, compute_cap, memory.total [MiB], driver_version, persistence_mode
+0, NVIDIA RTX PRO 6000 Blackwell Server Edition, 12.0, 97887 MiB, 580.159.03, Enabled
+1, NVIDIA RTX PRO 6000 Blackwell Server Edition, 12.0, 97887 MiB, 580.159.03, Enabled
+===== gpu count check =====
+gpu_count=2 (expect 2)
+===== xid errors (dmesg) =====
+no Xid errors (or dmesg not readable)
+===== ecc errors =====
+index, ecc.errors.uncorrected.volatile.total
+0, 0
+1, 0
+===== disk =====
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  3.5T  2.4T  973G   71% /
+/dev/nvme1n1    3.5T  166G  3.2T    5% /data
+expect: data disk free >= 200GB
+===== memory =====
+               total        used        free      shared  buff/cache   available
+内存：      251Gi        29Gi        19Gi        10Mi       202Gi       219Gi
+交换：      2.0Gi       2.0Gi       0.0Ki
+expect: total >= 128GB
+===== cpu =====
+192
+===== docker =====
+Docker version 29.1.3, build 29.1.3-0ubuntu3~22.04.2
+server= root=
+docker info needs sudo/group re-login
+===== toolchain =====
+Python 3.10.12
+uv 0.11.18 (x86_64-unknown-linux-gnu)
+git version 2.34.1
+git-lfs/3.0.2 (GitHub; linux amd64; go 1.18.1)
+===== preflight done =====

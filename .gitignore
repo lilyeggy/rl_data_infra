@@ -1,0 +1,14 @@
+# 上游源码 checkout（Day 1 冻结的第三方仓库，由 src/*/ 各自的 git 管理，不纳入本仓库）
+src/
+
+# 数据与缓存（不进版本库）
+hf-cache/
+models/
+docker-root/
+
+# Python
+__pycache__/
+*.pyc
+
+# 临时文件
+*.tmp

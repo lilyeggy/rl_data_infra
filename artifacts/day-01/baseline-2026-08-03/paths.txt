@@ -1,0 +1,11 @@
+Day-01 路径规划（全部落数据盘 /data，系统盘 / 仅余 973G 也不承担缓存）
+source root:          /data/day-01-workspace/src
+  polar:              /data/day-01-workspace/src/polar        (stable, f0e8343)
+  slime:              /data/day-01-workspace/src/slime        (v0.3.0, bf14dc2)
+  Megatron-LM:        /data/day-01-workspace/src/Megatron-LM  (1dcf0da)
+  sglang:             /data/day-01-workspace/src/sglang       (v0.5.13, 28b095c)
+Python environment:   /data/day-01-workspace/src/polar/.venv  (uv, python 3.12；唯一环境工具链，不用 conda/venv)
+Hugging Face cache:   /data/day-01-workspace/hf-cache         (HF_HOME；HF_ENDPOINT=https://hf-mirror.com，HF_HUB_DISABLE_XET=1)
+model checkpoints:    /data/day-01-workspace/models           (转换后权重放这里)
+Docker root:          /data/day-01-workspace/docker-root      (daemon.json data-root)
+experiment artifacts: /data/day-01-workspace/artifacts

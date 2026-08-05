@@ -1,0 +1,141 @@
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:8: FutureWarning: In the future `np.long` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "long"):
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:10: FutureWarning: In the future `np.ulong` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "ulong"):
+W0803 21:22:31.312000 3581637 torch/distributed/run.py:851] 
+W0803 21:22:31.312000 3581637 torch/distributed/run.py:851] *****************************************
+W0803 21:22:31.312000 3581637 torch/distributed/run.py:851] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0803 21:22:31.312000 3581637 torch/distributed/run.py:851] *****************************************
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:8: FutureWarning: In the future `np.long` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "long"):
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:10: FutureWarning: In the future `np.ulong` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "ulong"):
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:8: FutureWarning: In the future `np.long` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "long"):
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/sitecustomize.py:10: FutureWarning: In the future `np.ulong` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "ulong"):
+/data/day-01-workspace/src/Megatron-LM/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:113: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/distributed/fsdp/src/megatron_fsdp/mixed_precision.py:113: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/__init__.py:24: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/optimizer.py:28: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/clip_grads.py:29: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/__init__.py:24: UserWarning: Transformer Engine and Apex are not installed. Falling back to Torch optimizers.
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/optimizer.py:28: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/optimizer/clip_grads.py:29: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier, multi_tensor_l2norm, and multi_tensor_scale
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/backends.py:21: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/backends.py:21: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/gpt/gpt_layer_specs.py:70: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/gpt/gpt_layer_specs.py:70: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/transformers/loss/loss_for_object_detection.py:28: UserWarning: A NumPy version >=2.0.0 and <2.8.0 is required for this version of SciPy (detected version 1.26.4)
+  from scipy.optimize import linear_sum_assignment
+/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/transformers/loss/loss_for_object_detection.py:28: UserWarning: A NumPy version >=2.0.0 and <2.8.0 is required for this version of SciPy (detected version 1.26.4)
+  from scipy.optimize import linear_sum_assignment
+/data/day-01-workspace/src/mbridge-iseekyan/mbridge/models/internvl3/transformer_layer.py:38: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn(f"Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/vision/vit_layer_specs.py:30: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/mbridge-iseekyan/mbridge/models/internvl3/transformer_layer.py:38: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn(f"Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/core/models/vision/vit_layer_specs.py:30: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn("Apex is not installed. Falling back to Torch Norm")
+/data/day-01-workspace/src/Megatron-LM/megatron/training/utils.py:24: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_l2norm
+  warnings.warn(
+/data/day-01-workspace/src/Megatron-LM/megatron/training/utils.py:24: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_l2norm
+  warnings.warn(
+LANG_RL Log directory: None
+LANG_RL Log directory: None
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+INFO:slime.backends.megatron_utils.megatron_patch.megatron_chunked_grad_coalesce_patch:slime grad coalesce patch applied to megatron.core.distributed.finalize_model_grads._allreduce_non_tensor_model_parallel_grads (chunk=1024 MiB)
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+INFO:slime.backends.megatron_utils.megatron_patch.megatron_chunked_grad_coalesce_patch:slime grad coalesce patch applied to megatron.core.distributed.finalize_model_grads._allreduce_non_tensor_model_parallel_grads (chunk=1024 MiB)
+[2026-08-03 21:22:38] arguments.py:166 - --tokenizer-model not set, use --hf-checkpoint as tokenizer model.
+Using pipeline model parallel size: 2, decoder last pipeline num layers: 18
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/data/day-01-workspace/scripts/convert_qwen3.py", line 10, in <module>
+[rank1]:     runpy.run_path(
+[rank1]:   File "<frozen runpy>", line 287, in run_path
+[rank1]:   File "<frozen runpy>", line 98, in _run_module_code
+[rank1]:   File "<frozen runpy>", line 88, in _run_code
+[rank1]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 145, in <module>
+[rank1]:     main()
+[rank1]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 107, in main
+[rank1]:     args = get_args()
+[rank1]:            ^^^^^^^^^^
+[rank1]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 76, in get_args
+[rank1]:     validate_args(args)
+[rank1]:   File "/data/day-01-workspace/src/Megatron-LM/megatron/training/arguments.py", line 317, in validate_args
+[rank1]:     assert args.world_size % total_model_size == 0, (
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: AssertionError: world size (2) is not divisible by total_model_size (total_model_size=4)
+ > padded vocab (size: 151936) with 128 dummy tokens (new size: 152064)
+[2026-08-03 21:22:38] arguments.py:166 - --tokenizer-model not set, use --hf-checkpoint as tokenizer model.
+Using pipeline model parallel size: 2, decoder last pipeline num layers: 18
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/data/day-01-workspace/scripts/convert_qwen3.py", line 10, in <module>
+[rank0]:     runpy.run_path(
+[rank0]:   File "<frozen runpy>", line 287, in run_path
+[rank0]:   File "<frozen runpy>", line 98, in _run_module_code
+[rank0]:   File "<frozen runpy>", line 88, in _run_code
+[rank0]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 145, in <module>
+[rank0]:     main()
+[rank0]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 107, in main
+[rank0]:     args = get_args()
+[rank0]:            ^^^^^^^^^^
+[rank0]:   File "/data/day-01-workspace/src/slime/tools/convert_hf_to_torch_dist.py", line 76, in get_args
+[rank0]:     validate_args(args)
+[rank0]:   File "/data/day-01-workspace/src/Megatron-LM/megatron/training/arguments.py", line 317, in validate_args
+[rank0]:     assert args.world_size % total_model_size == 0, (
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: AssertionError: world size (2) is not divisible by total_model_size (total_model_size=4)
+[rank0]:[W803 21:22:38.497374080 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+E0803 21:22:40.597000 3581637 torch/distributed/elastic/multiprocessing/api.py:986] failed (exitcode: 1) local_rank: 0 (pid: 3581703) of binary: /data/day-01-workspace/src/slime/.venv/bin/python3
+Traceback (most recent call last):
+  File "/data/day-01-workspace/src/slime/.venv/bin/torchrun", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/torch/distributed/run.py", line 990, in main
+    run(args)
+  File "/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/torch/distributed/run.py", line 981, in run
+    elastic_launch(
+  File "/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/day-01-workspace/src/slime/.venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/data/day-01-workspace/scripts/convert_qwen3.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-08-03_21:22:40
+  host      : server-desktop
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 3581704)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-08-03_21:22:40
+  host      : server-desktop
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 3581703)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
