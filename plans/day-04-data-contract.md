@@ -179,11 +179,11 @@ artifacts/day-04/
 ## 12. 执行记录
 
 ```text
-状态：NOT_STARTED
-schema版本：
-capability数量：
-Polar fixture覆盖：
-JSONL roundtrip：
-core独立测试：
-未解决问题：
+状态：IN_PROGRESS（contract、capability、JSONL Adapter、PolarSourceAdapter 已完成；task-level success/coding golden coverage 等待 Day 3 fixture）
+schema版本：rollout-record/v1、rollout-batch/v1、training-ready-batch/v1、resample-request/v1、rollout-jsonl/v1
+capability数量：8
+Polar fixture覆盖：Day 2 execution-complete VALID_FAILURE 与 synthetic runtime fault 已覆盖；Adapter 不按目录名改写 reward
+JSONL roundtrip：已完成，除 source envelope 外语义等价
+core独立测试：已完成，不 import Polar/Slime
+未解决问题：task-level success、policy/group 缺失；Day 3 multi-turn/verifier mapping 待真实 artifact
 ```

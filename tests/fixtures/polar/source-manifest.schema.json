@@ -24,7 +24,13 @@
       "minLength": 1
     },
     "fixture_type": {
-      "enum": ["calculator_success", "calculator_fault"]
+      "enum": [
+        "calculator_success",
+        "calculator_fault",
+        "coding_success",
+        "coding_valid_failure",
+        "coding_invalid_infra"
+      ]
     },
     "synthetic_fault": {
       "type": "boolean"
@@ -87,7 +93,19 @@
             "pattern": "^(?!/)(?!.*\\.\\.).+$"
           },
           "role": {
-            "enum": ["request", "response", "summary", "raw_log", "normalized_log", "external_reference"]
+            "enum": [
+              "request",
+              "response",
+              "summary",
+              "verifier_evidence",
+              "patch",
+              "replay_evidence",
+              "fault_injection",
+              "task_metadata",
+              "raw_log",
+              "normalized_log",
+              "external_reference"
+            ]
           },
           "media_type": {
             "type": "string",

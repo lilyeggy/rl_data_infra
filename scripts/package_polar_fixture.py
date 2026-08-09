@@ -34,10 +34,19 @@ except ModuleNotFoundError:  # Support `python scripts/package_polar_fixture.py`
     )
 
 
-REQUIRED_FILES = {
+BASE_REQUIRED_FILES = {
     "request.json": "request",
     "response.json": "response",
     "summary.json": "summary",
+}
+CODING_REQUIRED_FILES = {
+    "verifier-evidence.json": "verifier_evidence",
+    "patch.diff": "patch",
+}
+CODING_REPLAY_FILES = {"replay.json": "replay_evidence"}
+OPTIONAL_EVIDENCE_FILES = {
+    "fault-injection.json": "fault_injection",
+    "task-metadata.json": "task_metadata",
 }
 OPTIONAL_ROOT_LOGS = {
     "gateway.log",
@@ -63,6 +72,7 @@ class PackageMetadata:
     tokenizer_revision: str
     runtime_image_identity: str
     harness: str
+    synthetic_fault: bool | None = None
     policy_version: str | None = None
     created_at_utc: str | None = None
     known_missing_fields: tuple[str, ...] = ()
@@ -86,7 +96,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fixture-type",
         required=True,
-        choices=("calculator_success", "calculator_fault"),
+        choices=(
+            "calculator_success",
+            "calculator_fault",
+            "coding_success",
+            "coding_valid_failure",
+            "coding_invalid_infra",
+        ),
     )
     parser.add_argument("--fixture-id", required=True)
     parser.add_argument("--polar-commit", required=True)
@@ -95,6 +111,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tokenizer-revision", required=True)
     parser.add_argument("--runtime-image-identity", required=True)
     parser.add_argument("--harness", required=True)
+    parser.add_argument(
+        "--synthetic-fault",
+        action="store_true",
+        default=None,
+        help="Mark a coding_invalid_infra fixture as intentionally injected.",
+    )
     parser.add_argument("--policy-version")
     parser.add_argument("--created-at-utc")
     parser.add_argument(
@@ -161,10 +183,21 @@ def _media_type(path: Path) -> str:
         return "application/json"
     if path.suffix in {".log", ".txt"}:
         return "text/plain"
+    if path.suffix in {".diff", ".patch"}:
+        return "text/x-diff"
     return mimetypes.guess_type(path.name)[0] or "application/octet-stream"
 
 
-def discover_source_files(source_dir: Path) -> list[SourceFile]:
+def _required_files_for_type(fixture_type: str) -> dict[str, str]:
+    required = dict(BASE_REQUIRED_FILES)
+    if fixture_type.startswith("coding_"):
+        required.update(CODING_REQUIRED_FILES)
+    if fixture_type in {"coding_success", "coding_valid_failure"}:
+        required.update(CODING_REPLAY_FILES)
+    return required
+
+
+def discover_source_files(source_dir: Path, fixture_type: str) -> list[SourceFile]:
     """Return an allowlisted, deterministic inventory of staging files."""
     if not source_dir.exists():
         raise PackageError(f"source directory does not exist: {source_dir}")
@@ -175,10 +208,29 @@ def discover_source_files(source_dir: Path) -> list[SourceFile]:
 
     discovered: list[SourceFile] = []
     allowed_paths: set[str] = set()
-    for filename, role in REQUIRED_FILES.items():
+    for filename, role in _required_files_for_type(fixture_type).items():
         path = source_dir / filename
         if not path.is_file() or path.is_symlink():
             raise PackageError(f"missing required regular file: {filename}")
+        if path.suffix == ".json":
+            try:
+                json.loads(path.read_text(encoding="utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise PackageError(f"invalid UTF-8 JSON in {filename}: {exc}") from exc
+        else:
+            try:
+                path.read_text(encoding="utf-8")
+            except UnicodeDecodeError as exc:
+                raise PackageError(f"invalid UTF-8 text in {filename}: {exc}") from exc
+        discovered.append(SourceFile(filename, role, _media_type(path)))
+        allowed_paths.add(filename)
+
+    for filename, role in OPTIONAL_EVIDENCE_FILES.items():
+        path = source_dir / filename
+        if not path.exists():
+            continue
+        if not path.is_file() or path.is_symlink():
+            raise PackageError(f"optional evidence is not a regular file: {filename}")
         try:
             json.loads(path.read_text(encoding="utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -280,7 +332,11 @@ def build_manifest(
         "schema_version": "polar-fixture-manifest/v1",
         "fixture_id": metadata.fixture_id,
         "fixture_type": metadata.fixture_type,
-        "synthetic_fault": metadata.fixture_type == "calculator_fault",
+        "synthetic_fault": (
+            metadata.synthetic_fault
+            if metadata.synthetic_fault is not None
+            else metadata.fixture_type == "calculator_fault"
+        ),
         "created_at_utc": metadata.created_at_utc or utc_now(),
         "source": {
             "polar_commit": metadata.polar_commit,
@@ -308,7 +364,7 @@ def package_fixture(
     """Create and verify a fixture, refusing overwrite and partial source input."""
     if max_file_bytes <= 0:
         raise PackageError("max_file_bytes must be positive")
-    source_files = discover_source_files(source_dir)
+    source_files = discover_source_files(source_dir, metadata.fixture_type)
     ensure_safe_output(output_dir, source_dir, max_file_bytes)
 
     oversized = [
@@ -381,6 +437,7 @@ def main() -> int:
             tokenizer_revision=args.tokenizer_revision,
             runtime_image_identity=args.runtime_image_identity,
             harness=args.harness,
+            synthetic_fault=args.synthetic_fault,
             policy_version=args.policy_version,
             created_at_utc=args.created_at_utc,
             known_missing_fields=tuple(args.missing_field),

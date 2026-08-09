@@ -1,0 +1,75 @@
+schema_version: polar-coding-capture/v1
+
+reference:
+  polar_commit: f0e8343a7870abf6ec2366890f685881ceab92cb
+  example: examples/swebench_verified
+  harness: qwen_code
+  evaluator: swebench_harness
+
+outcomes:
+  coding_success:
+    canonical_class: VALID_SUCCESS
+    synthetic_fault: false
+    verifier_completed: true
+    resolved: true
+    reward: 1
+  coding_valid_failure:
+    canonical_class: VALID_FAILURE
+    synthetic_fault: false
+    verifier_completed: true
+    resolved: false
+    reward: 0
+  coding_invalid_infra:
+    canonical_class: INVALID_INFRASTRUCTURE
+    resolved: null
+    reward: null
+    allow_natural_or_explicit_synthetic_fault: true
+
+required_common_files:
+  - request.json
+  - response.json
+  - summary.json
+  - verifier-evidence.json
+  - patch.diff
+
+required_for_valid_outcome:
+  - replay.json
+
+required_verifier_evidence:
+  schema_version: coding-verifier-evidence/v1
+  fields:
+    - outcome_class
+    - task_id
+    - instance_id
+    - base_commit
+    - runtime_image_identity
+    - synthetic_fault
+    - test.command
+    - test.timeout_seconds
+    - result.verifier_completed
+    - result.timed_out
+    - result.crashed
+    - result.exit_code
+    - result.resolved
+    - result.reward
+    - provenance.source_file
+    - provenance.json_path
+    - patch_sha256
+
+candidate_gate:
+  minimum_candidates: 3
+  prefer_distinct_repositories: true
+  require_full_base_commit: true
+  require_fail_to_pass: true
+  require_local_runtime_image: true
+  require_runtime_baseline: true
+
+training_field_rules:
+  may_retokenize_generated_text: false
+  may_fill_missing_logprobs_with_zero: false
+  may_infer_policy_version_from_time: false
+  may_map_infrastructure_failure_to_reward_zero: false
+
+repository_limits:
+  max_single_fixture_file_bytes: 2097152
+  commit_raw_runtime_directory: false

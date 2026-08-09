@@ -122,7 +122,7 @@ notes/task-pilot-report.md
 ## 11. 执行记录
 
 ```text
-状态：NOT_STARTED
+状态：READY_FOR_SERVER_EXECUTION（Day 2 已完成；runbook、capture policy、fixture validator 已就绪）
 Harness：
 候选/有效任务：
 真实 rollout 数量：
@@ -132,3 +132,5 @@ fixture：
 训练候选任务：
 未解决问题：
 ```
+
+执行入口：`docs/runbooks/day-03-polar-coding.md`

@@ -8,7 +8,10 @@
 polar/
 ├── source-manifest.schema.json
 ├── calculator_success/
-└── calculator_fault/
+├── calculator_fault/
+├── coding_success/
+├── coding_valid_failure/
+└── coding_invalid_infra/
 ```
 
 每个完整 fixture 必须包含：
@@ -20,6 +23,15 @@ response.json
 summary.json
 normalized-logs/
 README.md
+```
+
+Coding fixture 另外要求：
+
+```text
+verifier-evidence.json
+patch.diff
+replay.json              # success / valid failure 必需
+fault-injection.json     # synthetic invalid infrastructure 建议保存
 ```
 
 服务器执行前目录中只有说明和 schema，不存在伪造的 `request.json`、`response.json` 或 `summary.json`。
