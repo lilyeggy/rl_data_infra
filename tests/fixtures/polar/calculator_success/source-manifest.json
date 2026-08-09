@@ -1,0 +1,65 @@
+{
+  "created_at_utc": "2026-08-09T16:58:06Z",
+  "files": [
+    {
+      "bytes": 72514,
+      "media_type": "application/json",
+      "path": "request.json",
+      "role": "request",
+      "sha256": "d11e4df6f1e38e2ab8f29f3b1dd14941de586400a6f489982e7b2edf8fa2d05f"
+    },
+    {
+      "bytes": 434804,
+      "media_type": "application/json",
+      "path": "response.json",
+      "role": "response",
+      "sha256": "189b06e987fcca73def6c63828fb3591470d12d9259f000687afc51c78940230"
+    },
+    {
+      "bytes": 315515,
+      "media_type": "application/json",
+      "path": "summary.json",
+      "role": "summary",
+      "sha256": "52b30b3e796b3a7a7c5f3fe992d8bf93b4460ceeee08db628372179141d97d4a"
+    }
+  ],
+  "fixture_id": "polar-calculator-success-20260809T164046Z-calculator",
+  "fixture_type": "calculator_success",
+  "known_missing_fields": [
+    "group_id",
+    "old_logprobs",
+    "policy_version"
+  ],
+  "notes": [
+    "agent produced single completion (qwen-code CLI exits after first tool_call); evaluator completed with empty_generation; reward 0.0 is model outcome, not infrastructure error",
+    "native token_ids/logprobs verified in completion record choices[0]"
+  ],
+  "redactions": [
+    {
+      "count": 0,
+      "path": "request.json",
+      "rule": "secret_scan"
+    },
+    {
+      "count": 0,
+      "path": "response.json",
+      "rule": "secret_scan"
+    },
+    {
+      "count": 0,
+      "path": "summary.json",
+      "rule": "secret_scan"
+    }
+  ],
+  "schema_version": "polar-fixture-manifest/v1",
+  "source": {
+    "harness": "qwen_code",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "polar_commit": "f0e8343a7870abf6ec2366890f685881ceab92cb",
+    "policy_version": null,
+    "runtime_image_identity": "sha256:0a967a5c33ee206f7524181cdd4ff866389016651645336eee93de1a7d970f49",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "synthetic_fault": false
+}

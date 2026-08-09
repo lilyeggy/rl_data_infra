@@ -1,0 +1,66 @@
+{
+  "task_id": "calculator-qwen_code-20260809T165634Z-fault",
+  "instruction": "`calculator.py` has a `Calculator` class with a tokenizer and three stub methods.\nEach stub is marked with a `# TODO` comment and returns `0`.\n\nImplement the three methods to build a recursive-descent expression parser:\n\n1. `_parse_expr`  — handle `+` and `-` by calling `_parse_term`\n2. `_parse_term`  — handle `*` and `/` (integer division) by calling `_parse_factor`\n3. `_parse_factor` — handle integer literals and parenthesized sub-expressions\n\nAlso fix `__call__` to return the parsed value instead of `0`.\n\nRequirements:\n- Work only in `/polar/session/workspace/calculator.py`.\n- Keep the existing file structure, `_tokenize`, `_peek`, and `_consume` as-is.\n- Do not add imports.\n- Use `//` for division (integer division).\n- You must make actual edits. An empty git diff fails the task.\n\nAfter editing, run `python3 test_calculator.py` to test.\n",
+  "num_samples": 4,
+  "timeout_seconds": 1200.0,
+  "runtime": {
+    "backend": "docker",
+    "image": "polar-localhost-calculator:latest",
+    "prepare": [
+      {
+        "type": "exec",
+        "command": "npm install -g @qwen-code/qwen-code@0.14.5 && rm -rf /polar/session/workspace && mkdir -p /polar/session/workspace /polar/session/logs/agent && cd /polar/session/workspace && git init -q && git config user.email 'polar@test' && git config user.name 'Polar'"
+      },
+      {
+        "type": "upload_file",
+        "source": "/data/day-01-workspace/src/polar/examples/calculator/assets/test_calculator.py",
+        "target": "/polar/session/workspace/test_calculator.py"
+      },
+      {
+        "type": "upload_file",
+        "source": "/data/day-01-workspace/src/polar/examples/calculator/assets/calculator.py",
+        "target": "/polar/session/workspace/calculator.py"
+      },
+      {
+        "type": "exec",
+        "command": "cd /polar/session/workspace && git add -A && git commit -qm 'initial'"
+      },
+      {
+        "type": "exec",
+        "command": "echo SYNTHETIC_FAULT_INJECTED_AT_INIT && false"
+      }
+    ],
+    "network": "host",
+    "workdir": "/polar/session/workspace"
+  },
+  "agent": {
+    "harness": "qwen_code",
+    "model_name": "qwen3-coder-plus"
+  },
+  "builder": {
+    "strategy": "prefix_merging"
+  },
+  "evaluator": {
+    "strategy": "test_on_output",
+    "config": {
+      "repo_dir": "/polar/session/workspace",
+      "patch_command": "cd /polar/session/workspace && git add -A && git diff --cached --binary",
+      "test_command": "cd /polar/session/workspace && python3 test_calculator.py && echo 'PASSED test_calculator'",
+      "test_timeout": 0.1,
+      "expected_output_json": {
+        "test_calculator": "PASSED"
+      },
+      "exclude_patterns": [
+        "node_modules/**",
+        "**/node_modules/**",
+        ".cache/**",
+        "**/.cache/**",
+        ".venv/**",
+        "**/.venv/**",
+        ".qwen/**",
+        "**/.qwen/**"
+      ]
+    },
+    "refresh_runtime": true
+  }
+}
