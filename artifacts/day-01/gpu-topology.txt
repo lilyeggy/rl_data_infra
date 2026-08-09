@@ -1,5 +1,5 @@
 ===== date =====
-2026-08-05T14:17:16+0800 (CST)
+2026-08-09T16:06:11+0800 (CST)
 ===== nvidia-smi topo -m =====
 	[4mGPU0	GPU1	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
 GPU0	 X 	NODE	0-47,96-143	0		N/A

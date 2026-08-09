@@ -4,7 +4,7 @@
 # 证据来源: artifacts/day-01/{source-versions,python-packages,container-images,host-preflight}.txt
 #           （2026-08-05 采集，基线归档于 artifacts/day-01/baseline-2026-08-03/）
 
-captured_at_utc: "2026-08-05T06:17:27Z"
+captured_at_utc: "2026-08-09T08:06:57Z"
 
 hardware:
   gpu: NVIDIA RTX PRO 6000 Blackwell Server Edition
@@ -43,8 +43,12 @@ software:
         applied_diff_sha256: c30f39e6b7e01104b484ac21b3e09023d0b35ae3f98eba85ed75448e275818c1
       - name: local SDPA attention patch (sm120 8K 容量打通)
         source: 本地修改 megatron/core/transformer/dot_product_attention.py
+        path: patches/megatron/sdpa-sm120-8k.patch
+        sha256: eb95f109058bf8e57a9dadac222ac4908b3ebceaf6c26fdc05a1eef0a1a30cb8
         applied_as: unstaged (worktree vs index)
-        diff_sha256: eb95f109058bf8e57a9dadac222ac4908b3ebceaf6c26fdc05a1eef0a1a30cb8
+        apply_check:
+          clean_head_copy: "git apply --check on HEAD archive: OK (exit 0)"
+          dirty_worktree: "git apply --check --reverse: OK (patch already applied, exit 0)"
     pin_by: slime v0.3.0 docker/Dockerfile MEGATRON_COMMIT
   sglang:
     remote: https://github.com/sgl-project/sglang
@@ -111,7 +115,7 @@ environment:
   model_dir: /data/day-01-workspace/models
   docker_root: /data/day-01-workspace/docker-root
   artifacts: /data/day-01-workspace/artifacts
-  disk_data_free: 3.0T (2026-08-05)
+  disk_data_free: 3.0T (2026-08-09)
 
 evidence:
   smoke_sglang_response: artifacts/day-01/inference-response.json
