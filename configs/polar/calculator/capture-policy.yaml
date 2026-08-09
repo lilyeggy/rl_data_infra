@@ -1,0 +1,75 @@
+schema_version: polar-calculator-capture/v1
+
+fixture_types:
+  success:
+    synthetic_fault: false
+    required_outcome: evaluator_completed_success
+  fault:
+    synthetic_fault: true
+    required_outcome: explicitly_recorded_non_destructive_fault
+
+required_source_files:
+  - request.json
+  - response.json
+  - summary.json
+
+optional_source_files:
+  - gateway.log
+  - rollout-server.log
+  - sglang.log
+  - runtime.log
+  - evaluator.log
+
+required_observations:
+  - task_or_rollout_identity
+  - polar_commit
+  - model_id
+  - model_revision
+  - tokenizer_revision
+  - runtime_image_identity
+  - harness_identity
+  - termination_or_error_state
+  - evaluator_or_reward_result
+  - source_path_for_each_observed_field
+
+training_field_rules:
+  token_ids:
+    may_retokenize_generated_text: false
+    preserve_missing_as_missing: true
+  old_logprobs:
+    may_fill_with_zero: false
+    preserve_missing_as_missing: true
+  reward:
+    may_infer_from_status_text: false
+    preserve_missing_as_missing: true
+  policy_version:
+    may_infer_from_wall_clock_or_filename: false
+    preserve_missing_as_missing: true
+
+redaction:
+  remove:
+    - api_keys
+    - authorization_headers
+    - cookies
+    - private_registry_credentials
+    - user_home_paths_when_not_required_for_provenance
+  pseudonymize:
+    - public_ip_addresses
+    - usernames
+    - hostnames
+  preserve:
+    - opaque_task_ids
+    - opaque_rollout_ids
+    - model_revision
+    - source_commit
+    - image_digest
+
+repository_limits:
+  max_single_fixture_file_bytes: 2097152
+  large_file_policy: store_external_artifact_reference_and_sha256
+
+normalization:
+  mutate_raw_source_files: false
+  normalized_logs_directory: normalized-logs
+  timestamps: utc_iso8601
+  checksums: sha256
