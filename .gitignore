@@ -4,6 +4,7 @@ src/slime/
 src/Megatron-LM/
 src/sglang/
 src/mbridge/
+src/mbridge-iseekyan/
 src/Megatron-Bridge/
 
 # 数据与缓存（不进版本库）

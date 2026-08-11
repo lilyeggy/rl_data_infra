@@ -122,15 +122,15 @@ notes/task-pilot-report.md
 ## 11. 执行记录
 
 ```text
-状态：READY_FOR_SERVER_EXECUTION（Day 2 已完成；runbook、capture policy、fixture validator 已就绪）
-Harness：
-候选/有效任务：
-真实 rollout 数量：
-success/failure/invalid：
-reward variance：
-fixture：
-训练候选任务：
-未解决问题：
+状态：EXECUTED_AS_FAILURE（2026-08-11 run 20260811T030617Z-swebench；runbook docs/runbooks/day-03-polar-coding.md）
+Harness：qwen_code（@qwen-code/qwen-code@0.14.5）
+候选/有效任务：3 个 baseline 通过（sphinx-doc__sphinx-8595、sympy__sympy-20916、pytest-dev__pytest-5809）；排除 pylint-4661/sklearn-14141（FAIL_TO_PASS 在 base 上已通过）、django-12419（镜像传输失败）
+真实 rollout 数量：12（3 候选×2 + sympy 补采 4 + fault 2）
+success/failure/invalid：success=0 / valid failure=10 / invalid infra=1（另 1 次 verifier-timeout 注入不可观察）
+reward variance：无（全部单轮 empty_generation、reward=0；无正样本）
+fixture：tests/fixtures/polar/coding_valid_failure + coding_invalid_infra（验证均 exit 0）；coding_success 缺失（无真实 success，不伪造）
+训练候选任务：无（qwen_code 单轮退出限制，详见 notes/task-pilot-report.md）
+未解决问题：qwen_code 单轮退出（SGLang 结构化 tool_calls 为空 + content 为空）；swebench 官方镜像/make_test_spec 网络依赖（已用代理+fallback 绕过）
 ```
 
 执行入口：`docs/runbooks/day-03-polar-coding.md`

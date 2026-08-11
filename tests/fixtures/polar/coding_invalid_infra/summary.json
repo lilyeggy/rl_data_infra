@@ -1,0 +1,22 @@
+{
+  "session_id": "sk-polar-ba8095d2-8cce-4d1f-abfb-05395eec4057",
+  "task_id": "swebench-qwen_code-pytest-dev-pytest-5809-20260811T041722Z-fault-rprep",
+  "status": "ERROR",
+  "trajectory": {
+    "metadata": {
+      "builder": "prefix_merging",
+      "record_count": 0,
+      "task_metadata": {}
+    },
+    "traces": []
+  },
+  "timing": {
+    "register_to_init_queue_ms": 2.4621766060590744,
+    "init_ms": 2589.7500989958644,
+    "run_ms": 0.0,
+    "postrun_ms": 264.1809359192848
+  },
+  "node_id": "localhost-node-01",
+  "error": "runtime initialization failed: prepare action 1 failed with exit code 42",
+  "metadata": {}
+}
