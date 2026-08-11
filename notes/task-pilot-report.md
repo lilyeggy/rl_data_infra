@@ -50,7 +50,7 @@ Git golden fixture `coding_invalid_infra` 选择证据最完整的 **runtime pre
 训练候选：无（本 run 无 VALID_SUCCESS，无 reward variance 可观察）
 选择原因：qwen_code@0.14.5 + Qwen3-4B-Instruct-2507 环境下 agent 单轮退出（仅 1 次模型请求），
           无法产生多轮 trajectory / patch / resolved=true；reward 恒为 0，无正负样本区分。
-排除任务：全部 3 候选（原因同上）；pylint/sklearn（baseline 不成立）；django（镜像不可得）
+排除任务：全部 3 候选（原因同上）；pylint/sklearn（baseline 不成立）；django 后补 baseline 通过但未重跑 rollout（同一 harness 限制）
 是否观察到 reward variance：否（0 正样本）
 预计单 rollout 成本：~15–30s（INIT 3s + 单轮 agent 3s + evaluator 短路；远低于预算 1800s）
 仍需解决的问题：
@@ -70,7 +70,7 @@ project_commit=c29cfed48b8dee8d0c9108762c6ecfe8233b0966（执行时 HEAD）
 polar_commit=f0e8343a7870abf6ec2366890f685881ceab92cb
 run_id=20260811T030617Z-swebench
 swebench_evaluator_versions=swebench 4.1.0 / datasets 5.0.1（uv pip freeze 见 validation/polar-swe-packages.txt）
-candidates=sphinx-8595(PASS) sympy-20916(PASS) pytest-5809(PASS) pylint-4661(EXCLUDE) sklearn-14141(EXCLUDE) django-12419(EXCLUDE)
+candidates=sphinx-8595(PASS) sympy-20916(PASS) pytest-5809(PASS) pylint-4661(EXCLUDE) sklearn-14141(EXCLUDE) django-12419(PASS 后补)
 real_rollouts=12（10 valid-failure + 1 invalid + 1 vtimeout-不可观察）
 success=0 / valid_failure=10 / invalid=1
 fixtures=coding_valid_failure + coding_invalid_infra（coding_success 缺失：无真实 success）
