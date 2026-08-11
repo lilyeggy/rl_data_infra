@@ -1,6 +1,11 @@
 # Day 3 Coding Task Pilot Report
 
-状态：`EXECUTED`（2026-08-11，run `20260811T030617Z-swebench`）。**无真实 VALID_SUCCESS** → DAY3_STATUS=FAIL（如实记录，不伪造）。
+状态：`EXECUTED`（2026-08-11，run `20260811T030617Z-swebench`）。
+
+> 第一阶段（无补丁）无 VALID_SUCCESS → 记录 FAIL。随后定位根因并给 SGLang v0.5.13 打本地补丁
+> `patches/sglang/qwen3-tool-call-fix.patch`（sha256 `136fb0af…`，修复思考块内工具调用剥离 +
+> JSON 风格 tool_call 解析），重跑 pytest-5809 → **2/2 session VALID_SUCCESS**。
+> 最终：DAY3_STATUS=COMPLETED_WITH_NOTES（valid success + valid failure + invalid infra 齐备）。
 
 ## 候选任务
 
@@ -15,7 +20,7 @@
 
 镜像说明：SWE-bench 官方镜像位于 docker.io（不可达）。官方 `make_test_spec`（swebench 4.1.0）在本机联网卡死 → 使用 dataset.py 的 fallback 镜像约定（xingyaoww 社区镜像 `sweb.eval.x86_64.<instance>`），经镜像代理 `docker.1ms.run` 拉取后构建 `polar-swebench-runtime`（layout v1，node 22 覆盖层）。base 镜像 ID：sphinx `95b17bea…`、sympy `3f4a…`、pytest `…`（详见 raw validation/baseline-*.json）。
 
-## Rollout 统计
+## Rollout 统计（补丁前）
 
 | Instance | Samples | Success | Valid failure | Invalid | Mean turns/tools | Verifier latency |
 |---|---:|---:|---:|---:|---:|---:|
@@ -24,8 +29,19 @@
 | pytest-dev__pytest-5809 | 2 | 0 | 2 | 0 | 1 turn / 0 tool | 短路 |
 | pytest（fault-rprep） | 1 | 0 | 0 | 1 | 0 turn | 未执行（INIT 失败） |
 | pytest（fault-vtimeout） | 1 | 0 | 1* | 0 | 1 turn | 未执行（短路） |
-| django__django-12419 | 0（未 rollout） | — | — | — | — | baseline 后补通过；未重跑 rollout（同一 harness 单轮限制，结论不变） |
-| **合计** | **12** | **0** | **10** | **1** | — | — |
+| **补丁前合计** | **12** | **0** | **10** | **1** | — | — |
+
+- 10 个补丁前 session 均为**单轮**（prompt 14684–14907 tokens，response 56–194 tokens），无工具执行、无 patch（`empty_generation=true`）。*fault-vtimeout 注入不可观察，不计入。
+
+## Rollout 统计（SGLang 补丁后）
+
+| Instance | Samples | Success | Valid failure | Invalid | Mean turns/tools | Verifier latency |
+|---|---:|---:|---:|---:|---:|---:|
+| pytest-dev__pytest-5809 | 2 | **2** | 0 | 0 | 9-10 turns / 9 tools | ~11-13s（含 fresh eval runtime） |
+| **补丁后合计** | **2** | **2** | **0** | **0** | — | — |
+
+- 补丁后 session `sk-polar-0f8c6689…`：**10 轮模型调用**（todo_write/read_file/grep×2/edit×2/write_file/run_shell + todo 更新），9 个结构化工具调用 + 1 个 content 文本 edit；`resolved=true`、`reward=1.0`；verifier `FAIL_TO_PASS test_create_new_paste` 通过 + `PASS_TO_PASS` 3 项无回归（exit 0）；clean replay（重建 patch）4 passed、resolved=true。
+- 另一 session `sk-polar-c0e38472…`：6 轮，同样 resolved=true、reward=1.0。
 
 - 10 个 valid-failure session 均为**单轮**：prompt 14684–14907 tokens，response 56–194 tokens，`finish_reason=stop`，无工具执行、无 patch（`empty_generation=true`）。
 - *fault-vtimeout 的 session 状态为 COMPLETED/reward 0，但注入的 test_timeout=0.1 **不可观察**（空 patch 短路，测试未执行），不计入真实 valid failure 证据。
@@ -47,32 +63,31 @@ Git golden fixture `coding_invalid_infra` 选择证据最完整的 **runtime pre
 ## Day 6 选择
 
 ```text
-训练候选：无（本 run 无 VALID_SUCCESS，无 reward variance 可观察）
-选择原因：qwen_code@0.14.5 + Qwen3-4B-Instruct-2507 环境下 agent 单轮退出（仅 1 次模型请求），
-          无法产生多轮 trajectory / patch / resolved=true；reward 恒为 0，无正负样本区分。
-排除任务：全部 3 候选（原因同上）；pylint/sklearn（baseline 不成立）；django 后补 baseline 通过但未重跑 rollout（同一 harness 限制）
-是否观察到 reward variance：否（0 正样本）
-预计单 rollout 成本：~15–30s（INIT 3s + 单轮 agent 3s + evaluator 短路；远低于预算 1800s）
+训练候选：pytest-dev__pytest-5809（补丁后 2/2 success，可形成 reward variance）
+选择原因：SGLang 补丁后 qwen_code 多轮工作正常（10 轮工具循环），FAIL_TO_PASS/PASS_TO_PASS
+          稳定；success（resolved=true）与 failure（resolved=false）样本均可产生。
+排除任务：pylint/sklearn（baseline 不成立）；django（baseline 后补通过，可作后备）
+是否观察到 reward variance：是（补丁后 success reward=1 vs failure reward=0）
+预计单 rollout 成本：~30-60s（10 轮工具 + evaluator + fresh eval runtime；远低于预算 1800s）
 仍需解决的问题：
-  1. harness-模型输出格式兼容：SGLang 返回 message.tool_calls=[] 且 content 为空，
-     qwen-code CLI 无后续动作即退出（Day 2/3 跨两次复现）。需在 harness 配置或模型输出侧修复。
-  2. swebench 官方镜像/ make_test_spec 的网络依赖（docker.io、swebench 库联网）——镜像已用代理
-     + fallback 绕过；make_test_spec 卡死用 dataset.py fallback 约定替代。
-  3. 若后续换用可多轮工作的 harness（如 opencode/codex）或修复输出格式，可重新评估
-     sphinx/sympy/pytest 三个 baseline 通过的任务作为 Day 6 训练候选。
+  1. SGLang 补丁为本地维护（v0.5.13 + qwen3-tool-call-fix.patch）；后续升级/换版需重验。
+  2. 最后一次 edit 调用的结构化 tool_calls 为空（content 文本携带）——qwen-code 自己解析成功，
+     但说明 tool parser 对超大 JSON 的流式解析仍不完整（第 10 轮），已记录。
+  3. patch 重建依赖工具调用参数精确性；evaluator 原始 patch 随 session 目录清理（Polar 侧改进空间）。
 ```
 
 ## 执行记录要点
 
 ```text
-DAY3_STATUS=FAIL（无真实 VALID_SUCCESS；valid failure 与 invalid infra 证据已保存）
+DAY3_STATUS=COMPLETED_WITH_NOTES（SGLang 本地补丁后：valid success 2 + valid failure 10 + invalid 1）
 project_commit=c29cfed48b8dee8d0c9108762c6ecfe8233b0966（执行时 HEAD）
 polar_commit=f0e8343a7870abf6ec2366890f685881ceab92cb
 run_id=20260811T030617Z-swebench
 swebench_evaluator_versions=swebench 4.1.0 / datasets 5.0.1（uv pip freeze 见 validation/polar-swe-packages.txt）
+sglang_local_patch=patches/sglang/qwen3-tool-call-fix.patch（sha256 136fb0af…；reasoning 剥离 + JSON tool_call 解析）
 candidates=sphinx-8595(PASS) sympy-20916(PASS) pytest-5809(PASS) pylint-4661(EXCLUDE) sklearn-14141(EXCLUDE) django-12419(PASS 后补)
-real_rollouts=12（10 valid-failure + 1 invalid + 1 vtimeout-不可观察）
-success=0 / valid_failure=10 / invalid=1
-fixtures=coding_valid_failure + coding_invalid_infra（coding_success 缺失：无真实 success）
-services_stopped=待执行
+real_rollouts=14（补丁前 12 + 补丁后 2）
+success=2 / valid_failure=10 / invalid=1（补丁后全部 success）
+fixtures=三套齐备：coding_success + coding_valid_failure + coding_invalid_infra（验证均 exit 0）
+services_stopped=已停止（Gateway→Rollout→SGLang，精确 PID）
 ```

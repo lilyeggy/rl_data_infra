@@ -65,3 +65,29 @@ Gateway(2536257) → Rollout(2536171) → SGLang(2534902)，TERM 等待退出；
 ## 未启动
 
 未启动 Slime/Megatron/GRPO；未修改 Polar 核心；未伪造 success/patch/reward。
+
+## 补充：SGLang 本地补丁与 VALID_SUCCESS（2026-08-11 13:0x-13:2x UTC）
+
+根因：Qwen3-4B-Instruct-2507 默认 thinking 模式，工具调用输出在 `<think>` 块内；SGLang v0.5.13 的
+Qwen3Detector 声明了 think_excluded_tokens=["<tool_call>",...] 但剥离逻辑未实现（tool_start_token 未传）；
+且 Qwen3CoderDetector 只支持 XML 风格（<function=>），不支持 2507 版 JSON 风格（{"name":...,"arguments":...}）。
+结果：message.tool_calls=[] 且 content="" → qwen-code CLI 无动作退出（Day 2/3 共 14 次复现）。
+
+修复：patches/sglang/qwen3-tool-call-fix.patch（sha256 136fb0af…）
+1. reasoning_parser.py Qwen3Detector：传 tool_start_token="<tool_call>"（启用思考块内工具调用剥离）
+2. qwen3_coder_detector.py：支持 JSON 风格 tool_call（非流式 + 流式缓冲解析；XML 风格回归通过）
+单测（python 内联）：流式 JSON 解析 OK、XML 回归 OK。
+
+验证：SGLang 补丁版重启后，模拟 qwen-code 请求 → finish_reason=tool_calls、tool_calls 非空。
+
+重跑 pytest-5809（2 samples）→ 2/2 VALID_SUCCESS：
+- sk-polar-0f8c6689…：10 轮模型调用（9 结构化工具调用 + 1 content 文本 edit），
+  eval report exit_code=0、patch_exists=true、resolved=true、reward=1.0，
+  FAIL_TO_PASS test_create_new_paste 通过 + PASS_TO_PASS 3 项无回归
+- sk-polar-c0e38472…：6 轮，同样 resolved=true、reward=1.0
+
+patch.diff：evaluator 原始 patch 随 session 目录清理 → 从工具调用参数重建
+（rebuild_patch.py，sha256 f80ba962…）；clean replay（replay_success.py）：
+fresh runtime + base commit + git apply patch + verifier → 4 passed、resolved=true、matches_original=true。
+
+结论：DAY3_STATUS 由 FAIL 更新为 COMPLETED_WITH_NOTES（valid success 2 + valid failure 10 + invalid 1）。

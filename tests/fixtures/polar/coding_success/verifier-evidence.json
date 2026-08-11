@@ -1,0 +1,62 @@
+{
+  "schema_version": "coding-verifier-evidence/v1",
+  "outcome_class": "VALID_SUCCESS",
+  "task_id": "swebench-qwen_code-pytest-dev-pytest-5809-20260811T050600Z",
+  "instance_id": "pytest-dev__pytest-5809",
+  "base_commit": "8aba863a634f40560e25055d179220f0eefabe9a",
+  "runtime_image_identity": "polar-swebench-runtime:pytest-dev-pytest-5809",
+  "synthetic_fault": false,
+  "test": {
+    "command": "/opt/miniconda3/envs/testbed/bin/python -m pytest testing/test_pastebin.py::TestPaste::test_create_new_paste testing/test_pastebin.py::TestPasteCapture::test_failed testing/test_pastebin.py::TestPasteCapture::test_all testing/test_pastebin.py::TestPasteCapture::test_non_ascii_paste_text --tb=line",
+    "timeout_seconds": 1200.0
+  },
+  "result": {
+    "verifier_completed": true,
+    "timed_out": false,
+    "crashed": false,
+    "exit_code": 0,
+    "resolved": true,
+    "reward": 1.0,
+    "grading_report": {
+      "patch_is_None": false,
+      "patch_exists": true,
+      "patch_successfully_applied": true,
+      "resolved": true,
+      "tests_status": {
+        "FAIL_TO_PASS": {
+          "success": [
+            "testing/test_pastebin.py::TestPaste::test_create_new_paste"
+          ],
+          "failure": []
+        },
+        "PASS_TO_PASS": {
+          "success": [
+            "testing/test_pastebin.py::TestPasteCapture::test_failed",
+            "testing/test_pastebin.py::TestPasteCapture::test_all",
+            "testing/test_pastebin.py::TestPasteCapture::test_non_ascii_paste_text"
+          ],
+          "failure": []
+        },
+        "FAIL_TO_FAIL": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_FAIL": {
+          "success": [],
+          "failure": []
+        }
+      }
+    }
+  },
+  "provenance": {
+    "source_file": "raw/rollout_results/task_swebench-qwen_code-pytest-dev-pytest-5809-20260811T050600Z/ses_sk-polar-0f8c6689-aaa8-4cf4-9802-6951f48203f9.json",
+    "json_path": "$.trajectory.metadata.evaluation.report"
+  },
+  "patch_sha256": "f80ba962a483d508a5eb0ee00be38c3eac7811220d099024e247704d5a771d3d",
+  "patch_provenance": {
+    "rebuilt_from": "tool calls in completion records (edit lexer + edit try/except + write_file tests/test_pastebin.py)",
+    "rebuilt_script": "rebuild_patch.py",
+    "rebuilt_patch_sha256": "f80ba962a483d508a5eb0ee00be38c3eac7811220d099024e247704d5a771d3d",
+    "note": "evaluator's original patch.diff was cleaned with the session dir; patch reconstructed from exact tool-call arguments"
+  }
+}

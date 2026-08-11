@@ -42,18 +42,18 @@ source 约定：`<F>` = `tests/fixtures/polar/coding_valid_failure/`，`<II>` = 
 ```text
 源系统直接存在的训练字段：
   prompt_token_ids（input_token_ids/prompt_ids）、output_token_ids（token_ids/response_ids）、
-  sampled_logprobs（logprobs.content/response_logprobs）、loss_mask、reward（valid failure 场景）、
-  task_id、session_id、model_used
+  sampled_logprobs（logprobs.content/response_logprobs）、loss_mask、reward（success=1.0/failure=0.0）、
+  task_id、session_id、model_used、tool_calls（多轮：todo_write/read_file/grep/edit/write_file/run_shell）、
+  patch（重建自工具调用，patch_sha256=f80ba962…，replay 4 passed）
 
 明确缺失的训练字段：
   policy_version、group_id、old_logprobs、trajectory_id
 
 success 与 valid failure 的证据边界：
-  本 run 无 VALID_SUCCESS（10/10 session 均为单轮 empty_generation、resolved=false、reward=0）。
-  valid failure 证据：summary.status=COMPLETED + evaluation.report（resolved=false, error_eval=false,
-  test_timeout=false）+ clean replay 一致（exit 4, resolved=false）。
-  注意：empty_generation=true 使 swebench_harness 短路，测试命令未实际执行——verifier "completed"
-  是 evaluator 层面，不是测试执行层面。此 nuance 已如实记录。
+  success（coding_success）：verifier grading_report.patch_exists=true、patch_successfully_applied=true、
+  FAIL_TO_PASS success、PASS_TO_PASS 无回归、exit_code=0、resolved=true、reward=1.0；clean replay 4 passed。
+  valid failure：summary.status=COMPLETED + evaluation.report（resolved=false, error_eval=false）+ clean replay
+  一致（exit 4, resolved=false）。注意补丁前 failure 均 empty_generation（evaluator 短路，测试未实际执行）。
 
 invalid infrastructure 的证据边界：
   summary.status=ERROR + $.error="runtime initialization failed: prepare action N failed with exit code M"；
@@ -65,12 +65,13 @@ invalid infrastructure 的证据边界：
 进入 PolarSourceAdapter 前仍需回答的问题：
   1. policy_version 无来源；adapter 需显式声明或由上游提供。
   2. old_logprobs 训练语义缺失（源仅有当前采样 logprobs）。
-  3. qwen_code@0.14.5 + 本模型单轮退出（仅 1 次模型请求，无多轮/工具执行/代码修改）——
-     原因疑为 SGLang 响应结构化 tool_calls 为空 + content 为空，CLI 无法继续；已跨 Day 2/3 复现，
-     需 harness 侧或模型输出格式侧修复后才能产生真实多轮 Coding trajectory。
+  3. SGLang v0.5.13 需本地补丁 patches/sglang/qwen3-tool-call-fix.patch 才能正确剥离思考块内
+     <tool_call> 并解析 JSON 风格工具调用；该补丁是 Day 3 后多轮 rollout 的前置条件。
   4. swebench_harness 对空 patch 短路，test_timeout 注入不可观察（Day 2 同款行为）。
-  5. SWE-bench 官方镜像在 docker.io 不可达；经镜像代理 docker.1ms.run 拉取 xingyaoww 社区镜像；
-     官方 make_test_spec（swebench 4.1.0）在本机联网卡死，镜像名使用 dataset.py fallback 约定。
+  5. evaluator 原始 patch 随 session 目录清理；本项目以工具调用参数重建（rebuild_patch.py），
+     若需原生 patch 保留，Polar 侧需调整 artifacts 保留策略。
+  6. 最后一条超大 edit 的流式结构化 tool_calls 为空（content 文本携带，qwen-code 自解析成功）——
+     SGLang 流式 JSON 解析对超长 arguments 仍不完整。
 ```
 
 ## 转换规则（derived 字段）

@@ -54,7 +54,17 @@ software:
     remote: https://github.com/sgl-project/sglang
     ref: v0.5.13
     commit: 28b095c01005d4a3a2a5b637b7d028b07fba31b2
-    dirty: false
+    dirty: true  # 本地补丁：patches/sglang/qwen3-tool-call-fix.patch
+    patch_checksum: 136fb0af2bb5aff5ed78c0feddce097fe4445331a80d14b18d86c1dac9aa6d44
+    patches:
+      - name: qwen3 tool-call fix (think-block tool_call extraction + JSON-style parsing)
+        path: patches/sglang/qwen3-tool-call-fix.patch
+        sha256: 136fb0af2bb5aff5ed78c0feddce097fe4445331a80d14b18d86c1dac9aa6d44
+        files:
+          - python/sglang/srt/parser/reasoning_parser.py  # Qwen3Detector tool_start_token="<tool_call>"
+          - python/sglang/srt/function_call/qwen3_coder_detector.py  # JSON-style tool_call parsing (stream + non-stream)
+        note: 修复 Qwen3 思考块内工具调用被吞入 reasoning_content 且 tool parser 不认 JSON 风格的问题；
+              该补丁是 Day 3 后 qwen_code 多轮 rollout（VALID_SUCCESS）的前置条件。
     pin_by: polar stable README (uv pip install "sglang==0.5.13")
   mbridge:
     remote: https://github.com/ISEEKYAN/mbridge
