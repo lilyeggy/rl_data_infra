@@ -11,7 +11,7 @@
 | pytest-dev__pytest-5809 | pytest-dev/pytest | 8aba863a634f40560e25055d179220f0eefabe9a | polar-swebench-runtime:pytest-dev-pytest-5809 | PASS（test_create_new_paste 在 base 上失败 rc=4） | 保留（fixture 选择） |
 | pylint-dev__pylint-4661 | pylint-dev/pylint | 1d1619ef913b99b06647d2030bddff4800abdf63 | polar-swebench-runtime:pylint-dev-pylint-4661 | FAIL | FAIL_TO_PASS 在 base commit 上已通过（rc=0），无 reward variance 空间 |
 | scikit-learn__scikit-learn-14141 | scikit-learn/scikit-learn | 3d997697fdd166eff428ea9fd35734b6a8ba113e | polar-swebench-runtime:scikit-learn-scikit-learn-14141 | FAIL | 同上（test_get_deps_info rc=0） |
-| django__django-12419 | django/django | 7fa1a93c6c8109010a6ff3f604fda83b604e0e97 | 未构建 | — | base 镜像经代理下载 30+ 分钟停滞未完成，排除 |
+| django__django-12419 | django/django | 7fa1a93c6c8109010a6ff3f604fda83b604e0e97 | polar-swebench-runtime:django-django-12419 | **PASS（后补）** | 当时镜像并发下载慢被误判为停滞；复查确认镜像已拉全（4.1GB），构建后 baseline 通过（test_middleware_headers rc=2） |
 
 镜像说明：SWE-bench 官方镜像位于 docker.io（不可达）。官方 `make_test_spec`（swebench 4.1.0）在本机联网卡死 → 使用 dataset.py 的 fallback 镜像约定（xingyaoww 社区镜像 `sweb.eval.x86_64.<instance>`），经镜像代理 `docker.1ms.run` 拉取后构建 `polar-swebench-runtime`（layout v1，node 22 覆盖层）。base 镜像 ID：sphinx `95b17bea…`、sympy `3f4a…`、pytest `…`（详见 raw validation/baseline-*.json）。
 
@@ -24,6 +24,7 @@
 | pytest-dev__pytest-5809 | 2 | 0 | 2 | 0 | 1 turn / 0 tool | 短路 |
 | pytest（fault-rprep） | 1 | 0 | 0 | 1 | 0 turn | 未执行（INIT 失败） |
 | pytest（fault-vtimeout） | 1 | 0 | 1* | 0 | 1 turn | 未执行（短路） |
+| django__django-12419 | 0（未 rollout） | — | — | — | — | baseline 后补通过；未重跑 rollout（同一 harness 单轮限制，结论不变） |
 | **合计** | **12** | **0** | **10** | **1** | — | — |
 
 - 10 个 valid-failure session 均为**单轮**：prompt 14684–14907 tokens，response 56–194 tokens，`finish_reason=stop`，无工具执行、无 patch（`empty_generation=true`）。
