@@ -1,0 +1,1 @@
+"""Assembler tests."""

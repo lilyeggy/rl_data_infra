@@ -125,12 +125,12 @@ configs/polar/calculator/
 ## 9. 执行记录
 
 ```text
-状态：COMPLETED_WITH_NOTES（2026-08-09/10，run 20260809T164046Z-calculator）
-Polar commit：f0e8343a7870abf6ec2366890f685881ceab92cb（stable）
-SGLang 配置：0.5.13（28b095c0…）；Qwen/Qwen3-4B-Instruct-2507@cdbee75f…；context 32768（8K/16K 因 harness 请求 22846 tokens 超限），mem-fraction-static 0.35，GPU 0
-Harness：qwen_code（@qwen-code/qwen-code@0.14.5）
-success fixture：tests/fixtures/polar/calculator_success/ —— calculator-qwen_code-20260809T165213Z / sk-polar-0d2971a8…，evaluator 正常完成但 reward=0.0、resolved=false（模型未解出，VALID_FAILURE 语义）；原生 token_ids/logprobs 确认
-fault fixture：tests/fixtures/polar/calculator_fault/ —— calculator-qwen_code-20260809T165634Z-fault / sk-polar-61663888…，synthetic runtime INIT failure（prepare action 4 exit 1，4 session ERROR），分类 INVALID_INFRASTRUCTURE；evaluator timeout-only 尝试因 empty patch 短路（BasePatchEvaluator 提前返回）不可观察，最终未成为 fault 注入方式
-缺失训练字段：policy_version、group_id、old_logprobs；fault 另缺 output_token_ids/sampled_logprobs/reward
-未解决问题：qwen_code 单轮 tool_call 后退出（原因未定位）；SGLang 结构化 message.tool_calls 为空（工具调用仅在 reasoning_content 文本）；8080 被系统账户 server 占用（已改用 8081）；本地镜像无 RepoDigest
+状态：NOT_STARTED
+Polar commit：
+SGLang 配置：
+Harness：
+success fixture：
+fault fixture：
+缺失训练字段：
+未解决问题：
 ```

@@ -1,0 +1,45 @@
+{
+  "assembly_input_checksum": "6ff07a36b954bf61798375a9af2f7f40f6a50d4db3d142f0a7ae0b2214af1e30",
+  "assembly_output_checksum": "4b3389b3ab912626528f7673477b23f0da3baa39ae427515dba23685309055e6",
+  "episode_count": 3,
+  "episodes": [
+    {
+      "diagnoses": [
+        "SANDBOX_OPERATION_TIMEOUT"
+      ],
+      "episode_id": "episode-infra-timeout",
+      "execution_validity": "INFRA_INVALID",
+      "integrity": "COMPLETE",
+      "task_id": "demo/infra-timeout",
+      "task_status": "UNKNOWN"
+    },
+    {
+      "diagnoses": [],
+      "episode_id": "episode-success",
+      "execution_validity": "VALID",
+      "integrity": "COMPLETE",
+      "task_id": "demo/success",
+      "task_status": "SUCCESS"
+    },
+    {
+      "diagnoses": [
+        "TOOL_ERROR_FEEDBACK_LOSS"
+      ],
+      "episode_id": "episode-tool-loop",
+      "execution_validity": "VALID",
+      "integrity": "COMPLETE",
+      "task_id": "demo/tool-error-loop",
+      "task_status": "FAILURE"
+    }
+  ],
+  "known_limits": [
+    "V1 does not compare Harness versions or issue a Regression Gate verdict",
+    "cost is NOT_OBSERVABLE without a versioned pricing configuration",
+    "the reference run is deterministic synthetic evidence, not a benchmark claim"
+  ],
+  "quarantined_event_count": 0,
+  "reader_issue_count": 0,
+  "release": "v1",
+  "run_id": "run-v1-observability",
+  "scope": "single-run Trace -> Episode -> Metrics/Attribution observability loop"
+}

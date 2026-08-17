@@ -363,7 +363,7 @@ notes/task-pilot-report.md
 native token IDs、mask、sampled logprobs、tool events、patch、各组件状态、verifier、reward。
 
 Pilot report 至少包含 3 个候选的 baseline、rollout 数量、success/failure/invalid、token/
-turn/tool 数、verifier latency，以及 Day 6 是否采用该任务。
+turn/tool 数、verifier latency、可观察 Harness 行为，以及 Day 6 是否采用该任务做 paired comparison。
 
 ## 14. 停止与验收
 

@@ -82,10 +82,10 @@ Clean replay 只做最小验证：将 patch 应用到干净 workspace，确认 v
 对少量任务各生成 2–4 条 rollout，统计：
 
 - success/failure/invalid 比例；
-- reward variance；
 - 平均 token/turn/tool 数；
 - verifier latency；
-- 是否适合作为 Day 6 小规模 GRPO 训练任务。
+- tool error、retry、loop 和 premature termination 是否可稳定观察；
+- 是否适合作为 Day 6 Harness paired comparison 与 reference improvement 任务。
 
 ## 8. 本阶段不做
 
@@ -116,21 +116,21 @@ notes/task-pilot-report.md
 - [ ] 至少两类 invalid infrastructure fixture 存在；
 - [ ] verifier evidence 足以复核 outcome；
 - [ ] policy version 和 task/group identity 可追踪；
-- [ ] pilot report 能选出后续训练任务；
+- [ ] pilot report 能选出后续 Harness 对比任务；
 - [ ] 本阶段没有依赖 Slime/Megatron。
 
 ## 11. 执行记录
 
 ```text
-状态：COMPLETED_WITH_NOTES（2026-08-11 run 20260811T030617Z-swebench；SGLang 本地补丁后）
-Harness：qwen_code（@qwen-code/qwen-code@0.14.5）
-候选/有效任务：3 个 baseline 通过（sphinx-doc__sphinx-8595、sympy__sympy-20916、pytest-dev__pytest-5809）；排除 pylint-4661/sklearn-14141（FAIL_TO_PASS 在 base 上已通过）、django-12419（镜像传输慢，后补 baseline 通过）
-真实 rollout 数量：14（补丁前 12 + 补丁后 pytest 2）
-success/failure/invalid：补丁后 success=2 / 补丁前 valid failure=10 / invalid infra=1（另 1 次 verifier-timeout 注入不可观察）
-reward variance：有（补丁后 success reward=1 vs failure reward=0）
-fixture：tests/fixtures/polar/coding_success + coding_valid_failure + coding_invalid_infra（验证均 exit 0）
-训练候选任务：pytest-dev__pytest-5809
-未解决问题：SGLang 补丁为本地维护（patches/sglang/qwen3-tool-call-fix.patch，sha256 136fb0af…）；最后一条超大 edit 的流式结构化 tool_calls 为空（qwen-code 自解析 content 文本）；evaluator 原始 patch 随 session 目录清理（用工具调用重建）
+状态：READY_FOR_SERVER_EXECUTION（Day 2 已完成；runbook、capture policy、fixture validator 已就绪）
+Harness：
+候选/有效任务：
+真实 rollout 数量：
+success/failure/invalid：
+可观察 Harness 行为：
+fixture：
+Harness 对比候选任务：
+未解决问题：
 ```
 
 执行入口：`docs/runbooks/day-03-polar-coding.md`

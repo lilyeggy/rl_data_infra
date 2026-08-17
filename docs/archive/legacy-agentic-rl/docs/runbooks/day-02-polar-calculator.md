@@ -1,8 +1,7 @@
 # Day 2：Polar Calculator Rollout Runbook
 
-> 状态：`EXECUTED_WITH_NOTES`
+> 状态：`READY_FOR_SERVER_EXECUTION`
 >
-> 已在服务器执行（2026-08-09/10，run `20260809T164046Z-calculator`，polar f0e8343a）。
 > 本阶段运行锁定版本的 Polar Calculator 示例，取得真实 rollout artifacts，
 > 为 Day 4 的数据契约与 `PolarSourceAdapter` 提供输入样本。本阶段不重新实现
 > Polar，也不启动 Slime/Megatron。

@@ -1,453 +1,529 @@
-# Rollout-Agnostic Agentic RL Data Pipeline
+# Multi-Harness Agent Execution Data Plane
 
-> 状态：项目边界已更新，等待按新阶段实施
-> 实施顺序：先复现 Polar rollout，再实现独立数据模块，最后自定义双卡 Agentic RL 训练
-> 硬件基线：2 × NVIDIA RTX PRO 6000 96GB
+> 状态：方向已冻结，进入一周实现阶段（2026-08-12）
+> 目标岗位：Agent Infra / Agent Harness / Runtime Data / Evaluation / Observability
+> 权威边界：[PROJECT_SCOPE.md](PROJECT_SCOPE.md)
 
 ## 1. 项目定义
 
-本项目构建一个可插拔的 Agentic RL rollout 数据处理模块：从任意 Rollout Producer 接收 Agent trajectory，通过统一数据契约完成失败分类、训练信号筛选和 policy-consistent GRPO group 构建，再交给任意 Trainer Adapter。
+本项目构建一个面向多 Harness 的统一执行数据层。它从模型代理、Sandbox/Environment 和可选 Harness Hook 捕获运行事实，将异构事件组装为 `AgentEpisode`，再提供回放、指标、故障归因、受控 A/B 对比和版本回归判断。
 
-项目名称：
+项目不以“更新模型参数”为主目标，也不声称自动优化 Harness。它回答的是：
 
-> **Rollout-Agnostic Agentic RL Data Pipeline**
+> 当 Harness 发生变化时，我们能否用可复现、可审计的数据判断行为为什么变化，以及这项变化是否值得发布？
 
-中文：
+## 2. 与现有工作的关系
 
-> **与 Rollout 框架解耦的 Agentic RL 数据处理流水线**
+项目早期以 Rollout-Agnostic Agentic RL Data Pipeline 为目标，已经实现了一批有价值的基础组件：
 
-核心问题：
+- 版本化 `RolloutRecord` / batch contract；
+- capability gate；
+- Polar 和 JSONL Source Adapter；
+- checksum、lineage 和 fixture 测试；
+- execution status、verifier status 和 tool event 的部分表达。
 
-> 如何把不同 Harness/Rollout 系统产生的执行结果，稳定转换为有效、有训练信号、满足当前 policy 与 GRPO 分组语义的训练批次，同时把无效基础设施结果挡在 Trainer 之外？
-
-## 2. 为什么先复现 Polar
-
-Polar 已经提供真实 Coding Agent rollout 所需的关键路径：任务调度、Harness/runtime、模型 API proxy、token trace、trajectory builder 和 verifier。先复现 Polar 的 rollout 部分可以让我们基于真实 artifact 定义 contract，而不是凭空发明字段。
-
-复现 Polar 的目的：
-
-1. 理解一次真实 Agent rollout 的生命周期和产物；
-2. 获取 Calculator 与 SWE/Coding 的 golden fixtures；
-3. 确认 token、tool、termination、verifier 和 reward 的实际来源；
-4. 实现第一个 `PolarSourceAdapter`；
-5. 为后续处理器和训练闭环提供真实输入。
-
-Polar 不是核心依赖。核心包在没有安装或启动 Polar 时也必须可测试和运行。
-
-## 3. 项目边界
-
-### 3.1 Rollout Producer 负责
-
-- task sampling 与 rollout 执行；
-- Agent/Harness loop、工具和环境交互；
-- 模型生成请求；
-- 原始状态、termination 和 verifier/reward 产物；
-- 响应 `ResampleRequest`（如果上层选择自动补采）。
-
-Reference Provider 是 Polar，但也可以是 VeRL rollout、自定义 Harness 服务或离线 JSONL。
-
-### 3.2 核心数据模块负责
-
-- Source Adapter contract 与 capability；
-- canonical `RolloutRecord` / `RolloutBatch`；
-- failure classification；
-- high-signal/reward-variance filtering；
-- policy-consistent GRPO group building；
-- `TrainingReadyBatch`、`ProcessingReport` 和 `ResampleRequest`；
-- 拒绝原因、配置版本和 checksum；
-- Trainer Adapter contract。
-
-### 3.3 Trainer Consumer 负责
-
-- advantage、GRPO/PPO loss；
-- forward/backward 和 optimizer；
-- checkpoint；
-- 将新 policy 提供给下一轮 rollout。
-
-Reference Consumer 是 Slime/Megatron，但核心模块不直接依赖它。
-
-### 3.4 明确不负责
-
-- 不重新实现 Polar 或其他 Rollout Framework；
-- 不重新实现 Coding Agent Harness；
-- 不发明新的 GRPO/PPO 算法；
-- 不做多 Session、Session Graph 或信用分配；
-- 不做通用生产级数据湖、复杂 Dashboard 或大而全 Quality Gate；
-- 不训练 Process Reward Model；
-- 不实现通用异步 off-policy correction；
-- 第一版不深度适配多个 Trainer；
-- 不复现 Polar 官方 8-GPU 训练拓扑。
-
-## 4. 系统架构
+这些代码不删除。新的架构把它们放在正确位置：
 
 ```text
-                         Rollout Producers
-              ┌──────────────┼──────────────┐
-              │              │              │
-            Polar       Custom Harness    JSONL
-              │              │              │
-              └────── Source Adapters ──────┘
-                             │
-                             ▼
-                 Canonical Rollout Batch
-                             │
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-      FailureClassifier  SignalFilter  PolicyConsistent
-                                      GroupBuilder
-              └──────────────┼──────────────┘
-                             │
-             ┌───────────────┴────────────────┐
-             ▼                                ▼
-     TrainingReadyBatch                ResampleRequest
-             │                                │
-      Trainer Adapters                Rollout Controller
-       ┌─────┴─────┐                  （项目外或 example）
-       ▼           ▼
-     Slime        VeRL/other
-       │
-       ▼
-  Megatron GRPO → checkpoint → next policy rollout
+                     新主线
+raw TraceEvent → AgentEpisode → Analyze / Compare / Gate / UI
+                         │
+                         └── optional TrainingViewExporter
+                                      ↓
+                            现有 RolloutRecord / TrainingReadyBatch
 ```
 
-## 5. 核心数据契约
+因此改造方式是“增加更通用的上游层”，不是重写现有代码。
 
-### 5.1 RolloutRecord
+## 3. 系统边界
 
-第一版最小字段：
+### 3.1 Harness 负责
+
+- Agent loop 和任务状态；
+- prompt/context 构造；
+- tool selection 和参数；
+- retry、compaction、verification、termination 等策略；
+- 对工具和环境产生实际调用。
+
+### 3.2 本项目负责
+
+- 捕获不同 Harness 的可观测运行事实；
+- 保存 append-only raw events；
+- 将事件规范化并组装为 Episode；
+- 声明本次采集具备哪些 capability；
+- 计算统一指标和故障归因；
+- 在控制变量一致时比较 Harness/版本；
+- 输出可解释的 Regression Gate 结论；
+- 展示 Episode、Trace 和对比证据；
+- 可选导出训练视图。
+
+### 3.3 外部系统负责
+
+- 模型推理服务；
+- Sandbox/容器的实际隔离和资源执行；
+- task benchmark 与 verifier 的业务正确性；
+- 人工或自动提出 Harness patch；
+- Trainer 的 loss、optimizer 和 checkpoint（如果使用训练 exporter）。
+
+## 4. 总体架构
+
+```text
+               Experiment Manifest
+     task / model / seed / env / tools / evaluator
+                         │
+            ┌────────────┴────────────┐
+            ▼                         ▼
+        Harness A                 Harness B/v2
+            │                         │
+            └──────── Instrumentation ┘
+                ├─ Model Proxy
+                ├─ Sandbox Adapter
+                └─ Optional Harness Hook
+                         │
+                         ▼
+              append-only Raw Event Store
+                         │
+                         ▼
+                  EpisodeAssembler
+                         │
+                         ▼
+                    AgentEpisode
+               ┌─────────┼──────────┐
+               ▼         ▼          ▼
+           Trace View  Metrics  Failure Attribution
+               └─────────┼──────────┘
+                         ▼
+                  Paired Comparison
+                         │
+                         ▼
+                   Regression Gate
+             ┌───────────┴───────────┐
+             ▼                       ▼
+     Harness Observatory      TrainingViewExporter
+```
+
+## 5. Canonical Contract
+
+### 5.1 TraceEvent
+
+首批 event type：
+
+```text
+MODEL_REQUEST
+MODEL_RESPONSE
+TOOL_CALL
+TOOL_RESULT
+SANDBOX_STARTED
+SANDBOX_COMMAND
+SANDBOX_FINISHED
+VERIFICATION_STARTED
+VERIFICATION_FINISHED
+EPISODE_FINISHED
+```
+
+Hook-enabled 时可增加：
+
+```text
+HARNESS_DECISION
+CONTEXT_SELECTED
+CONTEXT_COMPACTED
+RETRY_SCHEDULED
+TERMINATION_DECIDED
+```
+
+每个事件至少包含：
 
 ```text
 schema_version
-source_type
-source_record_id
-trajectory_id
+event_id / episode_id / trace_id
+span_id / parent_span_id
+sequence / timestamp
+event_type / component / status / attempt
+attributes / artifact_refs
+```
+
+### 5.2 AgentEpisode
+
+一次 task execution 的 envelope：
+
+```text
+episode_id
 task_id
-group_id
-policy_version
-
-token_ids
-action_mask or loss_mask
-old_logprobs                 # 按目标算法可选/必需
-reward
-
-rollout_status
-termination_reason
-verifier_status
-verifier_evidence_ref
-
-source_payload_ref
-metadata
+run_id
+harness_manifest
+model_manifest
+environment_manifest
+evaluator_manifest
+capabilities
+events
+artifacts
+outcome
+termination
+integrity
 ```
 
-Adapter 不得静默伪造缺失的 token、logprob、reward 或 policy version。
+`AgentEpisode` 可以是 partial。assembler 不因为缺事件而编造内容，而是记录 gap、重复、乱序修复和完整性状态。
 
-### 5.2 SourceCapabilities
+### 5.3 Manifest
+
+Harness 对比前至少检查：
+
+- harness name、version、config digest；
+- model/provider/revision、sampling 参数；
+- task/dataset/revision；
+- sandbox image/runtime revision；
+- tool schema digest；
+- evaluator/verifier revision；
+- random seed 和时间限制。
+
+除 Harness 变量外存在不一致时，结果必须标记 confounder 或 `INSUFFICIENT_EVIDENCE`。
+
+### 5.4 ArtifactRef
+
+大型或二进制内容不直接塞入事件：
 
 ```text
-TOKEN_IDS
-ACTION_MASK
-OLD_LOGPROBS
-REWARD
-GROUP_ID
-POLICY_VERSION
-VERIFIER_EVIDENCE
-TOOL_EVENTS
+artifact_id
+kind
+uri/path
+media_type
+sha256
+size_bytes
+producer_event_id
 ```
 
-每个 Source Adapter 声明它能可靠提供的 capability。每个 Processor/Trainer Adapter 声明其 required capabilities；不满足时必须显式拒绝或降级。
+## 6. Capture 设计
 
-### 5.3 ValidityDecision
+### 6.1 Model Proxy
 
-第一版固定三类：
+提供 OpenAI-compatible 接口，透明转发 Harness 请求并记录：
+
+- messages、tool definitions 和参数；
+- response message、tool call 和 finish reason；
+- input/output token、latency、backend status；
+- request/response checksum；
+- backend 实际提供的 token ids/logprobs。
+
+不记录或声称模型未显式返回的隐藏 chain-of-thought。
+
+### 6.2 Sandbox/Environment Adapter
+
+记录：
+
+- environment create/start/stop；
+- command、cwd、exit code、stdout/stderr artifact；
+- timeout、resource error 和 lifecycle failure；
+- changed files、patch 和 final artifact；
+- verifier start/result/evidence。
+
+### 6.3 Harness Hook
+
+Hook 是增强能力，不是接入前提。它用于记录只能由 Harness 自己知道的 decision：
+
+- 哪些上下文被保留或丢弃；
+- 何时 compact、compact 前后 token；
+- 为什么 retry；
+- 为什么继续、验证或终止；
+- loop detector 和 task state 的变化。
+
+没有 Hook 时，相关字段为 `NOT_OBSERVABLE`，不能由外部轨迹反推成事实。
+
+## 7. Storage 与一致性
+
+第一版使用本地文件即可证明架构：
 
 ```text
-VALID_SUCCESS
-VALID_FAILURE
-INVALID_INFRASTRUCTURE
+artifacts/<run_id>/
+├── manifest.json
+├── raw-events.jsonl
+├── episodes.jsonl
+├── metrics.json
+├── diagnoses.jsonl
+├── comparison.json
+└── gate-result.json
 ```
 
-`VALID_FAILURE` 是模型在正常环境下真实失败，可以作为 reward=0 数据。`INVALID_INFRASTRUCTURE` 包括 runtime、Harness、模型服务和 verifier 非任务性失败，不能直接作为模型负奖励。
+规则：
 
-### 5.4 TrainingReadyBatch
+- raw event append-only；
+- event 以 `event_id` 去重；
+- assembler 以 `(episode_id, sequence)` 排序，并保留原始顺序信息；
+- 原始事实、派生指标、诊断和 Gate 结果分别保存；
+- 所有派生产物包含输入 checksum 和生成器版本；
+- stdout、patch 等大字段通过 `ArtifactRef` 关联。
+
+后续规模化可以把 Episode/metric 写为 Parquet 并用 DuckDB 查询，但不作为一周 MVP 的必要条件。
+
+## 8. Metrics
+
+### Outcome
+
+- success / valid task failure / infra invalid；
+- verifier outcome；
+- termination reason；
+- failure layer。
+
+### Behavior
+
+- turns 和 tool calls；
+- duplicate-action rate；
+- loop count；
+- tool-error recovery rate；
+- premature termination；
+- verification attempts。
+
+### Context（需要 Hook）
+
+- prompt/context token growth；
+- compaction count；
+- before/after token；
+- preserved/dropped item statistics。
+
+### Performance 与可靠性
+
+- model/tool/sandbox/verifier latency；
+- wall time；
+- input/output token 与估算 cost；
+- timeout、retry、worker failure、incomplete trace 和 recovery time。
+
+## 9. Failure Attribution
+
+一级类别：
 
 ```text
-batch_id
-task_groups
-policy_version
-group_size
-records
-reward_statistics
-required_capabilities
-processing_config_version
-input/output checksums
+MODEL
+HARNESS
+SANDBOX
+MODEL_BACKEND
+EVALUATOR
+EXTERNAL_SERVICE
+UNKNOWN
 ```
 
-### 5.5 ResampleRequest
+首批 Harness 二级 reason code：
 
 ```text
-request_id
-task_id
-group_id
-policy_version
-required_count
-reason
-constraints
+CONTEXT_LOSS
+COMPACTION_INFORMATION_LOSS
+TOOL_SCHEMA_FAILURE
+TOOL_ERROR_FEEDBACK_LOSS
+LOOP_CONTROL_FAILURE
+RETRY_POLICY_FAILURE
+PREMATURE_TERMINATION
+VERIFICATION_POLICY_FAILURE
+STATE_MANAGEMENT_FAILURE
 ```
 
-核心模块只输出补采意图，不直接依赖或调用 Polar。
-
-## 6. 第一版三个可插拔 Processor
-
-### 6.1 FailureClassifier
-
-输入 rollout 状态、termination、verifier 和来源 metadata，输出三类 validity 与 versioned reason code。
-
-首批 reason code：
+每个诊断包含：
 
 ```text
-TASK_SUCCEEDED
-TASK_FAILED
-RUNTIME_PREP_FAILED
-HARNESS_CRASHED
-MODEL_BACKEND_FAILED
-VERIFIER_FAILED
-VERIFIER_TIMED_OUT
-ROLLOUT_TIMED_OUT
-TRACE_INCOMPLETE
-TRAINING_FIELDS_INVALID
+diagnosis_id
+episode_id
+layer / reason_code
+evidence_event_ids
+evidence_artifact_ids
+confidence
+rule_version
+explanation
 ```
 
-### 6.2 SignalFilter
+允许 multi-label、`UNKNOWN` 和 `INSUFFICIENT_EVIDENCE`。第一版优先确定性规则，LLM judge 只能作为有标签的辅助意见。
 
-按 task/group 检查：
+## 10. Harness 对比协议
 
-- 至少包含目标数量的 valid records；
-- reward 有可用的组内差异；
-- 不是全部基础设施失败；
-- trainable token 非空；
-- 输入能力满足目标 Trainer Adapter。
+### 10.1 控制变量
 
-默认只输出确定性规则和统计，不训练 reward/process model。
-
-### 6.3 PolicyConsistentGroupBuilder
-
-按以下 key 分组：
+固定：
 
 ```text
-task_id + group_id + policy_version
+model revision + sampling
+task revision
+sandbox image
+tool schema
+evaluator/verifier
+seed and limits
 ```
 
-职责：
+只改变 Harness version 或单项策略。每个 task 形成 control/candidate 配对。
 
-- 不混合 policy version；
-- 过滤 `INVALID_INFRASTRUCTURE`；
-- 构建固定 group size；
-- 不足时生成 `ResampleRequest`；
-- 超量时使用显式、可复现的 selection policy；
-- 记录接受、拒绝和补采数量。
+### 10.2 Comparison 输出
 
-## 7. 插件接口
+- manifest compatibility；
+- paired outcome diff；
+- turns、tool、token、cost、latency diff；
+- loop、duplicate action、error recovery 和 verifier diff；
+- failure slice diff；
+- infra-invalid rate；
+- 样本量与不确定性说明；
+- severe regression 列表。
 
-第一版使用简单 Python Protocol/ABC 与配置 registry，不引入微服务或复杂插件平台。
+### 10.3 Regression Gate
 
-```python
-class SourceAdapter:
-    def capabilities(self) -> set[str]: ...
-    def convert(self, source_payload) -> list[RolloutRecord]: ...
-
-class RolloutProcessor:
-    required_capabilities: set[str]
-    def process(self, batch: RolloutBatch) -> ProcessResult: ...
-
-class TrainerAdapter:
-    required_capabilities: set[str]
-    def convert(self, batch: TrainingReadyBatch): ...
-```
-
-处理顺序由配置声明：
-
-```yaml
-processors:
-  - failure_classifier
-  - signal_filter
-  - policy_consistent_group_builder
-```
-
-## 8. Polar Reference Reproduction
-
-### 8.1 Calculator
-
-使用 1 个 Rollout Server、1 个 Gateway、1 个 SGLang backend、1 个 Harness 和 1 个 task。保存 request、response、summary、服务日志、模型 token metadata 和 runtime/evaluator 产物。
-
-### 8.2 Coding/SWE Rollout
-
-选择少量稳定任务，运行完整：
+Gate 读取版本化阈值，例如：
 
 ```text
-task → Harness → multi-turn model/tool calls → patch → verifier → reward
+candidate success 不低于 control
+目标 failure slice 改善
+token/cost/latency 增幅不超过阈值
+不得出现新的 severe regression
+infra-invalid rate 不增加
+样本与 paired coverage 足够
 ```
 
-保存至少成功/真实失败/基础设施失败三类 fixture。如果某一类别难以自然产生，可以在 fixture 层做可控故障注入，但必须标记为 synthetic fault。
+输出：
 
-### 8.3 复现不包含
+- `ACCEPT`：满足改进目标且无越线回归；
+- `REJECT`：明确违反阈值；
+- `INSUFFICIENT_EVIDENCE`：样本、能力或控制变量不足。
 
-- 官方 4 train + 4 serve GPU 拓扑；
-- 官方完整长程训练参数；
-- 为了匹配官方硬件而扩大模型或上下文；
-- 把 Slime 当作 Polar rollout 的必要组成。
+Gate 不是统计显著性的伪装。MVP 的小样本用于证明机制和逐任务证据，不宣称普遍提升。
 
-## 9. 自定义双卡 Agentic RL
+## 11. Reference Improvement Case
 
-Reference 训练采用 staged synchronous loop：
+第一版只选择一个主案例，优先级如下：
+
+### 首选：Structured Tool Error Feedback
 
 ```text
-policy_k
-→ rollout phase
-→ process phase
-→ train phase
-→ checkpoint policy_k+1
-→ reload SGLang
-→ rollout phase
+v1: 把原始 stderr 直接返回给模型
+v2: 返回 error_type、command、exit_code、stderr_summary、retryable
 ```
 
-### 9.1 Rollout Phase
+观察 tool error 后的恢复、重复命令、turn、token、success 和延迟。
 
-- 使用一张或两张 GPU 运行 SGLang；
-- Polar/Harness 在 CPU/runtime 上执行；
-- 每个 task 采样 group size 2，稳定后增加到 4；
-- 所有 records 标记当前 `policy_version`。
-
-### 9.2 Process Phase
-
-- 释放或停止 SGLang；
-- Polar Adapter 转换 raw results；
-- 三个 Processor 产生 TrainingReadyBatch 或 ResampleRequest；
-- 如果需要补采，在训练前继续使用同一 policy。
-
-### 9.3 Train Phase
-
-- 两张 GPU 运行 Megatron TP2 BF16；
-- 从 4K context、512 max output、小 prompt batch 开始；
-- Slime Adapter 只消费 TrainingReadyBatch；
-- 每个 policy iteration 只做配置允许的少量 update；
-- 旧 rollout 不被无限复用。
-
-### 9.4 Reload Phase
-
-- 保存 checkpoint/checksum；
-- 加载到 SGLang；
-- 分配新 `policy_version`；
-- 产生至少一条新 policy rollout，证明闭环成立。
-
-## 10. 对照实验
-
-### Baseline
+### 备选：Verification Completion Gate
 
 ```text
-Source Adapter
-→ minimal format validation
-→ Slime Adapter
+v1: 模型声明完成即可终止
+v2: 必须获得 verifier evidence 才允许成功终止
 ```
 
-### Processed Pipeline
+观察 premature termination、verification attempts、success 和额外成本。
+
+这项修改可以人工提出；项目价值在于捕获证据、定位问题和验证修改，而不是自动生成 patch。
+
+## 12. Harness Observatory
+
+UI 是只读 consumer，直接读取标准化 artifact。
+
+### Episode Explorer
+
+- 按 harness/version、model、task、outcome、failure、termination 和 capability 过滤；
+- 展示 duration、tokens、tool calls、verifier 和 integrity。
+
+### Trace Timeline
+
+- Model、Tool、Sandbox、Harness、Verifier 分 lane；
+- 显示 parent/child span、状态、latency 和 artifact；
+- 将 diagnosis 定位到具体 evidence；
+- 明确展示未采集能力。
+
+### Harness Compare
+
+- control/candidate 同任务并排；
+- 对齐关键行为差异；
+- 展示聚合指标、失败切片和回归；
+- 展示 Gate verdict、规则和证据。
+
+## 13. 代码结构目标
 
 ```text
-Source Adapter
-→ FailureClassifier
-→ SignalFilter
-→ PolicyConsistentGroupBuilder
-→ Slime Adapter
+src/
+├── contracts/
+│   ├── trace_event.py
+│   ├── agent_episode.py
+│   ├── manifests.py
+│   ├── artifacts.py
+│   └── rollout_record.py       # existing Training View
+├── capture/
+│   ├── event_writer.py
+│   ├── model_proxy.py
+│   ├── environment.py
+│   └── harness_hooks.py
+├── assembly/
+│   └── episode_assembler.py
+├── analysis/
+│   ├── metrics.py
+│   ├── attribution.py
+│   ├── compare.py
+│   └── regression_gate.py
+├── exporters/
+│   └── training_view.py
+├── cli.py
+└── ui/                         # 或独立 frontend 目录
 ```
 
-### 指标
+目录是目标边界，不要求一次性创建空文件。
 
-```text
-invalid_infrastructure_to_trainer_rate
-valid_group_completion_rate
-resample_count
-reward_variance
-accepted_trainable_tokens
-processing_latency
-rollout_cost_per_ready_group
-successful_optimizer_steps
-checkpoint/reload success
-held-out reward before/after training
-```
+## 14. 测试策略
 
-能力提升不是唯一成功标准，但必须进行真实训练和独立评估，不能只做一个格式转换 demo。
+### Contract
 
-## 11. 交付物
+- schema validation；
+- event ordering、dedupe、partial episode；
+- span parent/child；
+- checksum 和 artifact lineage；
+- capability truthfulness。
 
-### 核心代码
+### Capture/Assembly
 
-- contracts 与 capability；
-- Polar/JSONL Source Adapter；
-- 三个 Processor；
-- TrainingReadyBatch 与 ResampleRequest；
-- Slime Trainer Adapter；
-- pipeline 配置与 CLI；
-- baseline/processed 两套配置。
+- request/response 与 tool call pairing；
+- sandbox success/error/timeout；
+- out-of-order events；
+- missing terminal event；
+- duplicate delivery 和 crash recovery。
 
-### 测试
+### Analysis
 
-- core 无 Polar/Slime 依赖的单元测试；
-- golden fixture roundtrip；
-- capability 缺失；
-- 三类 validity；
-- reward variance；
-- policy version 隔离；
-- group selection 与 resample；
-- Polar integration；
-- Slime Sample contract；
-- staged rollout/train/reload E2E。
+- failure reason rules；
+- UNKNOWN/INSUFFICIENT_EVIDENCE；
+- metric denominator；
+- infra invalid exclusion；
+- manifest mismatch；
+- paired comparison 和 threshold boundary。
 
-### 证据
+### End-to-End
 
-- Polar Calculator 和 Coding raw artifacts；
-- canonical fixture；
-- ProcessingReport；
-- baseline vs processed 指标；
-- optimizer/checkpoint/reload 记录；
-- new policy rollout；
-- held-out evaluation；
-- 复现 runbook 与限制说明。
+- 两个 Harness/版本运行相同任务；
+- 生成统一 Episode；
+- 发现一个目标 failure；
+- v2 修改后重跑；
+- Gate 输出可解释结论；
+- UI 使用同一批 artifact 展示结果。
 
-## 12. 完成定义
+## 15. 完成定义
 
-只有以下全部满足，项目才算完成：
+只有以下条件全部满足，项目主线才算完成：
 
-1. Polar rollout 参考路径独立跑通并产生真实 fixture；
-2. 核心模块不依赖 Polar/Slime；
-3. 至少两个 Source Adapter 通过统一 contract；
-4. 三个 Processor 可通过配置启用/关闭；
-5. 基础设施失败不会静默作为 task failure 进入训练；
-6. GRPO group 不混合 policy version；
-7. group 不足能输出可执行的 ResampleRequest；
-8. Slime Adapter 可重复转换 TrainingReadyBatch；
-9. 双卡 staged loop 完成真实 GRPO update、checkpoint reload 和新 rollout；
-10. baseline/processed 对照和故障注入可重复；
-11. 文档明确区分 Reference Provider、Core 和 Reference Consumer；
-12. 项目描述不超出实际证据。
+1. 两个 Harness 或版本能进入同一 execution contract；
+2. Model、Tool/Sandbox 和 Verifier 核心事件可捕获；
+3. Episode assembler 正确处理重复、乱序和不完整事件；
+4. Trace 可以回放且能追溯 artifact；
+5. metrics 和 failure attribution 有稳定规则与测试；
+6. comparison 会检查控制变量，不比较不可比运行；
+7. Regression Gate 能输出三态结论和证据；
+8. 至少一个 reference Harness 修改完成 v1/v2 闭环；
+9. UI 展示 Episode、Timeline 和 Compare；
+10. 现有训练 contract 仍可用，但训练不阻塞项目验收；
+11. 所有数字、截图和简历结论能反查 artifact；
+12. 文档明确写出限制和不可观测能力。
 
-## 13. 实施文档
+## 16. 面试表述
+
+一句话版本：
+
+> 构建 Multi-Harness Agent Execution Data Plane，通过 model proxy、sandbox capture 和 optional hooks 将不同 Harness 的执行统一为可审计 AgentEpisode，并支持 trace replay、失败归因、受控 A/B 对比和 regression gate。
+
+项目故事版本：
+
+> 我先通过真实 Polar rollout 建立了 token、tool、verifier 和 failure evidence 的可靠采集基础；随后把训练导向的 RolloutRecord 降为可选视图，新增更通用的 TraceEvent/AgentEpisode 数据面。系统能够在相同模型、任务和环境下比较两个 Harness 版本，定位工具错误反馈或终止策略问题，并通过版本化 Gate 判断修改是否改善，同时在 UI 中把结论追溯到具体 span 和 artifact。
+
+## 17. 文档索引
 
 - [项目范围](PROJECT_SCOPE.md)
-- [Day 1–Day 7 实施索引](IMPLEMENTATION_PLAN.md)
-- [Day 1：环境与版本基线](plans/day-01-environment.md)
-- [Day 2：Polar Calculator rollout](plans/day-02-polar-smoke.md)
-- [Day 3：Polar Coding/SWE rollout](plans/day-03-swegym-rollout.md)
-- [Day 4：数据契约与 Source Adapter](plans/day-04-data-contract.md)
-- [Day 5：可插拔 Processor](plans/day-05-processors.md)
-- [Day 6：自定义双卡 Agentic RL](plans/day-06-custom-grpo.md)
-- [Day 7：对照实验与包装](plans/day-07-packaging.md)
-
-## 14. 官方参考
-
-- [Polar / ProRL-Agent-Server](https://github.com/NVIDIA-NeMo/ProRL-Agent-Server)
-- [Polar Calculator](https://github.com/NVIDIA-NeMo/ProRL-Agent-Server/tree/stable/examples/calculator)
-- [Polar SWE-Gym + Slime GRPO Reference](https://github.com/NVIDIA-NeMo/ProRL-Agent-Server/tree/stable/examples/swegym_slime_grpo)
-- [Slime](https://github.com/THUDM/slime)
-- [Agent-R1](https://github.com/AgentR1/Agent-R1)
-- [PRIME-RL](https://github.com/PrimeIntellect-ai/prime-rl)
-- [RAGEN-2](https://arxiv.org/abs/2604.06268)
-- [rStar](https://github.com/microsoft/rstar)
+- [一周实施索引](IMPLEMENTATION_PLAN.md)
+- [Canonical Data Contract](docs/data-contract.md)
+- [Day 5：Execution Data Plane](plans/day-05-execution-data-plane.md)
+- [Day 6：Harness Evaluation](plans/day-06-harness-evaluation.md)
+- [Day 7：Observatory & Packaging](plans/day-07-observatory-and-packaging.md)
+- [项目阅读顺序](docs/learning/project-reading-order.md)

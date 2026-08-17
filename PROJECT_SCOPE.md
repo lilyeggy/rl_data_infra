@@ -1,113 +1,135 @@
-# Rollout-Agnostic Agentic RL Data Pipeline：项目范围
+# Multi-Harness Agent Execution Data Plane：项目范围
+
+> 状态：范围冻结（2026-08-12）
+> 面试方向：Agent Infra / Agent Harness / Runtime Data / Evaluation / Observability
 
 ## 一句话定义
 
-构建一个与 Rollout Producer 解耦、与 Trainer 解耦的 Agentic RL 数据处理模块，把异构 rollout 记录转换为 **有效、具有训练信号、policy-consistent 的 GRPO 训练批次**。
-
-Polar 是第一个 Reference Rollout Provider；Slime/Megatron 是第一个 Reference Trainer Consumer。两者都不是核心模块的运行时硬依赖。
-
-## 项目要解决的问题
-
-Rollout 框架能够产生 Agent 执行，但不同来源的字段、失败语义和分组方式不一致，不能直接安全地交给 Agentic RL Trainer：
-
-- task 真实失败与容器、Harness、模型服务、verifier 等基础设施失败可能混在一起；
-- 同一 GRPO group 中的样本可能来自不同 policy version；
-- 过滤无效 rollout 后，group size 和 reward variance 可能失效；
-- token、action/loss mask、old logprobs 等训练字段可能缺失或不一致；
-- Trainer 往往只看到样本，不知道应该拒绝、补采还是等待更多 rollout。
-
-本项目在 Rollout Producer 与 Trainer 之间提供稳定的数据边界：
+构建一个面向多种 Agent Harness 的执行数据基础设施：在不绑定具体 Harness、模型或训练框架的前提下，捕获 Model、Tool、Sandbox、Harness 与 Verifier 事件，组装为统一的 `AgentEpisode`，用于轨迹回放、故障归因、Harness/版本对比和回归验证，并可选导出为模型训练数据。
 
 ```text
-Rollout Producer
-→ Source Adapter
-→ Canonical Rollout Batch
-→ Pluggable Processors
-→ Training-Ready Batch / Resample Request
-→ Trainer Adapter
+Any Harness × Same Task/Model/Environment
+                    ↓
+        Proxy + Environment Capture + Hooks
+                    ↓
+          Canonical AgentEpisode
+                    ↓
+ Trace / Metrics / Attribution / Compare / Regression Gate
+                    ↓
+        CLI + Harness Observatory UI
+                    └── optional Training View
 ```
+
+## 核心问题
+
+不同 Harness 对模型调用、上下文、工具错误、循环、重试、验证和终止的处理方式不同，但它们产生的数据通常无法直接比较，也无法回答：
+
+- 失败来自模型、Harness、Sandbox、模型后端还是 Evaluator？
+- 某个 Harness 修改究竟提升了成功率，还是只增加了 token、延迟或基础设施失败？
+- 两次运行使用的模型、任务、环境、工具和评估器是否真的可比？
+- 一项结论能否追溯到具体 event、span、artifact 和配置版本？
+- 当前采集链路看不到哪些内部行为，哪些判断只能标记为证据不足？
+
+本项目不承诺自动写出更好的 Harness；它提供可复现的证据和回归门，判断人工或自动提出的 Harness 修改是否更好。
 
 ## 核心模块拥有的能力
 
-- `RolloutRecord`、`RolloutBatch`、`TrainingReadyBatch` 等稳定数据契约；
-- Source Adapter 协议和 capability 声明；
-- Polar Adapter 与离线 JSONL Adapter；
-- `valid_success / valid_failure / invalid_infrastructure` 分类；
-- reward-variance/high-signal group 筛选；
-- 按 `task_id + group_id + policy_version` 构建 GRPO group；
-- 样本不足时生成 `ResampleRequest`，但不直接控制上游 rollout；
-- Slime Sample Adapter；
-- 处理报告、拒绝原因、输入输出 checksum 与最小 lineage；
-- 无需安装 Polar 或 Slime 即可执行的核心单元测试。
+### 1. 多源执行捕获
 
-## Reference Integration 拥有的能力
+- OpenAI-compatible Model Proxy：捕获 request/response、tool schema、usage、latency 和可用的 token metadata；
+- Environment/Sandbox Adapter：捕获命令、stdout/stderr、exit code、文件/patch、生命周期、超时和 verifier artifact；
+- Optional Harness Hook：捕获 context selection、compaction、retry、loop control、verification 和 termination decision；
+- append-only raw event writer：先保存事实，再异步派生 Episode 和诊断。
 
-### Polar Reference Provider
+### 2. Canonical Execution Contract
 
-- Calculator rollout 参考复现；
-- SWE-Gym/SWE-bench 小规模 Coding Agent rollout；
-- Harness、tool call、verifier、token metadata 的真实 fixture；
-- `PolarSourceAdapter` 集成测试。
+- `TraceEvent`：一个可排序、可关联的执行事实；
+- `AgentEpisode`：一次 task execution 的完整 envelope；
+- `HarnessManifest`、`EnvironmentManifest`：保证对比时控制变量可检查；
+- `ArtifactRef`：文件、patch、日志、verifier 报告等外部证据；
+- schema version、checksum、lineage、deduplication 和 partial episode 语义。
 
-### Slime/Megatron Reference Consumer
+### 3. 可观测性与诊断
 
-- 将 `TrainingReadyBatch` 转换为 Slime `Sample`；
-- 使用自定义双 RTX PRO 6000 配置完成 GRPO 更新；
-- checkpoint 保存、SGLang 重新加载和新 policy rollout；
-- 验证数据确实可以参与 Agentic RL，而不是只生成离线 JSON。
+- outcome、turn、tool、token、cost、latency、loop、duplicate action、recovery 和 verifier 指标；
+- MODEL / HARNESS / SANDBOX / MODEL_BACKEND / EVALUATOR / EXTERNAL_SERVICE / UNKNOWN 一级归因；
+- Harness 二级 reason code 和逐条 evidence；
+- 原始事实与派生诊断分离，规则版本可追踪。
 
-## 外部 Harness 的边界
+### 4. Harness 对比与回归验证
 
-外部 Harness 继续负责 Agent loop、上下文、工具决策、工具副作用和运行生命周期。本项目不复制或合并 Harness 源码，只通过 rollout 结果或 Source Adapter 接收数据。
+- 在相同 task、model、environment、toolset、evaluator 和 seed 下比较 Harness A/B 或 v1/v2；
+- 输出逐任务 paired diff、聚合指标、失败切片和成本/延迟变化；
+- Regression Gate 输出 `ACCEPT`、`REJECT` 或 `INSUFFICIENT_EVIDENCE`；
+- 至少完成一个 reference improvement case，证明数据能支持 Harness 迭代。
 
-## 输入
+### 5. 展示与扩展
+
+- CLI：capture、inspect、compare；
+- Harness Observatory：Episode Explorer、Trace Timeline、Harness Compare；
+- 可选 `TrainingViewExporter`：把满足能力要求的 Episode 转为现有 `RolloutRecord`，供 SFT/RL 使用。
+
+## 采集能力等级
+
+| 等级 | 能看到什么 | 能做什么 |
+|---|---|---|
+| Black-box | 模型请求/响应、外部执行、结果与 verifier | 跨 Harness 基础对比、性能和外部失败分析 |
+| Hook-enabled | context、compaction、retry、termination 等 Harness decision | 更精确的 Harness 归因与策略诊断 |
+| Managed | snapshot、replay、branching、策略替换 | 可控反事实实验；第一版不要求完整实现 |
+
+缺失能力必须显示为 `NOT_OBSERVABLE`；不得根据普通日志文本推断隐藏的 Harness 内部状态。
+
+## 现有代码的定位
+
+现有代码不推倒重写：
+
+- `src/contracts/rollout_record.py`、`RolloutBatch`、`TrainingReadyBatch` 和 `ResampleRequest` 保留为训练兼容层；
+- Polar/JSONL Source Adapter、capability、checksum 与 lineage 逻辑继续复用；
+- 新增 `AgentEpisode`/`TraceEvent` 上游层；
+- 新增 Episode → `RolloutRecord` 的可选 exporter；
+- 新项目主链路不依赖 Slime、Megatron 或 GRPO。
+
+## 第一版明确非目标
+
+- 不自动生成或修改 Harness 源码；
+- 不做 Harness 自进化平台或搜索算法；
+- 不重写完整 Agent loop；
+- 不复制 Orchard 的 Kubernetes 环境平台；
+- 不做生产级多租户、权限、计费或大规模调度；
+- 不以 RL 训练、模型涨点或 SWE-Bench SOTA 作为完成条件；
+- 不依赖 LLM Judge 替代确定性规则和 verifier；
+- 不声称看到了未被采集的 chain-of-thought 或 Harness 内部决策；
+- 不把 UI 做成核心逻辑或在线编辑器。
+
+## 一周完成标准
+
+第一版必须形成下面的证据闭环：
 
 ```text
-RolloutRecord(s)
-SourceCapabilities
-ProcessingConfig
-PolicyContext
-GroupRequirements
+2 个 Harness 或 Harness 版本
+× 同一模型
+× 同一组任务、环境、工具和 Verifier
+→ 统一 AgentEpisode
+→ 可回放 Trace 与统一指标
+→ 定位一个 Harness 行为问题
+→ 实施一个有边界的 Harness 策略修改
+→ 对比 v1/v2
+→ Regression Gate 给出可解释结论
 ```
 
-## 输出
+具体要求：
 
-```text
-TrainingReadyBatch
-ValidityDecision(s)
-ProcessingReport
-ResampleRequest(s)
-RejectedRecord(s)
-```
+1. 至少两个可比较的 Harness manifest；
+2. 每条 Episode 具有稳定事件顺序、parent/child span、artifact lineage 和 capability 声明；
+3. 至少覆盖一次成功、真实任务失败和基础设施无效；
+4. 诊断结果包含 reason code、evidence、confidence 和 rule version；
+5. 同任务对比能够展示 outcome、行为、成本、延迟和失败切片；
+6. Regression Gate 能拒绝回归并在样本不足时返回证据不足；
+7. UI 能从本地标准化数据展示 Episode、时间线和 A/B 结论；
+8. 一个真实改进案例能从原始事件追溯到最终 Gate 判断；
+9. 现有单元测试继续通过，新增核心逻辑无需安装 Polar/Slime；
+10. README、演示和简历描述不超过实际 artifact 证据。
 
-## 第一版只实现的三个 Processor
+## 项目完成后的准确表述
 
-1. `FailureClassifier`：区分真实成功、真实失败和基础设施无效；
-2. `SignalFilter`：检查 group reward variance 与可训练信号；
-3. `PolicyConsistentGroupBuilder`：构建固定大小、同 policy 的 GRPO group，并输出补采请求。
-
-## 明确非目标
-
-- 不重新实现 Polar、Agent loop、GRPO/PPO 或 Megatron；
-- 不要求使用 Polar 才能运行核心模块；
-- 不要求使用 Slime 才能生成通用输出；
-- 不做多 Session Graph 或信用分配；
-- 不做通用生产级数据湖、数据库、Dashboard 或复杂规则引擎；
-- 不做 Process Reward Model；
-- 不实现异步 off-policy correction；
-- 第一版不声称完整支持 VeRL、NeMo RL 等多个 Trainer；
-- 不复现 Polar 官方 8-GPU 训练拓扑；
-- 不以 SWE-Bench SOTA 或显著模型涨点作为唯一完成条件。
-
-## 成功标准
-
-1. Polar Calculator 和至少一条真实 Coding Agent rollout 被保存为可重复 fixture；
-2. 核心 pipeline 在没有 Polar/Slime 的环境中通过全部单元测试；
-3. Polar 与 JSONL 两个 Source Adapter 产生相同 canonical contract；
-4. 三类 validity 状态和拒绝原因可稳定复现；
-5. Group Builder 不混合 policy version，并能在缺样本时产生正确补采请求；
-6. Slime Adapter 能确定性导出训练 Sample；
-7. 自定义双卡配置至少完成 `rollout → process → GRPO update → reload → new rollout`；
-8. baseline 与启用处理器的对照实验可重复；
-9. 文档明确区分核心模块、Reference Provider 和 Reference Consumer；
-10. 所有简历和演示结论都有真实 artifact 支撑。
+> 我们实现的不是 Harness Optimizer，而是一个 Multi-Harness Agent Execution Data Plane。它把不同 Harness 的模型调用、工具、Sandbox、Harness decision 和验证事件统一成可审计 Episode，并在受控变量下完成失败归因、版本对比和回归验证，从而为 Harness 改进提供可复现的数据证据；训练数据只是可选下游视图。

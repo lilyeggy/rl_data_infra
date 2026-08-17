@@ -1,79 +1,75 @@
-# Polar 官方链路与本项目边界
+# Polar / Orchard 参考系统与本项目边界
 
-> 本文件只记录上游参考语义。项目权威定义见 `PROJECT_PLAN.md`。
+> 本笔记用于解释参考项目，不定义当前实施范围；权威范围见 [`PROJECT_SCOPE.md`](../PROJECT_SCOPE.md)。
 
-## 1. Polar 本身负责什么
+## 1. Polar 提供什么
 
-Polar 是面向真实 Agent Harness 的 rollout-as-a-service：Rollout Server/Gateway 负责调度任务、启动 Harness/runtime、代理模型请求、收集 token 级 trace、构建 trajectory，并执行或连接 evaluator。
+Polar 提供真实 Agent rollout 路径，包括 Harness/runtime、模型 API proxy、token trace、trajectory builder 和 verifier。它对本项目的价值是：
 
-Calculator、Count Stars 和 SWE-bench Verified 等 rollout 示例不需要 Megatron，也不包含模型参数更新。
+- 提供真实 model/tool/runtime/verifier artifact；
+- 验证 token、status、reward 和 failure 的来源；
+- 作为首个 capture/source integration；
+- 证明契约不是凭空编造。
 
-## 2. 官方完整 Agentic RL 示例负责什么
+Polar 更关注从 Harness 调用中重建可训练 trajectory。本项目的新主线更关注统一执行观测、Harness 对比和回归决策。
 
-`examples/swegym_slime_grpo` 把 Polar rollout 接到 Slime/Megatron：Polar 产生 Agent trajectory，Slime 组织 GRPO，Megatron 更新模型，SGLang 接收新权重。其官方硬件拓扑是训练参考，不是 Polar rollout 的运行前提，也不是本项目必须照搬的配置。
+## 2. Orchard 提供什么
 
-## 3. 本项目复现的官方范围
+Orchard 的核心抽象是让不同 Harness 使用统一、可编程的 Agent environment/sandbox 服务。它解决环境创建、命令执行、文件/patch 和生命周期等运行底座问题。
 
-Day 1–3 只复现和审计：
+本项目不复制完整 Orchard 平台。我们借鉴的是：
 
-```text
-task
-→ Polar Rollout Server
-→ Polar Gateway
-→ Harness + tools
-→ SGLang model calls
-→ trajectory
-→ verifier/reward
-→ raw artifacts
-```
+- Harness 与 Environment 解耦；
+- 统一 environment-side API；
+- 多 Harness 可以在相同环境约束下运行；
+- 环境产物可以复用于 rollout、evaluation 和 training。
 
-不把官方 8-GPU Slime/Megatron 拓扑作为复现目标。
-
-## 4. Polar 在本项目中的身份
-
-Polar 是第一个 `RolloutSourceAdapter` 的真实数据来源，也是生成 integration fixture 的参考系统。核心 pipeline：
-
-- 不启动 Polar；
-- 不 import Polar；
-- 不依赖 Polar API；
-- 不理解 Gateway 的控制逻辑；
-- 只接收满足统一 contract 的 rollout records。
-
-核心测试必须能够使用 JSONL/golden fixtures 独立运行。
-
-## 5. 本项目在 Polar 之后做什么
+本项目向上增加的数据价值是：
 
 ```text
-Polar raw result
-→ PolarSourceAdapter
-→ Canonical Rollout Batch
-→ FailureClassifier
-→ SignalFilter
-→ PolicyConsistentGroupBuilder
-→ TrainingReadyBatch / ResampleRequest
+Any Harness × Controlled Environment
+→ Unified Execution Trace
+→ Diagnose / Compare / Regression Gate
 ```
 
-其他 Provider 只需实现新的 Source Adapter，即可复用相同 Processor。
+## 3. 三者的区别
 
-## 6. 自定义 Agentic RL 验证
+| 系统 | 主要抽象 | 主要输出 |
+|---|---|---|
+| Orchard | Harness-agnostic environment service | 可执行 Sandbox/environment |
+| Polar | Harness/model-call rollout capture | token-faithful trajectory/training data |
+| 本项目 | Multi-Harness execution data plane | Episode、诊断、A/B 对比和 Gate |
 
-本项目使用自己的双 RTX PRO 6000 staged 配置：
+## 4. 现有训练路线如何保留
 
-1. 当前 policy 通过 Polar/SGLang 产生 rollout；
-2. 数据模块处理并组装 batch；
-3. 释放 rollout GPU 占用；
-4. Slime/Megatron TP2 更新 Qwen3-4B；
-5. 新 checkpoint 重新加载到 SGLang；
-6. 新 policy 产生下一轮 rollout。
+旧链路：
 
-Slime 是第一个 Trainer Adapter，不是核心数据模块的唯一消费者。
+```text
+Polar → RolloutRecord → TrainingReadyBatch → Slime/Megatron
+```
 
-## 7. 本项目的改动点
+保留为可选扩展：
 
-- producer-agnostic rollout contract 与 capability；
-- 基础设施失败与真实任务失败分离；
-- reward-variance/high-signal group 检查；
-- 同 task、同 policy、固定大小的 GRPO group builder；
-- 缺少有效样本时输出显式 `ResampleRequest`；
-- Polar fixture、离线 fixture 与 Slime Sample 的可重复转换；
-- 自定义两卡 on-policy 训练闭环和对照实验。
+```text
+AgentEpisode → TrainingViewExporter → RolloutRecord → optional trainer
+```
+
+因此已有 Polar adapter、token/mask/reward capability、checksum 和 policy gate 不删除，但 Slime/GRPO 不再是本周完成定义。
+
+## 5. 当前 reference E2E
+
+```text
+same tasks/model/environment/verifier
+          ├→ Harness v1
+          └→ Harness v2
+                 ↓
+     model + sandbox + verifier capture
+                 ↓
+             AgentEpisode
+                 ↓
+ metrics + attribution + paired comparison
+                 ↓
+           Regression Gate + UI
+```
+
+一个有效演示必须能从 Gate 结论反查 comparison、diagnosis、event 和 artifact。

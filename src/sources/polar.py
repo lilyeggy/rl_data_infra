@@ -223,6 +223,7 @@ class PolarSourceAdapter:
         fixture_type: str,
         summary_sha: str,
     ) -> RolloutRecord:
+        """这部分很重要，是如何把 polar 的 trace 转换为rollout record"""
         prompt_ids = self._int_list(trace.get("prompt_ids"), "prompt_ids")
         response_ids = self._int_list(trace.get("response_ids"), "response_ids")
         response_mask = self._int_list(trace.get("loss_mask"), "loss_mask")

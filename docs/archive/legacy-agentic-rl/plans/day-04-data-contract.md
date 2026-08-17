@@ -1,6 +1,7 @@
 # Day 4：Producer-Agnostic 数据契约与 Source Adapter
 
-> 从本阶段开始实现项目核心。核心代码不能 import Polar 或 Slime。
+> 历史基础阶段：本计划记录已实现的 training-oriented `RolloutRecord v1` 和 Source Adapter。
+> 2026-08-12 后它被保留为 Training View 基础；新的 universal execution contract 见 [Day 5](day-05-execution-data-plane.md) 与 [Canonical Data Contract v2](../docs/data-contract.md)。
 
 ## 1. 阶段目标
 
