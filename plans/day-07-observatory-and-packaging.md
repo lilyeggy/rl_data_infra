@@ -1,5 +1,6 @@
 # Day 7：Harness Observatory、Reference Improvement 与项目包装
 
+> 状态：已完成；Observatory、TrainingCandidateView、release 与教学材料均已交付。
 > 目标：用同一批 canonical artifact 完成 CLI、UI、实验报告和面试演示闭环。
 
 ## 1. 阶段目标

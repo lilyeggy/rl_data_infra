@@ -25,6 +25,9 @@ Day 5 未通过验收前，不提前把 UI 或复杂诊断作为主任务；Day 
 
 - [项目阅读顺序](learning/project-reading-order.md)
 - [新旧数据契约学习笔记](learning/data-contract.md)
+- [V1 Agent Infra 教学复盘](learning/v1-agent-infra-review-guide.md)
+- [V2 真实 Pi Harness Decision 教学复盘](learning/v2-harness-decision-guide.md)
+- [V2 交付与真实实验结果](releases/v2-harness-decision.md)
 - [Polar / Orchard 边界](../notes/01-official-pipeline.md)
 - [Harness Comparison Task Pilot](../notes/task-pilot-report.md)
 

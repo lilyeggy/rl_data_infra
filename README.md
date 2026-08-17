@@ -4,7 +4,7 @@
 
 ## 当前可运行版本
 
-`v1-observability` 已实现单次运行的纵向闭环：
+`v2-harness-decision` 已在 V1 单次运行纵向闭环上，实现真实 Pi 的横向 Harness 决策闭环：
 
 ```text
 Capture adapters
@@ -18,7 +18,7 @@ AgentEpisode + integrity/lineage
 Metrics + evidence-linked attribution
 ```
 
-V1 覆盖：
+当前覆盖：
 
 - 严格且不可变的 `TraceEvent`、manifest、`ArtifactRef`、`AgentEpisode`；
 - append-only JSONL、`event_id` 幂等、冲突 quarantine、坏行隔离；
@@ -28,8 +28,10 @@ V1 覆盖：
 - outcome、token、延迟、工具行为和 verifier 指标；
 - SANDBOX / MODEL_BACKEND / EVALUATOR / HARNESS / UNKNOWN 的证据关联归因；
 - 成功、有效任务失败和 infra-invalid 三类冻结演示数据。
-
-V1 尚未实现 Harness A/B、Regression Gate 和 Observatory UI；这些属于 V2，不能用当前 artifact 声称“某项 Harness 修改已经被验证”。
+- Pi 0.84.2 + 固定 `opencode-go/gpt-5.6-luna` 的真实 NDJSON capture/adapter；
+- `ExperimentManifest`、逐对 compatibility、paired comparison；
+- 三态 Regression Gate、只读 Observatory、`TrainingCandidateView`；
+- 3 对真实 error-recovery reference case：control 0/3、candidate 3/3，但因 token/latency 超预算，Gate 诚实输出 `REJECT`。
 
 ## 快速开始
 
@@ -38,6 +40,7 @@ V1 尚未实现 Harness A/B、Regression Gate 和 Observatory UI；这些属于 
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m src.cli demo-v1 --output artifacts/v1-observability
+python3 -m src.cli demo-v2 --output artifacts/v2-harness-decision
 python3 -m src.cli inspect \
   --episodes artifacts/v1-observability/episodes.jsonl \
   --episode-id episode-tool-loop
@@ -68,10 +71,12 @@ artifacts/v1-observability/
 - V1 复盘教程：[docs/learning/v1-agent-infra-review-guide.md](docs/learning/v1-agent-infra-review-guide.md)
 - 两版迭代计划：[docs/v1-v2-roadmap.md](docs/v1-v2-roadmap.md)
 - V1 交付记录：[docs/releases/v1-observability.md](docs/releases/v1-observability.md)
+- V2 教学复盘：[docs/learning/v2-harness-decision-guide.md](docs/learning/v2-harness-decision-guide.md)
+- V2 交付记录：[docs/releases/v2-harness-decision.md](docs/releases/v2-harness-decision.md)
 - Canonical contract：[docs/data-contract.md](docs/data-contract.md)
 
 ## 准确的面试表述
 
-> 我实现了一个 Harness-neutral 的 Agent Execution Data Plane。它采用 append-only event log 与确定性 assembler，把 model/tool/sandbox/verifier/harness 事实组装成带完整性、能力声明和数据血缘的 Episode；在此之上以版本化规则计算指标和失败归因，为后续受控 Harness A/B 与 Regression Gate 提供可审计证据。
+> 我实现了一个 Harness-neutral 的 Agent Execution Data Plane。它把 model/tool/sandbox/verifier/harness 事实确定性组装成可审计 Episode，并在真实 Pi 轨迹上完成受控 Harness A/B、failure attribution 和三态 Regression Gate；每个上线结论都能下钻到原始事件证据。
 
-当前不应表述为“自动优化 Harness”或“已完成大规模 benchmark 提升”。
+当前不应表述为“已完成大规模 benchmark 提升”或“teacher trace 已经是 on-policy RL rollout”。

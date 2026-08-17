@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping
+from typing import Iterable, Mapping
 
 from src.contracts._json import sha256_json
 from src.contracts.agent_episode import (

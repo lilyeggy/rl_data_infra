@@ -27,6 +27,13 @@ SENSITIVE_KEYS = frozenset(
         "token",
         "access_token",
         "refresh_token",
+        "thinking_signature",
+        "text_signature",
+        "thinkingsignature",
+        "textsignature",
+        # Public trace fixtures must not expose chain-of-thought, even when a
+        # provider happens to return a plaintext summary beside its signature.
+        "thinking",
     }
 )
 

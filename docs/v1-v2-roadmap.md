@@ -34,6 +34,8 @@ CLI inspect / deterministic three-outcome demo
 
 ## 后三天：V2 Harness Improvement Decision Loop
 
+交付状态：真实 Pi 成对 capture、comparison、Gate、Observatory 和 Training View 已完成。reference candidate 正确性改善但效率超预算，当前 Gate 为 `REJECT`；下一轮目标是在不放宽阈值的前提下优化 recovery policy。
+
 目标链路：
 
 ```text

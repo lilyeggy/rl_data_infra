@@ -1,5 +1,6 @@
 # Day 5：Multi-Harness Execution Data Plane
 
+> 状态：已完成，作为 V1 Observability Loop 复盘材料保留。
 > 目标：让两个不同 Harness 或 Harness 版本产生的数据进入同一个可审计 `AgentEpisode` 契约。
 
 ## 1. 阶段目标

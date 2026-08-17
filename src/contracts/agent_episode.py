@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
-from src.contracts._json import freeze_json, sha256_json, thaw_json, validate_sha256
+from src.contracts._json import sha256_json, thaw_json, validate_sha256
 from src.contracts._validation import (
     enum_member,
     frozen_object,

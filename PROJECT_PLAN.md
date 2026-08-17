@@ -1,6 +1,6 @@
 # Multi-Harness Agent Execution Data Plane
 
-> 状态：方向已冻结，进入一周实现阶段（2026-08-12）
+> 状态：V1/V2 一周主线已交付（2026-08-17），当前进入 V2.1 效率优化
 > 目标岗位：Agent Infra / Agent Harness / Runtime Data / Evaluation / Observability
 > 权威边界：[PROJECT_SCOPE.md](PROJECT_SCOPE.md)
 

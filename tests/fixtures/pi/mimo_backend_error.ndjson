@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"pi-mimo-error-001","timestamp":"2026-08-17T06:27:12.598Z","cwd":"/private/tmp/pi-harness-probe"}
+{"type":"message_end","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"opencode-go","model":"mimo-v2.5","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"error","timestamp":1786948068889,"errorMessage":"500: {\"type\":\"error\",\"message\":\"Internal server error\"}"}}
+{"type":"agent_end","messages":[],"willRetry":true}
+{"type":"message_end","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"opencode-go","model":"mimo-v2.5","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"error","timestamp":1786948072433,"errorMessage":"500: {\"type\":\"error\",\"message\":\"Internal server error\"}"}}
+{"type":"agent_end","messages":[],"willRetry":false}

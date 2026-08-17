@@ -1,5 +1,6 @@
 # Day 6：Harness Evaluation、Failure Attribution 与 Regression Gate
 
+> 状态：已完成；真实 Pi reference case 的 Gate 为 `REJECT`（效率超预算）。
 > 目标：把 Episode 变成能够支持 Harness 改进决策的证据，而不是只收集日志。
 
 ## 1. 阶段目标

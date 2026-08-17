@@ -1,6 +1,6 @@
 # Multi-Harness Agent Execution Data Plane：项目范围
 
-> 状态：范围冻结（2026-08-12）
+> 状态：V2 已完成（2026-08-17）；进入 V2.1 recovery efficiency iteration
 > 面试方向：Agent Infra / Agent Harness / Runtime Data / Evaluation / Observability
 
 ## 一句话定义
@@ -133,3 +133,12 @@ Any Harness × Same Task/Model/Environment
 ## 项目完成后的准确表述
 
 > 我们实现的不是 Harness Optimizer，而是一个 Multi-Harness Agent Execution Data Plane。它把不同 Harness 的模型调用、工具、Sandbox、Harness decision 和验证事件统一成可审计 Episode，并在受控变量下完成失败归因、版本对比和回归验证，从而为 Harness 改进提供可复现的数据证据；训练数据只是可选下游视图。
+
+## V2 实际验收快照
+
+- 真实 Harness：Pi 0.84.2；固定模型：`opencode-go/gpt-5.6-luna`；无 silent fallback；
+- 3 对真实 control/candidate，paired coverage 100%，无 compatibility mismatch；
+- exact-verifier success：0/3 → 3/3；`OBSERVED_TOOL_ERROR_LOOP`：3 → 0；
+- token +43.54%、latency +51.15%，超过冻结阈值，Gate 为 `REJECT`；
+- 3 条 successful teacher Episode 可作 off-policy SFT candidate，0 条满足 on-policy RL 条件；
+- 样本只证明 reference mechanism，不声称 benchmark 普遍提升。

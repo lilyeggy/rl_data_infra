@@ -1,0 +1,11 @@
+{
+  "schema_version": "gate-config/v1",
+  "minimum_paired_coverage": 1.0,
+  "minimum_episode_pairs": 3,
+  "success_rate_drop_tolerance": 0.0,
+  "require_target_slice_improvement": true,
+  "max_token_increase_ratio": 0.2,
+  "max_latency_increase_ratio": 0.25,
+  "max_infra_invalid_increase": 0.0,
+  "reject_new_severe_regression": true
+}

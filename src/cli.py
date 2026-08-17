@@ -1,4 +1,4 @@
-"""Small dependency-free CLI for the V1 evidence artifact."""
+"""Dependency-free CLI for V1/V2 Agent Infra evidence artifacts."""
 
 from __future__ import annotations
 
@@ -7,8 +7,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.capture.pi_adapter import dump_pi_ndjson, read_pi_ndjson
 from src.contracts.agent_episode import AgentEpisode
 from src.demo_v1 import generate_v1_demo
+from src.demo_v2 import generate_v2_demo
 
 
 def _read_episodes(path: Path) -> tuple[AgentEpisode, ...]:
@@ -30,6 +32,28 @@ def _print(value: Any) -> None:
 
 def _demo(args: argparse.Namespace) -> int:
     _print(generate_v1_demo(args.output))
+    return 0
+
+
+def _demo_v2(args: argparse.Namespace) -> int:
+    _print(generate_v2_demo(args.output))
+    return 0
+
+
+def _sanitize_pi(args: argparse.Namespace) -> int:
+    source = Path(args.input)
+    destination = Path(args.output)
+    records, issues = read_pi_ndjson(source.read_text())
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(dump_pi_ndjson(records))
+    _print(
+        {
+            "input": str(source),
+            "output": str(destination),
+            "record_count": len(records),
+            "issue_count": len(issues),
+        }
+    )
     return 0
 
 
@@ -74,6 +98,17 @@ def build_parser() -> argparse.ArgumentParser:
     demo = commands.add_parser("demo-v1", help="generate the deterministic V1 artifact")
     demo.add_argument("--output", default="artifacts/v1-observability")
     demo.set_defaults(func=_demo)
+    demo_v2 = commands.add_parser(
+        "demo-v2", help="generate V2 from captured real Pi comparison pairs"
+    )
+    demo_v2.add_argument("--output", default="artifacts/v2-harness-decision")
+    demo_v2.set_defaults(func=_demo_v2)
+    sanitize_pi = commands.add_parser(
+        "sanitize-pi", help="redact and normalize a Pi NDJSON trace for fixtures"
+    )
+    sanitize_pi.add_argument("--input", required=True)
+    sanitize_pi.add_argument("--output", required=True)
+    sanitize_pi.set_defaults(func=_sanitize_pi)
     inspect = commands.add_parser("inspect", help="inspect one canonical Episode timeline")
     inspect.add_argument("--episodes", required=True)
     inspect.add_argument("--episode-id", required=True)
