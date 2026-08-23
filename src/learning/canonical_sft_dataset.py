@@ -24,7 +24,6 @@ from typing import Any, Mapping
 
 from src.capture.pi_canonical_adapter import CanonicalEpisode, convert_episode_to_canonical
 from src.contracts._json import sha256_json, thaw_json
-from src.contracts.agent_episode import AgentEpisode
 from src.exporters.canonical import (
     assert_training_view_is_leak_free,
 )
@@ -148,14 +147,14 @@ def _role_of(action, index: int, count: int, prev_failed: bool) -> str:
 
 
 def build_canonical_sft_dataset(
-    episodes: tuple[AgentEpisode, ...],
+    episodes: tuple[Any, ...],
     *,
     task_ids: Mapping[str, str] | None = None,
     workspace_roots: Mapping[str, str] | None = None,
     split: str = "TRAIN",
     channel: str = "assistant-only",
 ) -> tuple[tuple[SFTExample, ...], SFTDatasetReport]:
-    """Convert certified AgentEpisodes into canonical generic SFT examples.
+    """Convert episodes (AgentEpisode or CanonicalEpisode) into SFT examples.
 
     Every example is derived from a CanonicalEpisode (harness-neutral), carries
     an explicit role, a neutral system-prompt marker (never Pi-private), and
@@ -168,6 +167,10 @@ def build_canonical_sft_dataset(
     canonical_episodes: dict[str, CanonicalEpisode] = {}
     canonical_issues: dict[str, tuple] = {}
     for ep in episodes:
+        if isinstance(ep, CanonicalEpisode):
+            canonical_episodes[ep.episode_id] = ep
+            canonical_issues[ep.episode_id] = ()
+            continue
         canonical, issues = convert_episode_to_canonical(
             ep, workspace_root=(workspace_roots or {}).get(ep.episode_id)
         )
@@ -188,7 +191,13 @@ def build_canonical_sft_dataset(
     for ep in episodes:
         canonical = canonical_episodes[ep.episode_id]
         source_set.add(ep.episode_id)
-        task_id = task_ids.get(ep.episode_id, ep.task_id)
+        task_id = task_ids.get(
+            ep.episode_id,
+            ep.task_id if not isinstance(ep, CanonicalEpisode) else None,
+        )
+        if task_id is None:
+            # CanonicalEpisode always carries a task_id
+            task_id = ep.task_id
         count = len(canonical.actions)
         for index, action in enumerate(canonical.actions):
             prev_failed = (
