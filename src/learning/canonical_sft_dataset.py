@@ -18,14 +18,13 @@ Quality gates applied:
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field as dc_field
+from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any, Mapping
 
+from src.capture.pi_canonical_adapter import CanonicalEpisode, convert_episode_to_canonical
 from src.contracts._json import sha256_json, thaw_json
-from src.capture.pi_canonical_adapter import CanonicalEpisode
 from src.contracts.agent_episode import AgentEpisode
-from src.capture.pi_canonical_adapter import convert_episode_to_canonical
 from src.exporters.canonical import (
     assert_training_view_is_leak_free,
 )
@@ -282,8 +281,17 @@ def _render_user(task_id: str, episode: CanonicalEpisode, index: int) -> str:
 
     history: list[str] = []
     for i, action in enumerate(episode.actions[:index]):
-        status = "ok" if action.result_status.value == "SUCCEEDED" else action.result_status.value.lower()
-        history.append(f"  {action.canonical_tool_name}({json.dumps(thaw_json(action.normalized_arguments), ensure_ascii=False, sort_keys=True)}) -> {status}")
+        status = (
+            "ok"
+            if action.result_status.value == "SUCCEEDED"
+            else action.result_status.value.lower()
+        )
+        args_repr = json.dumps(
+            thaw_json(action.normalized_arguments), ensure_ascii=False, sort_keys=True
+        )
+        history.append(
+            f"  {action.canonical_tool_name}({args_repr}) -> {status}"
+        )
     prefix = "\n".join(g for g in history) if history else "(no prior actions)"
     return (
         f"Solve the task: {task_id}\n\n"
