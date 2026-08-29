@@ -1,0 +1,28 @@
+{
+  "schema_version": "coding-verifier-evidence/v1",
+  "outcome_class": "INVALID_INFRASTRUCTURE",
+  "task_id": "swebench-qwen_code-pytest-dev-pytest-5809-20260811T041722Z-fault-rprep",
+  "instance_id": "pytest-dev__pytest-5809",
+  "base_commit": "8aba863a634f40560e25055d179220f0eefabe9a",
+  "runtime_image_identity": "polar-swebench-runtime:pytest-dev-pytest-5809",
+  "synthetic_fault": true,
+  "test": {
+    "command": "/opt/miniconda3/envs/testbed/bin/python -m pytest testing/test_pastebin.py::TestPaste::test_create_new_paste --no-header -q --tb=no -p no:cacheprovider",
+    "timeout_seconds": 1200.0,
+    "note": "configured but NOT executed: runtime INIT failed before agent/evaluator ran"
+  },
+  "result": {
+    "verifier_completed": false,
+    "timed_out": false,
+    "crashed": true,
+    "exit_code": null,
+    "resolved": null,
+    "reward": null,
+    "note": "runtime initialization failed: prepare action 1 failed with exit code 42"
+  },
+  "provenance": {
+    "source_file": "raw/rollout_results/task_swebench-qwen_code-pytest-dev-pytest-5809-20260811T041722Z-fault-rprep/ses_sk-polar-ba8095d2-8cce-4d1f-abfb-05395eec4057.json",
+    "json_path": "$.error"
+  },
+  "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

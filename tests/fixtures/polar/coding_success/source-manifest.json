@@ -1,0 +1,70 @@
+{
+  "created_at_utc": "2026-08-11T05:18:17Z",
+  "files": [
+    {
+      "bytes": 2897,
+      "media_type": "text/x-diff",
+      "path": "patch.diff",
+      "role": "patch",
+      "sha256": "f80ba962a483d508a5eb0ee00be38c3eac7811220d099024e247704d5a771d3d"
+    },
+    {
+      "bytes": 1104,
+      "media_type": "application/json",
+      "path": "replay.json",
+      "role": "replay_evidence",
+      "sha256": "684bdd8256085202a3d582b6b49f409c0f432c55cf14c72da7c9dd89272e3ad4"
+    },
+    {
+      "bytes": 72314,
+      "media_type": "application/json",
+      "path": "request.json",
+      "role": "request",
+      "sha256": "2187ed5414037701ef6029f7d8084a1187f3b222eea426ae6d550fde82ee3fc2"
+    },
+    {
+      "bytes": 480161,
+      "media_type": "application/json",
+      "path": "response.json",
+      "role": "response",
+      "sha256": "077742991e54ffb0342fbc7e63df5d1010c765b35cf7645356ee4fb370682558"
+    },
+    {
+      "bytes": 568723,
+      "media_type": "application/json",
+      "path": "summary.json",
+      "role": "summary",
+      "sha256": "488771299223965c9d6a8403185992685c2baf71a4017af375220930e81e6244"
+    },
+    {
+      "bytes": 2492,
+      "media_type": "application/json",
+      "path": "verifier-evidence.json",
+      "role": "verifier_evidence",
+      "sha256": "3cb6891ad4780d3128130be7fc3dc83c3f2cfcda31c3ecb9f8c6f8a280370e61"
+    }
+  ],
+  "fixture_id": "polar-coding-success-20260811T030617Z-swebench",
+  "fixture_type": "coding_success",
+  "known_missing_fields": [
+    "group_id",
+    "old_logprobs",
+    "policy_version"
+  ],
+  "notes": [
+    "VALID_SUCCESS after SGLang local patch (qwen3-tool-call-fix): 10-turn tool loop, edit lexer + try/except, write tests/test_pastebin.py; verifier FAIL_TO_PASS + PASS_TO_PASS all pass, resolved=true reward=1",
+    "patch.diff reconstructed from exact tool-call arguments (evaluator patch cleaned with session dir); clean replay on fresh runtime: 4 passed, resolved=true"
+  ],
+  "redactions": [],
+  "schema_version": "polar-fixture-manifest/v1",
+  "source": {
+    "harness": "qwen_code",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "polar_commit": "f0e8343a7870abf6ec2366890f685881ceab92cb",
+    "policy_version": null,
+    "runtime_image_identity": "polar-swebench-runtime:pytest-dev-pytest-5809",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "synthetic_fault": false
+}

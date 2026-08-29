@@ -1,0 +1,70 @@
+{
+  "created_at_utc": "2026-08-11T04:19:55Z",
+  "files": [
+    {
+      "bytes": 0,
+      "media_type": "text/x-diff",
+      "path": "patch.diff",
+      "role": "patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 706,
+      "media_type": "application/json",
+      "path": "replay.json",
+      "role": "replay_evidence",
+      "sha256": "e06df1a3a2568c2051792d374f9ff54c2854ad689a8ec5696db580d46d5fc230"
+    },
+    {
+      "bytes": 72314,
+      "media_type": "application/json",
+      "path": "request.json",
+      "role": "request",
+      "sha256": "2187ed5414037701ef6029f7d8084a1187f3b222eea426ae6d550fde82ee3fc2"
+    },
+    {
+      "bytes": 460465,
+      "media_type": "application/json",
+      "path": "response.json",
+      "role": "response",
+      "sha256": "60c3fd4a0e2bb0e527a59cb43833a4bfc965290337bf2c69c2d722aec121c7cf"
+    },
+    {
+      "bytes": 321360,
+      "media_type": "application/json",
+      "path": "summary.json",
+      "role": "summary",
+      "sha256": "1286bfd305412e0b8600248b0b4b7462aa2782ea09024491ba88d4c47c22817a"
+    },
+    {
+      "bytes": 1198,
+      "media_type": "application/json",
+      "path": "verifier-evidence.json",
+      "role": "verifier_evidence",
+      "sha256": "5c86f6fe512ab33e880388b9761d5f1ee927c823ca24b1feded0c7cc51af7b24"
+    }
+  ],
+  "fixture_id": "polar-coding-valid-failure-20260811T030617Z-swebench",
+  "fixture_type": "coding_valid_failure",
+  "known_missing_fields": [
+    "group_id",
+    "old_logprobs",
+    "policy_version"
+  ],
+  "notes": [
+    "real single-turn qwen_code rollout; agent produced no patch (empty_generation=true); swebench harness short-circuited; resolved=false reward=0 (VALID_FAILURE)",
+    "clean replay on fresh runtime: empty patch, verifier exit 4, resolved=false, matches original"
+  ],
+  "redactions": [],
+  "schema_version": "polar-fixture-manifest/v1",
+  "source": {
+    "harness": "qwen_code",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "polar_commit": "f0e8343a7870abf6ec2366890f685881ceab92cb",
+    "policy_version": null,
+    "runtime_image_identity": "polar-swebench-runtime:pytest-dev-pytest-5809",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "synthetic_fault": false
+}

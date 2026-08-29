@@ -1,0 +1,22 @@
+{
+  "session_id": "sk-polar-61663888-df74-4d97-b2c6-b77e801123fe",
+  "task_id": "calculator-qwen_code-20260809T165634Z-fault",
+  "status": "ERROR",
+  "trajectory": {
+    "metadata": {
+      "builder": "prefix_merging",
+      "record_count": 0,
+      "task_metadata": {}
+    },
+    "traces": []
+  },
+  "timing": {
+    "register_to_init_queue_ms": 2.2229813039302826,
+    "init_ms": 3019.4068355485797,
+    "run_ms": 0.0,
+    "postrun_ms": 210.33038292080164
+  },
+  "node_id": "localhost-node-01",
+  "error": "runtime initialization failed: prepare action 4 failed with exit code 1",
+  "metadata": {}
+}

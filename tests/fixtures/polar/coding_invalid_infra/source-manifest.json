@@ -1,0 +1,73 @@
+{
+  "created_at_utc": "2026-08-11T04:20:21Z",
+  "files": [
+    {
+      "bytes": 585,
+      "media_type": "application/json",
+      "path": "fault-injection.json",
+      "role": "fault_injection",
+      "sha256": "829803d6de7c6bb12837d2c0fc44f725adb42fb028cd4bd470a922f6beba58d5"
+    },
+    {
+      "bytes": 0,
+      "media_type": "text/x-diff",
+      "path": "patch.diff",
+      "role": "patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5589,
+      "media_type": "application/json",
+      "path": "request.json",
+      "role": "request",
+      "sha256": "5a604602ef55b4f74e44bae4413d27e209e40bf96b2c9255200d5168a089b84f"
+    },
+    {
+      "bytes": 112,
+      "media_type": "application/json",
+      "path": "response.json",
+      "role": "response",
+      "sha256": "585f3e4dd75c37722361fe6d6e410d910189dac3358e7bd638a16f7fd26f985d"
+    },
+    {
+      "bytes": 627,
+      "media_type": "application/json",
+      "path": "summary.json",
+      "role": "summary",
+      "sha256": "35702b6ec1a4b923720d7a1cac09b98609878183a7ef8fea36496e7392fd6867"
+    },
+    {
+      "bytes": 1260,
+      "media_type": "application/json",
+      "path": "verifier-evidence.json",
+      "role": "verifier_evidence",
+      "sha256": "ec9d1fe5f8eefaea4a6792b0e341ad01e7acf0f43c9d072800aca2c63a5322f2"
+    }
+  ],
+  "fixture_id": "polar-coding-invalid-infra-20260811T030617Z-swebench",
+  "fixture_type": "coding_invalid_infra",
+  "known_missing_fields": [
+    "group_id",
+    "old_logprobs",
+    "output_token_ids",
+    "policy_version",
+    "reward",
+    "sampled_logprobs"
+  ],
+  "notes": [
+    "synthetic_fault=true: runtime.prepare appended 'exit 42'; session ERROR 'runtime initialization failed: prepare action 1 failed with exit code 42'; INVALID_INFRASTRUCTURE, resolved=null reward=null",
+    "verifier-timeout injection (test_timeout=0.1) also recorded in raw evidence but unobservable due to empty_patch short-circuit"
+  ],
+  "redactions": [],
+  "schema_version": "polar-fixture-manifest/v1",
+  "source": {
+    "harness": "qwen_code",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "polar_commit": "f0e8343a7870abf6ec2366890f685881ceab92cb",
+    "policy_version": null,
+    "runtime_image_identity": "polar-swebench-runtime:pytest-dev-pytest-5809",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "synthetic_fault": true
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "day3-fault-injection/v1",
+  "instance_id": "pytest-dev__pytest-5809",
+  "mode": "fault-runtime-prepare",
+  "payload_sha256_original": "a17dc43a1b0d60bb6180da70c0b0a8f8c484d47f256ddaa23028988ddba9c5de",
+  "payload_sha256_modified": "a2b172996dcb52efab0974dd3d4b73d4ae0a559b94ab8bda0182bc2b20223d2d",
+  "injection": {
+    "synthetic_fault": true,
+    "changed_keys": [
+      "runtime.prepare[+]"
+    ],
+    "injected_command": "exit 42",
+    "expected_failure_stage": "runtime INIT (prepare)"
+  },
+  "raw_dir": "raw/pytest-dev--pytest-5809-fault-runtime-prepare"
+}

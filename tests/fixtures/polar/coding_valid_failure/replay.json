@@ -1,0 +1,15 @@
+{
+  "schema_version": "coding-clean-replay/v1",
+  "clean_workspace": true,
+  "patch_applied": false,
+  "patch_was_empty": true,
+  "verifier_command": "/opt/miniconda3/envs/testbed/bin/python -m pytest testing/test_pastebin.py::TestPaste::test_create_new_paste --no-header -q --tb=no -p no:cacheprovider",
+  "verifier_completed": true,
+  "timed_out": false,
+  "exit_code": 4,
+  "resolved": false,
+  "reward": 0.0,
+  "matches_original": true,
+  "run_duration_s": 0.6,
+  "stdout_tail": "PATCH_APPLY_CHECK_DONE\n\u001b[31mERROR: usage: pytest.py [options] [file_or_dir] [file_or_dir] [...]\npytest.py: error: unrecognized arguments: --no-header\n  inifile: /testbed/tox.ini\n  rootdir: /testbed\n\u001b[0m\n"
+}

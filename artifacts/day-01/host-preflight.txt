@@ -1,5 +1,5 @@
 ===== date =====
-2026-08-05T14:17:16+0800 (CST)
+2026-08-09T16:06:11+0800 (CST)
 ===== hostname =====
 server-desktop
 ===== kernel =====
@@ -7,12 +7,12 @@ Linux server-desktop 6.8.0-110-generic #110~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC F
 ===== cpu / ram =====
 cores: 192
 MemTotal:       263717104 kB
-MemAvailable:   245998688 kB
+MemAvailable:   193796908 kB
 SwapTotal:       2097148 kB
 ===== disk =====
 文件系统        大小  已用  可用 已用% 挂载点
 /dev/nvme1n1    3.5T  319G  3.0T   10% /data
-/dev/nvme0n1p2  3.5T  2.5T  875G   74% /
+/dev/nvme0n1p2  3.5T  2.6T  756G   78% /
 expect: data disk free >= 200GB
 ===== gpu (nvidia-smi -L) =====
 GPU 0: NVIDIA RTX PRO 6000 Blackwell Server Edition (UUID: GPU-4288d6c9-0384-25dc-1071-9bea701b9374)

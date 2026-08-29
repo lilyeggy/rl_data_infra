@@ -1,14 +1,61 @@
-# 上游源码 checkout（Day 1 冻结的第三方仓库，由 src/*/ 各自的 git 管理，不纳入本仓库）
-src/
-
-# 数据与缓存（不进版本库）
-hf-cache/
-models/
-docker-root/
-
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
 
-# 临时文件
-*.tmp
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+
+# Large local dependencies and model data
+third_party/*
+!third_party/README.md
+models/
+checkpoints/
+datasets/
+cache/
+hf-cache/
+docker-root/
+
+# Day 1 frozen upstream checkouts (their own repositories are not vendored)
+src/polar/
+src/slime/
+src/Megatron-LM/
+src/sglang/
+src/mbridge/
+src/mbridge-iseekyan/
+src/Megatron-Bridge/
+
+# Runtime output
+artifacts/*
+!artifacts/.gitkeep
+!artifacts/v1-observability/
+!artifacts/v1-observability/raw-events.jsonl
+!artifacts/v1-observability/episodes.jsonl
+!artifacts/v1-observability/metrics.json
+!artifacts/v1-observability/diagnoses.jsonl
+!artifacts/v1-observability/summary.json
+!artifacts/v1-observability/blobs/
+!artifacts/v1-observability/blobs/*
+logs/
+outputs/
+work/
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,20 @@
+{
+  "schema_version": "pi-run-config/v1",
+  "provider": "opencode-go",
+  "model": "gpt-5.6-luna",
+  "pi_version": "0.84.2",
+  "api": "openai-responses",
+  "fallback_model": null,
+  "roles": {
+    "adapter_probe": {"thinking": "minimal"},
+    "harness_comparison": {"thinking": "minimal"},
+    "teacher_trajectory": {"thinking": "medium"},
+    "low_cost_batch_probe": {"thinking": "minimal"},
+    "stable_low_cost_default": {"thinking": "minimal"}
+  },
+  "failure_policy": {
+    "retry_same_model_only": true,
+    "terminal_backend_error_validity": "INFRA_INVALID",
+    "terminal_backend_error_task_status": "UNKNOWN"
+  }
+}

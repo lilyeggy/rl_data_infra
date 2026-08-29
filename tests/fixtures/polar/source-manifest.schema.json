@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/polar-fixture-manifest-v1.json",
+  "title": "Polar Source Fixture Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fixture_id",
+    "fixture_type",
+    "synthetic_fault",
+    "created_at_utc",
+    "source",
+    "files",
+    "redactions",
+    "known_missing_fields"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "polar-fixture-manifest/v1"
+    },
+    "fixture_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fixture_type": {
+      "enum": [
+        "calculator_success",
+        "calculator_fault",
+        "coding_success",
+        "coding_valid_failure",
+        "coding_invalid_infra"
+      ]
+    },
+    "synthetic_fault": {
+      "type": "boolean"
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "polar_commit",
+        "model_id",
+        "model_revision",
+        "tokenizer_revision",
+        "runtime_image_identity",
+        "harness"
+      ],
+      "properties": {
+        "polar_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tokenizer_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_image_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_version": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "role", "media_type", "bytes", "sha256"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*\\.\\.).+$"
+          },
+          "role": {
+            "enum": [
+              "request",
+              "response",
+              "summary",
+              "verifier_evidence",
+              "patch",
+              "replay_evidence",
+              "fault_injection",
+              "task_metadata",
+              "raw_log",
+              "normalized_log",
+              "external_reference"
+            ]
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "redactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "rule", "count"],
+        "properties": {
+          "path": {"type": "string"},
+          "rule": {"type": "string"},
+          "count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "known_missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

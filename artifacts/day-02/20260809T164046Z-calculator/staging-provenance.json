@@ -1,0 +1,86 @@
+{
+  "schema_version": "day2-staging-provenance/v2",
+  "created_at_utc": "2026-08-09T17:09:02Z",
+  "run_id": "20260809T164046Z-calculator",
+  "redaction_notes": "secret_scan on every extracted value (api_key/bearer/sk-/token patterns); 0 hits",
+  "entries": [
+    {
+      "fixture_type": "calculator_success",
+      "file": "request.json",
+      "fixture_path": "tests/fixtures/polar/calculator_success/request.json",
+      "fixture_sha256": "d11e4df6f1e38e2ab8f29f3b1dd14941de586400a6f489982e7b2edf8fa2d05f",
+      "raw_source_relative_path": "raw/rollout_results/task_calculator-qwen_code-20260809T165213Z/sessions/sk-polar-0d2971a8-8dcb-4087-a8cd-f9824a5d07a4/completions/0001-msg_ff634f2fb0a0.json",
+      "raw_source_sha256": "458db9baaae93b6fc31782fdce20945ef7cb79c81c4f86ceccc4699df4809c46",
+      "raw_json_path": "$.original_request",
+      "provenance": "direct",
+      "extraction_method": "lossless json extract of agent original request from completion record",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    },
+    {
+      "fixture_type": "calculator_success",
+      "file": "response.json",
+      "fixture_path": "tests/fixtures/polar/calculator_success/response.json",
+      "fixture_sha256": "189b06e987fcca73def6c63828fb3591470d12d9259f000687afc51c78940230",
+      "raw_source_relative_path": "raw/rollout_results/task_calculator-qwen_code-20260809T165213Z/sessions/sk-polar-0d2971a8-8dcb-4087-a8cd-f9824a5d07a4/completions/0001-msg_ff634f2fb0a0.json",
+      "raw_source_sha256": "458db9baaae93b6fc31782fdce20945ef7cb79c81c4f86ceccc4699df4809c46",
+      "raw_json_path": "$.response",
+      "provenance": "direct",
+      "extraction_method": "lossless json extract of gateway-served backend response from completion record",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    },
+    {
+      "fixture_type": "calculator_success",
+      "file": "summary.json",
+      "fixture_path": "tests/fixtures/polar/calculator_success/summary.json",
+      "fixture_sha256": "52b30b3e796b3a7a7c5f3fe992d8bf93b4460ceeee08db628372179141d97d4a",
+      "raw_source_relative_path": "raw/rollout_results/task_calculator-qwen_code-20260809T165213Z/ses_sk-polar-0d2971a8-8dcb-4087-a8cd-f9824a5d07a4.json",
+      "raw_source_sha256": "39bf7ae3f0baf43359c26d72c66de04342379967cfb9aea8c31c2b7d6488000b",
+      "raw_json_path": "$",
+      "provenance": "direct",
+      "extraction_method": "full session artifact copy",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    },
+    {
+      "fixture_type": "calculator_fault",
+      "file": "request.json",
+      "fixture_path": "tests/fixtures/polar/calculator_fault/request.json",
+      "fixture_sha256": "ac89b13639f0cb8dd7528029e0b80af4e48a135317add53238d619ccd4547d6d",
+      "raw_source_relative_path": "raw/fault/submit-payload.json",
+      "raw_source_sha256": "ac89b13639f0cb8dd7528029e0b80af4e48a135317add53238d619ccd4547d6d",
+      "raw_json_path": "$",
+      "provenance": "direct",
+      "extraction_method": "actual POST /rollout/task/submit payload (fault task has no model completion)",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    },
+    {
+      "fixture_type": "calculator_fault",
+      "file": "response.json",
+      "fixture_path": "tests/fixtures/polar/calculator_fault/response.json",
+      "fixture_sha256": "f77b13176bcdb4cfe28bebceda64259eb017632a8cddabc6a52196e4f92b1287",
+      "raw_source_relative_path": "raw/fault/submit-response.json",
+      "raw_source_sha256": "f77b13176bcdb4cfe28bebceda64259eb017632a8cddabc6a52196e4f92b1287",
+      "raw_json_path": "$",
+      "provenance": "direct",
+      "extraction_method": "actual submit API response",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    },
+    {
+      "fixture_type": "calculator_fault",
+      "file": "summary.json",
+      "fixture_path": "tests/fixtures/polar/calculator_fault/summary.json",
+      "fixture_sha256": "312a17e9c16ae24ee883ea03e6cfea75e344d3327f796f77b159978b3bc9b139",
+      "raw_source_relative_path": "raw/rollout_results/task_calculator-qwen_code-20260809T165634Z-fault/ses_sk-polar-61663888-df74-4d97-b2c6-b77e801123fe.json",
+      "raw_source_sha256": "192a0af7e0be309922f8db3353bda04205dc360adaafc975ac7d51d3a29873e1",
+      "raw_json_path": "$",
+      "provenance": "direct",
+      "extraction_method": "full ERROR session artifact copy",
+      "redaction_rule": "secret_scan",
+      "redaction_count": 0
+    }
+  ]
+}

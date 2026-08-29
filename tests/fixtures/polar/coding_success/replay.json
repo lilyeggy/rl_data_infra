@@ -1,0 +1,15 @@
+{
+  "schema_version": "coding-clean-replay/v1",
+  "clean_workspace": true,
+  "patch_applied": true,
+  "patch_sha256": "f80ba962a483d508a5eb0ee00be38c3eac7811220d099024e247704d5a771d3d",
+  "verifier_command": "/opt/miniconda3/envs/testbed/bin/python -m pytest testing/test_pastebin.py::TestPaste::test_create_new_paste testing/test_pastebin.py::TestPasteCapture::test_failed testing/test_pastebin.py::TestPasteCapture::test_all testing/test_pastebin.py::TestPasteCapture::test_non_ascii_paste_text --tb=line -p no:cacheprovider",
+  "verifier_completed": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "resolved": true,
+  "reward": 1.0,
+  "matches_original": true,
+  "run_duration_s": 3.2,
+  "stdout_tail": "============================= test session starts ==============================\nplatform linux -- Python 3.9.19, pytest-4.6.6.dev9+g8aba863a6, py-1.11.0, pluggy-0.13.1\nrootdir: /rw/repo, inifile: tox.ini\ncollected 4 items\n\ntesting/test_pastebin.py ....                                            [100%]\n\n=========================== 4 passed in 2.31 seconds ===========================\n"
+}

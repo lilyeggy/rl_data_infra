@@ -1,0 +1,127 @@
+diff --git a/python/sglang/srt/function_call/qwen3_coder_detector.py b/python/sglang/srt/function_call/qwen3_coder_detector.py
+index 0254045..fef12af 100644
+--- a/python/sglang/srt/function_call/qwen3_coder_detector.py
++++ b/python/sglang/srt/function_call/qwen3_coder_detector.py
+@@ -51,6 +51,10 @@ class Qwen3CoderDetector(BaseFormatDetector):
+         # [FIX] New state flag: mark whether inside tool_call structure block
+         self.is_inside_tool_call: bool = False
+ 
++        # LOCAL PATCH (see patches/sglang/): buffer for JSON-style tool call
++        # bodies {"name":..., "arguments":...} in streaming mode.
++        self._json_buf: str = ""
++
+         # Initialize attributes that were missing in the original PR
+         self.current_func_name: Optional[str] = None
+ 
+@@ -188,6 +192,32 @@ class Qwen3CoderDetector(BaseFormatDetector):
+             for tool_content in raw_tool_calls:
+                 # Find function calls
+                 funcs = self.tool_call_function_regex.findall(tool_content)
++                if not funcs:
++                    # LOCAL PATCH: JSON-style tool call emitted by Qwen3-2507
++                    # thinking models: <tool_call>{"name":...,"arguments":{...}}</tool_call>
++                    body = tool_content.strip()
++                    if body.startswith("{"):
++                        try:
++                            obj = json.loads(body)
++                            name = obj.get("name")
++                            if name:
++                                args = obj.get("arguments")
++                                params = (
++                                    args
++                                    if isinstance(args, str)
++                                    else json.dumps(args or {}, ensure_ascii=False)
++                                )
++                                calls.append(
++                                    ToolCallItem(
++                                        tool_index=tool_idx,
++                                        name=str(name),
++                                        parameters=params,
++                                    )
++                                )
++                                tool_idx += 1
++                        except Exception:
++                            pass
++                    continue
+                 for func_match in funcs:
+                     func_body = func_match[0] or func_match[1]
+                     if ">" not in func_body:
+@@ -403,6 +433,29 @@ class Qwen3CoderDetector(BaseFormatDetector):
+             if current_slice.startswith(self.tool_call_end_token):
+                 self.parsed_pos += len(self.tool_call_end_token)
+                 self.is_inside_tool_call = False  # [FIX] Exit tool call region
++                # LOCAL PATCH: flush buffered JSON-style tool call body
++                if self._json_buf.strip():
++                    body = self._json_buf.strip()
++                    self._json_buf = ""
++                    try:
++                        obj = json.loads(body)
++                        name = obj.get("name")
++                        if name:
++                            args = obj.get("arguments")
++                            params = (
++                                args
++                                if isinstance(args, str)
++                                else json.dumps(args or {}, ensure_ascii=False)
++                            )
++                            calls.append(
++                                ToolCallItem(
++                                    tool_index=self.current_tool_id,
++                                    name=str(name),
++                                    parameters=params,
++                                )
++                            )
++                    except Exception:
++                        pass
+                 continue
+ 
+             # -------------------------------------------------------
+@@ -418,7 +471,9 @@ class Qwen3CoderDetector(BaseFormatDetector):
+                 # This entire segment is plain text
+                 if not self.is_inside_tool_call:
+                     normal_text_chunks.append(current_slice)
+-                # [FIX] If inside tool call, discard this text (usually \n), don't append
++                else:
++                    # LOCAL PATCH: buffer JSON-style tool call body
++                    self._json_buf += current_slice
+                 self.parsed_pos += len(current_slice)
+                 continue
+ 
+@@ -446,6 +501,9 @@ class Qwen3CoderDetector(BaseFormatDetector):
+                     # Just a plain '<' symbol
+                     if not self.is_inside_tool_call:
+                         normal_text_chunks.append("<")
++                    else:
++                        # LOCAL PATCH: buffer JSON-style tool call body
++                        self._json_buf += "<"
+                     self.parsed_pos += 1
+                     continue
+ 
+@@ -454,7 +512,9 @@ class Qwen3CoderDetector(BaseFormatDetector):
+                 text_segment = current_slice[:next_open_angle]
+                 if not self.is_inside_tool_call:
+                     normal_text_chunks.append(text_segment)
+-                # [FIX] If inside tool call, discard whitespace/text before Tag
++                else:
++                    # LOCAL PATCH: buffer JSON-style tool call body
++                    self._json_buf += text_segment
+                 self.parsed_pos += next_open_angle
+                 continue
+ 
+diff --git a/python/sglang/srt/parser/reasoning_parser.py b/python/sglang/srt/parser/reasoning_parser.py
+index b36a8fa..619bfbc 100644
+--- a/python/sglang/srt/parser/reasoning_parser.py
++++ b/python/sglang/srt/parser/reasoning_parser.py
+@@ -261,6 +261,12 @@ class Qwen3Detector(BaseReasoningFormatDetector):
+             previous_content=previous_content,
+             thinks_internally=True,
+             reasoning_default="enable_thinking",
++            # LOCAL PATCH (see patches/sglang/): Qwen3 thinking models emit
++            # <tool_call> inside the <think> block; without an interruption
++            # token the tool call was swallowed into reasoning_content and the
++            # OpenAI tool_calls array stayed empty, which made OpenAI-format
++            # harnesses (qwen_code) exit after the first turn.
++            tool_start_token="<tool_call>",
+         )
+ 
+ 

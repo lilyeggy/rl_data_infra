@@ -117,3 +117,30 @@ checksum 变化+恢复 ✓）。产物 backward-smoke-8192-tp2.json。
 - [x] SGLang 原始响应证明 token ID 与 logprob 来自实际采样（inference-response.json）
 - [x] Megatron smoke 证明 optimizer step、checkpoint save/load 与 checksum 变化（backward-smoke-*.json）
 - [x] Day 2 使用的 runtime image digest 已冻结（polar-localhost-calculator@sha256:0a967a…）
+
+## Day 1 最小收口（2026-08-09，分支 codex/sync-authoritative-plans @ 08f0c048）
+
+状态：**DAY1_STATUS=COMPLETED_WITH_NOTES**（验收器输出 PASS_WITH_NOTES，exit 0）
+
+### 收口动作
+1. 轻量环境采集 `bash scripts/capture_day01_evidence.sh /data/day-01-workspace`（只读，未启动/停止任何服务）。
+2. 版本漂移审计（对照 configs/upstream-lock.yaml）——**无漂移**，未重跑任何 GPU smoke：
+   - 六个上游仓库 commit 全 40 位且与 lock 一致：polar f0e8343a…、slime bf14dc21…、Megatron-LM 1dcf0daf…、sglang 28b095c0…、mbridge(ISEEKYAN) 89eb1088…、megatron_bridge(radixark) 7f0fb345…；
+   - Megatron dirty 全量 `git diff HEAD` checksum 仍为 `2a2af7be…ddd64`（与 lock 一致）；
+   - 模型 snapshot revision `cdbee75f…`（Qwen3-4B-Instruct-2507）不变；
+   - 两套 venv 关键包不变（polar: sglang 0.5.13/torch 2.11.0+cu130；slime: mbridge 0.15.1/slime 0.3.0/megatron-core 0.16.0rc0）；
+   - Calculator runtime 镜像身份一致：`polar-localhost-calculator:latest` ID `sha256:0a967a5c…`，layout v3。
+3. 保存实际 Megatron SDPA patch：`patches/megatron/sdpa-sm120-8k.patch`（113 行）。
+   - 干净 HEAD 副本 `git apply --check`：OK（exit 0），可从 HEAD 干净重现；
+   - 当前工作树（补丁已应用）反向 `git apply --check --reverse`：OK（exit 0）。
+   - SHA256：`eb95f109058bf8e57a9dadac222ac4908b3ebceaf6c26fdc05a1eef0a1a30cb8`。
+4. 将 patch 相对路径与 SHA256 写入 `configs/upstream-lock.yaml`（megatron_lm.patches[1].path / .sha256），并更新 captured_at_utc 为 2026-08-09T08:06:57Z。
+5. 最终验收 `python3 scripts/verify_day01_evidence.py`（不带 --strict-warnings）：12 PASS / 1 WARN，DAY1_STATUS=PASS_WITH_NOTES，exit 0。
+
+### 失败实验标记（不得计入通过结果）
+- `backward-smoke-512-tp2.json`：`checksum_restored_after_reload=false`（reload 后 checksum 回到 A 而非 B）→ **失败实验**，不满足 A≠B 且 B==C，不计入 Megatron 通过证据。
+- 有效 Megatron TP2 证据以 4096/8192 为准：backward-smoke-4096-tp2.json 与 backward-smoke-8192-tp2.json 均满足 `A != B`、`B == C`、grad_norm>0（4096: 127.0；8192: 70.0）。
+
+### 保留的 warnings（显式不消除）
+1. `sglang_numeric_output_token_ids`：SGLang 原始响应（inference-response.json）含 token 文本与 logprob，但缺少原生数值 output token IDs。**不通过重新 tokenize 文本伪造**；由 Day 2 起在 gateway 层以原生字段采集。
+2. `backward-smoke-512-tp2.json` 为失败实验（见上），保留在 artifacts 中作为失败证据，不在 lock 的通过 checksum 列表之外新增标记。

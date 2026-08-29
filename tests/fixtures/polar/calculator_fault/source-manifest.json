@@ -1,0 +1,68 @@
+{
+  "created_at_utc": "2026-08-09T16:58:10Z",
+  "files": [
+    {
+      "bytes": 2997,
+      "media_type": "application/json",
+      "path": "request.json",
+      "role": "request",
+      "sha256": "ac89b13639f0cb8dd7528029e0b80af4e48a135317add53238d619ccd4547d6d"
+    },
+    {
+      "bytes": 85,
+      "media_type": "application/json",
+      "path": "response.json",
+      "role": "response",
+      "sha256": "f77b13176bcdb4cfe28bebceda64259eb017632a8cddabc6a52196e4f92b1287"
+    },
+    {
+      "bytes": 600,
+      "media_type": "application/json",
+      "path": "summary.json",
+      "role": "summary",
+      "sha256": "312a17e9c16ae24ee883ea03e6cfea75e344d3327f796f77b159978b3bc9b139"
+    }
+  ],
+  "fixture_id": "polar-calculator-fault-20260809T164046Z-calculator",
+  "fixture_type": "calculator_fault",
+  "known_missing_fields": [
+    "group_id",
+    "old_logprobs",
+    "output_token_ids",
+    "policy_version",
+    "sampled_logprobs"
+  ],
+  "notes": [
+    "synthetic_fault=true: runtime.prepare appended failing exec (exit 1) -> session ERROR 'runtime initialization failed: prepare action 4 failed'; INIT-stage infrastructure failure, not a model answer",
+    "evaluator test_timeout injection is unobservable when agent patch is empty (BasePatchEvaluator early-return); recorded in run raw/fault-test_timeout-attempt",
+    "no model completion exists for fault (init failed before run); request/response are the actual submitted payload and submit API response"
+  ],
+  "redactions": [
+    {
+      "count": 0,
+      "path": "request.json",
+      "rule": "secret_scan"
+    },
+    {
+      "count": 0,
+      "path": "response.json",
+      "rule": "secret_scan"
+    },
+    {
+      "count": 0,
+      "path": "summary.json",
+      "rule": "secret_scan"
+    }
+  ],
+  "schema_version": "polar-fixture-manifest/v1",
+  "source": {
+    "harness": "qwen_code",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "polar_commit": "f0e8343a7870abf6ec2366890f685881ceab92cb",
+    "policy_version": null,
+    "runtime_image_identity": "sha256:0a967a5c33ee206f7524181cdd4ff866389016651645336eee93de1a7d970f49",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "synthetic_fault": true
+}
