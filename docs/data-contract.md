@@ -1,25 +1,26 @@
-# Canonical Agent Execution Data Contract v2
+# Canonical Agent Improvement Data Contract v3
 
-> Status: design frozen for the new project direction.
-> `rollout-record/v1` remains supported as an optional Training View.
+> Status: implementation baseline. `rollout-record/v1` and
+> `training-candidate-view/v1` are compatibility projections, not the
+> authoritative eligibility boundary.
 
 ## 1. Purpose
 
 The core package sits between heterogeneous Agent Harnesses and multiple data consumers. It records observable execution facts, assembles them into comparable Episodes, and prevents unsupported inferences from becoming canonical data.
 
 ```text
-Harness / Model Proxy / Sandbox / Verifier / Hook
+Task + Harness + Model Proxy + Sandbox + Verifier + Hook
                          ↓
-                  TraceEvent stream
+              RolloutProducer / Capture
                          ↓
-                  EpisodeAssembler
+       immutable evidence + policy trajectory
                          ↓
-                    AgentEpisode
-          ┌──────────────┼──────────────┐
-          ↓              ↓              ↓
-       Analyze        Compare        Export
-                                      ↓
-                             RolloutRecord v1
+       AgentEpisode + ExecutionBundle
+                         ↓
+             consumer certification
+          ┌──────────────┴──────────────┐
+          ↓                             ↓
+  Harness compare/gate       versioned learning dataset
 ```
 
 The contract has no runtime dependency on Polar, Slime, Megatron, a model backend, or a specific Harness.
@@ -49,6 +50,27 @@ The contract has no runtime dependency on Polar, Slime, Megatron, a model backen
 | `EpisodeComparison` | `episode-comparison/v1` | Paired or aggregate Harness differences |
 | `GateResult` | `gate-result/v1` | Versioned release decision and evidence |
 | `RolloutRecord` | `rollout-record/v1` | Existing optional training projection |
+| `ExecutionIdentity` | `execution-identity/v1` | One producer session/task attempt across all views |
+| `ExecutionBundle` | `execution-bundle/v2` | Pre-certification content-addressed join of Episode, policy traces and verifier evidence |
+| `EpisodeCertification` | `episode-certification/v1` | Derived semantic evidence verdict |
+| `EligibilityDecision` | `consumer-certification/v2` | One consumer-specific decision that may bind an evidence bundle and policy artifact |
+| `DatasetManifest` | `dataset-manifest/v1` | Immutable membership, role, split and certification lineage |
+
+### 3.1 Cross-view identity
+
+`ExecutionIdentity` is allocated once per concrete attempt. A Polar task with
+`num_samples=N` produces N session identities; its task id is never reused as
+an episode id. The identity, source artifact checksum and all derived checksums
+are joined by `ExecutionBundle`. Matching display names are not sufficient. The
+bundle deliberately contains no certification checksum: certification points
+to the already-addressed bundle, avoiding a cyclic checksum graph.
+
+### 3.2 Dataset safety
+
+A `DatasetManifest` accepts only an `ELIGIBLE` decision for its exact consumer
+profile. All attempts of a logical task belong to one split. Preference groups
+contain exactly one CHOSEN and one REJECTED member for the same task. Historical
+files and arbitrary `verified=true` flags cannot grant membership.
 
 Unknown producer fields belong in `attributes` or source-specific metadata. Unknown top-level canonical fields are rejected so schema drift cannot pass silently.
 
@@ -424,7 +446,7 @@ Rules retained from v1:
 
 - text is never retokenized and labelled as sampled token IDs;
 - missing logprobs, masks, rewards or policy identity remain missing;
-- Polar-specific fields remain inside `PolarSourceAdapter`;
+- Polar fixture-specific fields remain inside `PolarFixtureImporter`; live execution belongs to `PolarLiveProducer`;
 - `INVALID_INFRASTRUCTURE` is not converted into model reward zero;
 - policy/group requirements remain enforced for training consumers;
 - checksums and source lineage remain stable.
@@ -457,3 +479,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 Real Harness integration is covered by fixtures plus a separately reproducible end-to-end run.
+
+Persisted `ProducerArtifact`, `EligibilityDecision`, `ExecutionBundle` and
+`DatasetManifest` values use strict deserialization. Unknown fields, missing fields,
+damaged JSON and old schema versions without an explicit migration fail closed and
+must never be skipped into a training dataset.

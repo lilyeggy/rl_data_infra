@@ -150,6 +150,7 @@ def build_canonical_sft_dataset(
     episodes: tuple[Any, ...],
     *,
     task_ids: Mapping[str, str] | None = None,
+    task_statements: Mapping[str, str] | None = None,
     workspace_roots: Mapping[str, str] | None = None,
     split: str = "TRAIN",
     channel: str = "assistant-only",
@@ -164,6 +165,7 @@ def build_canonical_sft_dataset(
     """
 
     task_ids = task_ids or {}
+    task_statements = task_statements or {}
     canonical_episodes: dict[str, CanonicalEpisode] = {}
     canonical_issues: dict[str, tuple] = {}
     for ep in episodes:
@@ -198,6 +200,12 @@ def build_canonical_sft_dataset(
         if task_id is None:
             # CanonicalEpisode always carries a task_id
             task_id = ep.task_id
+        task_statement = task_statements.get(task_id) or task_statements.get(ep.episode_id)
+        if not isinstance(task_statement, str) or not task_statement.strip():
+            raise ValueError(
+                f"missing non-empty task statement for task {task_id!r}; "
+                "task ids alone are not sufficient training context"
+            )
         count = len(canonical.actions)
         for index, action in enumerate(canonical.actions):
             prev_failed = (
@@ -215,7 +223,18 @@ def build_canonical_sft_dataset(
             except ValueError:
                 leak_count += 1
                 continue
-            user_text = _render_user(task_id, canonical, index)
+            user_text = _render_user(
+                task_id,
+                task_statement,
+                canonical,
+                index,
+                workspace_root=(workspace_roots or {}).get(ep.episode_id),
+            )
+            try:
+                assert_training_view_is_leak_free(user_text, label="sft-context")
+            except ValueError:
+                leak_count += 1
+                continue
             action_payload = {
                 "tool": action.canonical_tool_name,
                 "args": thaw_json(action.normalized_arguments),
@@ -281,7 +300,14 @@ def build_canonical_sft_dataset(
     return tuple(examples), report
 
 
-def _render_user(task_id: str, episode: CanonicalEpisode, index: int) -> str:
+def _render_user(
+    task_id: str,
+    task_statement: str,
+    episode: CanonicalEpisode,
+    index: int,
+    *,
+    workspace_root: str | None = None,
+) -> str:
     """Render a neutral task+history prompt ending right before the target action.
 
     Uses only canonical action content (no Pi tool names, no absolute paths,
@@ -298,12 +324,31 @@ def _render_user(task_id: str, episode: CanonicalEpisode, index: int) -> str:
         args_repr = json.dumps(
             thaw_json(action.normalized_arguments), ensure_ascii=False, sort_keys=True
         )
+        observation = json.dumps(
+            _neutralize_workspace(thaw_json(action.observation), workspace_root),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
         history.append(
-            f"  {action.canonical_tool_name}({args_repr}) -> {status}"
+            f"  {action.canonical_tool_name}({args_repr}) -> {status}\n"
+            f"    observation: {observation}"
         )
     prefix = "\n".join(g for g in history) if history else "(no prior actions)"
     return (
-        f"Solve the task: {task_id}\n\n"
+        f"Task id: {task_id}\n\n"
+        f"Problem statement:\n{task_statement.strip()}\n\n"
         f"Progress so far ({index} completed action):\n{prefix}\n\n"
         f"Choose the next canonical action."
     )
+
+
+def _neutralize_workspace(value: Any, workspace_root: str | None) -> Any:
+    """Preserve tool evidence while removing the known machine workspace prefix."""
+
+    if isinstance(value, str):
+        return value.replace(workspace_root.rstrip("/"), "$WORKSPACE") if workspace_root else value
+    if isinstance(value, Mapping):
+        return {key: _neutralize_workspace(item, workspace_root) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_neutralize_workspace(item, workspace_root) for item in value]
+    return value

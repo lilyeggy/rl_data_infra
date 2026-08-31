@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.demo_v2 import generate_v2_demo
+from examples.legacy_scenarios.demo_v2 import generate_v2_demo
 
 
 class DemoV2Test(unittest.TestCase):

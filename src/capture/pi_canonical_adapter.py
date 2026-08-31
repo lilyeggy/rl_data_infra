@@ -18,24 +18,21 @@ Guarantees
 
 from __future__ import annotations
 
-import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 from src.contracts._json import sha256_json, thaw_json
 from src.contracts.agent_episode import AgentEpisode
 from src.contracts.canonical_action import (
     ActionType,
-    CANONICAL_ACTION_TYPES,
     CanonicalAction,
-    PI_TO_CANONICAL,
     ResultStatus,
     _action_type_for_tool,
     build_canonical_action,
     canonical_tool_for_source,
 )
-from src.contracts.trace_event import EventComponent, EventStatus, EventType, TraceEvent
-from src.errors import AdapterConversionError, ErrorCode, AdapterIssue
+from src.contracts.trace_event import EventStatus, EventType, TraceEvent
+from src.errors import AdapterConversionError, AdapterIssue, ErrorCode
 
 CANONICAL_EPISODE_SCHEMA_VERSION = "canonical-episode/v1"
 
@@ -116,7 +113,6 @@ def _workspace_root_from_episode(episode: AgentEpisode) -> str | None:
                 path = args.get("path")
                 for value in (command, path):
                     if isinstance(value, str):
-                        token = value.split(" ")[0] if command is value else value
                         for piece in value.split():
                             if piece.startswith("/"):
                                 candidates.append(piece.split("/python")[0])

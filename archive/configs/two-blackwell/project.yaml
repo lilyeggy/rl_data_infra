@@ -1,0 +1,83 @@
+# ARCHIVED: historical two-Blackwell project profile; not the current runtime.
+project:
+  name: rollout-agnostic-agentic-rl-data-pipeline
+  objective: build_policy_consistent_high_signal_training_batches
+  schedule_semantics: sequential_phases_not_calendar_days
+
+boundaries:
+  core_depends_on_polar: false
+  core_depends_on_slime: false
+  owns_rollout_generation: false
+  owns_agent_loop: false
+  owns_rl_algorithm: false
+  owns_data_contract_and_processing: true
+  validates_with_real_agentic_rl: true
+
+reference_integrations:
+  rollout_provider: Polar
+  offline_source: JSONL
+  inference: SGLang
+  environment: SWE-Gym
+  trainer: Slime
+  training_backend: Megatron-LM
+  algorithm: GRPO
+
+model:
+  reference: Qwen/Qwen3-4B-Instruct-2507
+  initial_context_length: 4096
+  target_context_length: 8192
+  max_output_tokens_initial: 512
+  max_output_tokens_target: 1024
+
+hardware:
+  gpu_model: NVIDIA RTX PRO 6000 Blackwell
+  gpu_count: 2
+  vram_gb_per_gpu: 96
+  execution_mode: staged_shared_two_gpu
+  training_tensor_parallel: 2
+  auxiliary_a6000_in_main_nccl_group: false
+
+contracts:
+  schema_version: v1
+  preserve_source_payload: true
+  required_identity:
+    - trajectory_id
+    - task_id
+    - policy_version
+  training_capabilities:
+    - token_ids
+    - action_or_loss_mask
+    - reward
+    - group_id
+    - policy_version
+  optional_capabilities:
+    - old_logprobs
+    - verifier_evidence
+    - tool_events
+
+source_adapters:
+  implemented_first:
+    - polar
+    - jsonl
+  adapter_may_fabricate_missing_training_fields: false
+
+processors:
+  implemented_first:
+    - failure_classifier
+    - signal_filter
+    - policy_consistent_group_builder
+  multi_session_credit_assignment: false
+  output_resample_request_instead_of_running_rollout: true
+
+training:
+  trainer_adapter_first: slime
+  precision: bf16
+  synchronous_policy_iterations: true
+  reuse_old_rollouts_indefinitely: false
+  initial_group_size: 2
+  target_group_size: 4
+
+evaluation:
+  compare_raw_baseline_and_processed_pipeline: true
+  inject_infrastructure_failures: true
+  require_checkpoint_reload_and_new_rollout: true

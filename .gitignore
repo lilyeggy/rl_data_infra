@@ -24,6 +24,7 @@ datasets/
 cache/
 hf-cache/
 docker-root/
+project-guide-site/
 
 # Day 1 frozen upstream checkouts (their own repositories are not vendored)
 src/polar/
@@ -59,3 +60,6 @@ dist/
 .idea/
 .vscode/
 *.swp
+# SWE-bench local data (contains gold patches; redacted manifest committed instead)
+experiments/swebench/*.parquet
+experiments/swebench/selected_instances.json

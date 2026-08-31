@@ -103,6 +103,75 @@ class PiJsonAdapterTest(unittest.TestCase):
         self.assertEqual(content["thinking"], "[REDACTED]")
         self.assertEqual(content["thinkingSignature"], "[REDACTED]")
 
+    def test_structured_enoent_becomes_file_not_found_fact(self) -> None:
+        records = (
+            {
+                "type": "tool_execution_end",
+                "toolCallId": "call-enoent",
+                "toolName": "read",
+                "isError": True,
+                "result": {
+                    "isError": True,
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "ENOENT: no such file or directory, access '/workspace/missing.json'",
+                        }
+                    ],
+                },
+            },
+        )
+        result = PiJsonAdapter().convert(
+            records,
+            run_id="run-pi",
+            episode_id="episode-pi-enoent",
+            trace_id="trace-pi-enoent",
+            config=PiRunConfig(),
+            declared_outcome=PiOutcomeDeclaration(
+                task_status=TaskStatus.FAILURE,
+                execution_validity=ExecutionValidity.VALID,
+                verifier_status=EpisodeVerifierStatus.FAILED,
+            ),
+            normalize_tool_errors=True,
+        )
+
+        tool_result = next(
+            event for event in result.events if event.event_type is EventType.TOOL_RESULT
+        )
+        self.assertEqual(tool_result.attributes["error_code"], "FILE_NOT_FOUND")
+        self.assertEqual(tool_result.attributes["error_path"], "/workspace/missing.json")
+        self.assertEqual(tool_result.attributes["error_source"], "pi_tool_protocol")
+        self.assertIn("ENOENT", str(tool_result.attributes["result"]))
+
+    def test_non_file_tool_error_is_not_relabelled(self) -> None:
+        records = (
+            {
+                "type": "tool_execution_end",
+                "toolCallId": "call-permission",
+                "toolName": "read",
+                "isError": True,
+                "result": {"content": [{"type": "text", "text": "EACCES: permission denied"}]},
+            },
+        )
+        result = PiJsonAdapter().convert(
+            records,
+            run_id="run-pi",
+            episode_id="episode-pi-permission",
+            trace_id="trace-pi-permission",
+            config=PiRunConfig(),
+            declared_outcome=PiOutcomeDeclaration(
+                task_status=TaskStatus.FAILURE,
+                execution_validity=ExecutionValidity.VALID,
+                verifier_status=EpisodeVerifierStatus.FAILED,
+            ),
+            normalize_tool_errors=True,
+        )
+
+        tool_result = next(
+            event for event in result.events if event.event_type is EventType.TOOL_RESULT
+        )
+        self.assertNotIn("error_code", tool_result.attributes)
+
     def test_command_is_fixed_model_read_only_and_has_no_fallback(self) -> None:
         command = PiRunConfig().command("probe")
         self.assertEqual(command[0], "pi")

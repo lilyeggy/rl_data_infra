@@ -27,7 +27,6 @@ from src.contracts.manifests import (
 from src.contracts.trace_event import EventType, TraceEvent
 from src.errors import ContractValidationError
 
-
 ASSEMBLER_VERSION = "episode-assembler/v1"
 
 

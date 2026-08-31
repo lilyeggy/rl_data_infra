@@ -1,0 +1,48 @@
+{
+  "schema_version": "recovery-input-fixtures/v1",
+  "purpose": "Inputs for learner-owned FILE_NOT_FOUND recovery policy tests; expected transitions are intentionally not frozen here.",
+  "cases": [
+    {
+      "case_id": "structured-file-not-found",
+      "error_code": "FILE_NOT_FOUND",
+      "error_path": "workspace/missing-1.json",
+      "scope_key": "workspace",
+      "discovery_cache": {},
+      "remaining_discovery_budget": 1,
+      "trigger_event_ids": ["evt-file-error-1"],
+      "attributes": {"tool_name": "read", "source": "tool-result"}
+    },
+    {
+      "case_id": "non-file-error-does-not-define-recovery",
+      "error_code": "PERMISSION_DENIED",
+      "error_path": "workspace/task-1.json",
+      "scope_key": "workspace",
+      "discovery_cache": {},
+      "remaining_discovery_budget": 1,
+      "trigger_event_ids": ["evt-permission-error-1"],
+      "attributes": {"tool_name": "read", "source": "tool-result"}
+    },
+    {
+      "case_id": "cached-scope",
+      "error_code": "FILE_NOT_FOUND",
+      "error_path": "workspace/missing-2.json",
+      "scope_key": "workspace",
+      "discovery_cache": {
+        "workspace": ["workspace/task-2.json"]
+      },
+      "remaining_discovery_budget": 0,
+      "trigger_event_ids": ["evt-file-error-2"],
+      "attributes": {"tool_name": "read", "source": "tool-result"}
+    },
+    {
+      "case_id": "budget-exhausted",
+      "error_code": "FILE_NOT_FOUND",
+      "error_path": "workspace/missing-3.json",
+      "scope_key": "workspace",
+      "discovery_cache": {},
+      "remaining_discovery_budget": 0,
+      "trigger_event_ids": ["evt-file-error-3"],
+      "attributes": {"tool_name": "read", "source": "tool-result"}
+    }
+  ]
+}

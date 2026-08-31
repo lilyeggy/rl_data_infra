@@ -109,6 +109,7 @@ class CanonicalSFTDatasetTest(unittest.TestCase):
         examples, report = build_canonical_sft_dataset(
             (episode,),
             task_ids={"episode-1": "sympy__sympy-23824"},
+            task_statements={"sympy__sympy-23824": "Fix the parser regression."},
             workspace_roots={"episode-1": WORKSPACE},
         )
         self.assertIsInstance(report, SFTDatasetReport)
@@ -126,6 +127,8 @@ class CanonicalSFTDatasetTest(unittest.TestCase):
         # no Pi-private marker
         for ex in examples:
             self.assertEqual(ex.system_prompt_marker, "<neutral-agent-instructions>")
+            self.assertIn("Problem statement:\nFix the parser regression.", ex.user_text)
+        self.assertIn("observation:", examples[1].user_text)
         # canonical tool names only
         for ex in examples:
             self.assertIn(ex.action["tool"], {
@@ -141,12 +144,21 @@ class CanonicalSFTDatasetTest(unittest.TestCase):
         examples, report = build_canonical_sft_dataset(
             (episode,),
             task_ids={"episode-1": "t"},
+            task_statements={"t": "Fix t."},
             workspace_roots={"episode-1": WORKSPACE},
         )
         for ex in examples:
             self.assertTrue(ex.checksum)
             d = ex.to_dict()
             self.assertEqual(d["episode_id"], "episode-1")
+
+    def test_missing_task_statement_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing non-empty task statement"):
+            build_canonical_sft_dataset(
+                (_build_episode(),),
+                task_ids={"episode-1": "t"},
+                workspace_roots={"episode-1": WORKSPACE},
+            )
 
     def test_failure_recovery_assigned_when_action_follows_failure(self) -> None:
         # Build a canonical episode directly: bash(fail) then read -> read is

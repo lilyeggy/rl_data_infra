@@ -28,6 +28,7 @@ class PiRunnerTest(unittest.TestCase):
         self.assertFalse(result.protocol_settled)
         self.assertEqual(result.backend_error_messages, ("500",))
         self.assertFalse(mocked.call_args.kwargs["shell"])
+        self.assertIs(mocked.call_args.kwargs["stdin"], subprocess.DEVNULL)
 
     @patch("src.capture.pi_runner.subprocess.run")
     def test_fixed_model_success_is_protocol_settled(self, mocked) -> None:

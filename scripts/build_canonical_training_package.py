@@ -37,6 +37,25 @@ def _write_json(path: Path, value: Any) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
 
 
+def _bounded_context(text: str, *, max_context: int) -> tuple[str, bool]:
+    """Keep task framing and latest state without silently dropping context.
+
+    ``max_context`` is measured in characters deliberately: the subsequent
+    tokenizer preflight remains the authoritative token limit. The marker makes
+    every compression visible in the training artifact rather than pretending
+    the prompt was complete.
+    """
+
+    if max_context < 512:
+        raise ValueError("max_context must be at least 512 characters")
+    if len(text) <= max_context:
+        return text, False
+    marker = "\n\n[Earlier action history omitted due to context budget]\n\n"
+    head = max_context // 3
+    tail = max_context - head - len(marker)
+    return text[:head] + marker + text[-tail:], True
+
+
 def _row_from_example(ex: dict[str, Any], *, max_context: int) -> dict[str, Any]:
     """Render a canonical example as chat messages with a JSON action answer.
 
@@ -60,11 +79,14 @@ def _row_from_example(ex: dict[str, Any], *, max_context: int) -> dict[str, Any]
             "Do not include any text outside the JSON object."
         ),
     }
+    bounded_user_text, context_truncated = _bounded_context(
+        ex["user_text"], max_context=max_context
+    )
     user = {
         "role": "user",
         "content": (
             f"Task: {ex['task_id']} ({ex['role']})\n\n"
-            f"{ex['user_text']}\n\n"
+            f"{bounded_user_text}\n\n"
             "Output the next canonical action as JSON."
         ),
     }
@@ -82,6 +104,7 @@ def _row_from_example(ex: dict[str, Any], *, max_context: int) -> dict[str, Any]
         "tools": [],
         "tools_checksum": tools_checksum,
         "source_episode": ex["episode_id"],
+        "task_id": ex["task_id"],
         "split": ex["split"],
         "action_format": ACTION_FORMAT,
         "target_action": target_action,
@@ -89,6 +112,7 @@ def _row_from_example(ex: dict[str, Any], *, max_context: int) -> dict[str, Any]
         "verifier_status": ex["verifier_status"],
         "source_episode_checksum": ex["source_episode_checksum"],
         "lossy": ex["lossy"],
+        "context_truncated": context_truncated,
     }
 
 
@@ -101,11 +125,12 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--max-length", type=int, default=4096)
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--max-context", type=int, default=2000, )
+    parser.add_argument("--max-context", type=int, default=12000)
     parser.add_argument("--student-model", required=True)
     parser.add_argument("--train-tasks", nargs="*", default=[])
     parser.add_argument("--dev-tasks", nargs="*", default=[])
     parser.add_argument("--test-tasks", nargs="*", default=[])
+    parser.add_argument("--gradient-accumulation-steps", type=int, default=1)
     args = parser.parse_args()
 
     lines = args.dataset.read_text().splitlines()
@@ -114,7 +139,10 @@ def main() -> int:
     unavailable = [ex for ex in examples if ex["verifier_status"] != "PASSED"]
     # Only PASSED (or explicitly marked lossy-negative) examples are SFT-positive.
     # Here we keep PASSED examples only as positive training rows.
-    positive = [ex for ex in examples if ex["verifier_status"] == "PASSED"]
+    positive = [
+        ex for ex in examples
+        if ex["verifier_status"] == "PASSED" and not ex.get("lossy", False)
+    ]
     if unavailable:
         print(f"skipping {len(unavailable)} non-PASSED rows from SFT positive set")
 
@@ -123,15 +151,22 @@ def main() -> int:
     train_tasks = set(args.train_tasks)
     dev_tasks = set(args.dev_tasks)
     test_tasks = set(args.test_tasks)
+    if (train_tasks & dev_tasks) or (train_tasks & test_tasks) or (dev_tasks & test_tasks):
+        raise ValueError("TRAIN/DEV/TEST task sets must be disjoint")
     for row in rows:
-        if row["split"] == "DEV" or row["source_episode"] in dev_tasks:
+        task_id = row["task_id"]
+        if task_id in dev_tasks:
             row["split"] = "DEV"
-        elif row["split"] == "TEST" or row["source_episode"] in test_tasks:
+        elif task_id in test_tasks:
             row["split"] = "TEST"
-        elif train_tasks and row["split"] != "TRAIN":
+        elif task_id in train_tasks:
             row["split"] = "TRAIN"
 
-    dataset_bytes = b"".join(canonical_json_bytes(r) + b"\n" for r in rows)
+    train_rows = [row for row in rows if row["split"] == "TRAIN"]
+    dev_rows = [row for row in rows if row["split"] == "DEV"]
+    test_rows = [row for row in rows if row["split"] == "TEST"]
+
+    dataset_bytes = b"".join(canonical_json_bytes(r) + b"\n" for r in train_rows)
     dataset_sha = _bytes_sha(dataset_bytes)
 
     lora_config = {
@@ -140,7 +175,7 @@ def main() -> int:
         "dataset": "train-turns.jsonl",
         "max_length": args.max_length,
         "batch_size": 1,
-        "gradient_accumulation_steps": 3,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "gradient_checkpointing": True,
         "epochs": args.epochs,
         "learning_rate": args.lr,
@@ -159,13 +194,21 @@ def main() -> int:
     output = args.output_dir
     output.mkdir(parents=True, exist_ok=True)
     (output / "train-turns.jsonl").write_bytes(dataset_bytes)
+    (output / "dev-turns.jsonl").write_bytes(
+        b"".join(canonical_json_bytes(r) + b"\n" for r in dev_rows)
+    )
+    (output / "test-turns.jsonl").write_bytes(
+        b"".join(canonical_json_bytes(r) + b"\n" for r in test_rows)
+    )
     _write_json(output / "lora-config.json", lora_config)
 
     quality = {
         "schema_version": QUALITY_POLICY_VERSION,
         "action_format": ACTION_FORMAT,
-        "positive_rows": len(rows),
+        "positive_rows": len(train_rows),
         "skipped_non_passed": len(unavailable),
+        "quarantined_lossy": sum(1 for ex in examples if ex.get("lossy", False)),
+        "context_truncated_rows": sum(1 for row in rows if row["context_truncated"]),
         "leak_free": True,
         "loss_mask": {"channel": "assistant-only", "note": "no Pi-private token weighting"},
     }
@@ -186,7 +229,7 @@ def main() -> int:
         "schema_version": PACKAGE_VERSION,
         "dataset_to_train": True,
         "train_turns_sha256": dataset_sha,
-        "turn_example_count": len(rows),
+        "turn_example_count": len(train_rows),
         "lora_config_checksum": sha256_json(lora_config),
         "tools_checksum": sha256_json([]),
         "action_format": ACTION_FORMAT,
@@ -197,7 +240,7 @@ def main() -> int:
         "source": "canonical-generic-sft-v1",
     }
     _write_json(output / "training-package-manifest.json", manifest)
-    print(json.dumps({"package": str(output), "rows": len(rows),
+    print(json.dumps({"package": str(output), "rows": len(train_rows),
                       "sha256": dataset_sha,
                       "manifest_checksum": sha256_json(manifest)}, ensure_ascii=False))
     return 0

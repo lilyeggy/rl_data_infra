@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import os
 import posixpath
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
@@ -244,7 +244,8 @@ class CanonicalAction:
 
         object.__setattr__(self, "arguments", freeze_json(self.arguments, "$.arguments"))
         object.__setattr__(
-            self, "normalized_arguments", freeze_json(self.normalized_arguments, "$.normalized_arguments")
+            self, "normalized_arguments",
+            freeze_json(self.normalized_arguments, "$.normalized_arguments"),
         )
         object.__setattr__(self, "observation", freeze_json(self.observation, "$.observation"))
         for name in ("action_timestamp", "result_timestamp"):

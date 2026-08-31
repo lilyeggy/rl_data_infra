@@ -42,6 +42,7 @@ def run_pi_process(
     completed = subprocess.run(
         command,
         cwd=Path(cwd),
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         timeout=timeout_seconds,

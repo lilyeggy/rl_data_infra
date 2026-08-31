@@ -149,9 +149,11 @@ class HarnessImprovementExporterTest(unittest.TestCase):
         metrics = export_harness_improvement(ep)
         self.assertEqual(metrics.episode_id, ep.episode_id)
         self.assertEqual(metrics.tool_call_count, 4)
-        # one repeated search/read is not present; failures = 1
-        self.assertEqual(metrics.repeated_failure_count, 1)
-        self.assertIsNotNone(metrics.first_action_latency_ms)
+        # A failure is not a repeated failure unless the same failed call recurs.
+        self.assertEqual(metrics.repeated_failure_count, 0)
+        # CanonicalEpisode v1 has no episode-start timestamp.
+        self.assertIsNone(metrics.first_action_latency_ms)
+        self.assertIsNone(metrics.termination_reason)
         self.assertIsNotNone(metrics.time_to_patch_ms)
         self.assertTrue(metrics.checksum)
 

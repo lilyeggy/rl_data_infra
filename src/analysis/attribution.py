@@ -208,7 +208,12 @@ class AttributionEngine:
                     return last_error, event, decision_after_error
                 last_call_key = key
             elif event.event_type is EventType.HARNESS_DECISION and last_error is not None:
-                decision_after_error = event
+                # Merely observing a Harness decision is not enough to prove
+                # unchanged retry.  Discovery, context selection, or explicit
+                # termination must not be upgraded to TOOL_ERROR_FEEDBACK_LOSS.
+                decision = event.attributes.get("decision")
+                if decision in {"RETRY_UNCHANGED", "RETRY_SAME_ACTION"}:
+                    decision_after_error = event
             elif event.event_type is EventType.TOOL_RESULT and event.status in {
                 EventStatus.FAILED,
                 EventStatus.ERROR,

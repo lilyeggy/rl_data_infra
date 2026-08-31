@@ -19,12 +19,15 @@ from typing import Any, Mapping
 from src.capture.canonical_harness_adapter import canonical_to_pi_call, parse_canonical_action
 
 
-def extract_tool_calls(text: str) -> tuple[list[dict[str, Any]], list[str]]:
+def extract_tool_calls(
+    text: str, *, workspace_root: str | None = None
+) -> tuple[list[dict[str, Any]], list[str]]:
     """Extract Pi tool-call payloads from generated text.
 
     Supports both Pi-native payloads (``{"name":..., "arguments":...}``) and
     canonical payloads (``{"action_type":..., "arguments":...}``). Canonical
-    payloads are translated through the harness adapter to Pi tool names.
+    payloads are translated through the harness adapter to Pi tool names, with
+    ``$WORKSPACE`` resolved to ``workspace_root`` if provided.
     Returns (tool_call_payloads, diagnostics).
     """
 
@@ -38,7 +41,7 @@ def extract_tool_calls(text: str) -> tuple[list[dict[str, Any]], list[str]]:
     if canonical[0]:
         ok, err, payload = canonical
         try:
-            pi_call = canonical_to_pi_call(payload)
+            pi_call = canonical_to_pi_call(payload, workspace_root=workspace_root)
         except ValueError as exc:
             return [], [f"canonical->pi mapping failed: {exc}"]
         return [pi_call], ["canonical_action"]

@@ -115,11 +115,17 @@ def parse_canonical_action(text: str) -> tuple[bool, str, dict]:
     return True, "", {"action_type": action_type, "arguments": arguments}
 
 
-def canonical_to_pi_call(payload: Mapping[str, Any]) -> dict[str, Any]:
+def canonical_to_pi_call(
+    payload: Mapping[str, Any], *, workspace_root: str | None = None
+) -> dict[str, Any]:
     """Translate a parsed canonical action into a Pi tool call.
 
     Raises ValueError on unknown action_type or an irreversible argument mapping
-    (fail closed).
+    (fail closed). If ``workspace_root`` is supplied, the training-only
+    ``$WORKSPACE`` placeholder in arguments is resolved to that root (e.g. for
+    a ``run_command``). This is the thin-adapter execution boundary: the
+    placeholder exists so training views never leak host paths, but at serving
+    time the command must reference the real workspace.
     """
 
     action_type = payload["action_type"]
@@ -130,8 +136,39 @@ def canonical_to_pi_call(payload: Mapping[str, Any]) -> dict[str, Any]:
     pi_args: dict[str, Any] = {}
     for key, value in args.items():
         mapped = _CANONICAL_TO_PI_ARGS.get(action_type, {}).get(key, key)
+        if workspace_root and isinstance(value, str) and "$WORKSPACE" in value:
+            # Pi runs bash inside the workspace cwd, so the training placeholder
+            # ``$WORKSPACE`` is best resolved to a relative cwd form.
+            value = _resolve_workspace_placeholder(value, workspace_root)
         pi_args[mapped] = value
     return {"name": pi_tool, "arguments": pi_args}
+
+
+def _resolve_workspace_placeholder(command: str, workspace_root: str) -> str:
+    """Resolve the ``$WORKSPACE`` placeholder at the execution boundary.
+
+    At serving time Pi is already in the workspace cwd, so:
+    - ``cd $WORKSPACE && X``  ->  ``X``
+    - ``$WORKSPACE/foo``      ->  ``foo`` (relative)
+    - ``cat $WORKSPACE/x``    ->  ``cat x``
+    Any remaining absolute host path is left untouched (fail-open for display;
+    the harness itself bounds execution to the workspace).
+    """
+
+    cmd = command
+    # The model often emits ``$WORKSPACE && X`` (no explicit cd). Collapse a
+    # leading ``$WORKSPACE`` (with optional ``cd`` and optional ``&&``/``;``).
+    import re as _re
+
+    cmd = _re.sub(r"^cd\s+\$WORKSPACE(?:/[^\s]*)?\s*&&?\s*", "", cmd)
+    cmd = _re.sub(r"^cd\s+\$WORKSPACE\s*;?\s*", "", cmd)
+    cmd = _re.sub(r"^\$WORKSPACE(?:/[^\s]*)?\s*&&?\s*", "", cmd)
+    cmd = _re.sub(r"^\$WORKSPACE\s*;?\s*", "", cmd)
+    # ``$WORKSPACE/`` -> relative (already-in-cwd), so drop the prefix.
+    cmd = cmd.replace("$WORKSPACE/", "")
+    cmd = cmd.replace("$WORKSPACE", workspace_root if workspace_root != "." else "")
+    cmd = cmd.strip()
+    return cmd
 
 
 def pi_result_to_observation(pi_name: str, result: Any) -> dict[str, Any]:

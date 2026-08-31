@@ -180,6 +180,70 @@ class MetricsAndAttributionTest(unittest.TestCase):
         self.assertIs(black_box.diagnoses[0].layer, FailureLayer.UNKNOWN)
         self.assertTrue(black_box.insufficient_evidence_rules)
 
+    def test_non_retry_harness_decision_does_not_become_feedback_loss(self) -> None:
+        events = list(make_complete_event_stream())
+        events[3] = replace(events[3], status=EventStatus.FAILED)
+        decision = replace(
+            events[0],
+            event_id="evt-discovery-decision",
+            sequence=4,
+            timestamp="2026-08-14T00:00:04Z",
+            span_id="span-discovery-decision",
+            event_type=EventType.HARNESS_DECISION,
+            component=EventComponent.HARNESS,
+            status=EventStatus.SUCCEEDED,
+            attributes={"decision": "DISCOVER", "reason_code": "FILE_NOT_FOUND"},
+        )
+        repeated_call = replace(
+            events[2],
+            event_id="evt-tool-call-repeated-discovery",
+            sequence=5,
+            timestamp="2026-08-14T00:00:05Z",
+            span_id="span-tool-repeated-discovery",
+        )
+        repeated_result = replace(
+            events[3],
+            event_id="evt-tool-result-repeated-discovery",
+            sequence=6,
+            timestamp="2026-08-14T00:00:06Z",
+            span_id="span-tool-repeated-discovery",
+        )
+        verification_start = replace(events[4], sequence=7, timestamp="2026-08-14T00:00:07Z")
+        verification_finish = replace(
+            events[5],
+            sequence=8,
+            timestamp="2026-08-14T00:00:08Z",
+            status=EventStatus.FAILED,
+            attributes={"passed": False},
+        )
+        terminal = replace(
+            events[6],
+            sequence=9,
+            timestamp="2026-08-14T00:00:09Z",
+            attributes={
+                "task_status": "FAILURE",
+                "execution_validity": "VALID",
+                "verifier_status": "FAILED",
+                "score": 0,
+                "termination_reason": "VERIFIER_FAILED",
+                "evidence_event_ids": ["evt-verification-finished"],
+            },
+        )
+        trace = tuple(events[:4]) + (
+            decision,
+            repeated_call,
+            repeated_result,
+            verification_start,
+            verification_finish,
+            terminal,
+        )
+
+        report = AttributionEngine().analyze(self._assemble(trace))
+
+        self.assertEqual(report.diagnoses[0].layer, FailureLayer.UNKNOWN)
+        self.assertEqual(report.diagnoses[0].reason_code, "OBSERVED_TOOL_ERROR_LOOP")
+        self.assertTrue(report.insufficient_evidence_rules)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,12 +21,13 @@ Views delivered here:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from src.contracts._json import sha256_json, thaw_json
 from src.capture.pi_canonical_adapter import CanonicalAction, CanonicalEpisode
+from src.contracts._json import sha256_json, thaw_json
 
 CANONICAL_EXPORTER_VERSION = "canonical-exporters/v1"
 
@@ -57,7 +58,8 @@ def assert_training_view_is_leak_free(value: Any, *, label: str) -> None:
             for marker in _HOST_PATH_MARKERS:
                 if marker in node and "$WORKSPACE" not in node:
                     raise ValueError(
-                        f"{label} leaks host path marker {marker!r}: …{node[max(0,node.rfind(marker))-20:]}"
+                        f"{label} leaks host path marker {marker!r}: "
+                        f"…{node[max(0, node.rfind(marker)) - 20:]}"
                     )
         elif isinstance(node, Mapping):
             for value in node.values():
@@ -82,7 +84,7 @@ class GenericSFTExample:
     observation: str
     patch: str | None
     verifier_outcome: str | None
-    example_type: str  # first-action | tool-selection | failure-recovery | patch | test-selection | final-answer
+    example_type: str  # first-action / tool-selection / failure-recovery / patch / final-answer
     source_episode: str
     format: str
     version: str
@@ -156,14 +158,16 @@ def export_generic_agent_sft(
     count = len(episode.actions)
     for index, action in enumerate(episode.actions):
         brief = _action_brief(action)
-        example_type = _example_type_for_index(index, episode.actions, episode.verifier_status, count)
+        example_type = _example_type_for_index(
+            index, episode.actions, episode.verifier_status, count
+        )
         is_patch_like = action.canonical_tool_name in {"edit_file", "write_file"}
         example = GenericSFTExample(
             task=task,
             context=context,
             action=thaw_json(brief),
             observation=action.observation,
-            patch=("auto-generated" if is_patch_like else None),
+            patch=None,
             verifier_outcome=episode.verifier_status,
             example_type=example_type,
             source_episode=episode.episode_id,
@@ -394,7 +398,7 @@ class HarnessMetrics:
 
 
 def _ms(ts: str | None) -> int | None:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     if not ts:
         return None
@@ -424,9 +428,19 @@ def export_harness_improvement(episode: CanonicalEpisode) -> HarnessMetrics:
             for b in actions[:i]
         )
     )
-    failures = sum(1 for a in actions if a.result_status.value in {"FAILED", "ERROR"})
+    failed_signatures: set[tuple[str, str]] = set()
+    repeated_failures = 0
+    for action in actions:
+        if action.result_status.value not in {"FAILED", "ERROR", "TIMEOUT"}:
+            continue
+        signature = (
+            action.canonical_tool_name,
+            json.dumps(thaw_json(action.normalized_arguments), sort_keys=True),
+        )
+        if signature in failed_signatures:
+            repeated_failures += 1
+        failed_signatures.add(signature)
     first_ts = _ms(actions[0].action_timestamp) if actions else None
-    last_ts = _ms(actions[-1].action_timestamp) if actions else None
     patch_idx = next(
         (
             i
@@ -435,10 +449,16 @@ def export_harness_improvement(episode: CanonicalEpisode) -> HarnessMetrics:
         ),
         None,
     )
-    first_action_latency = first_ts
+    # CanonicalEpisode v1 has no episode-start timestamp. Reporting the first
+    # action's Unix epoch as a latency would be fabricated, so leave it unknown.
+    first_action_latency = None
     time_to_patch = (
         _ms(actions[patch_idx].action_timestamp) - first_ts
-        if patch_idx is not None and first_ts is not None and _ms(actions[patch_idx].action_timestamp)
+        if (
+            patch_idx is not None
+            and first_ts is not None
+            and _ms(actions[patch_idx].action_timestamp) is not None
+        )
         else None
     )
     path_tokens = sum(
@@ -446,15 +466,21 @@ def export_harness_improvement(episode: CanonicalEpisode) -> HarnessMetrics:
         for a in actions
         if a.normalized_arguments.get("path")
     )
-    context_bytes = sum(len(str(v)) for a in actions for v in a.normalized_arguments.values())
-    termination = actions[-1].canonical_tool_name if actions else None
+    context_bytes = sum(
+        len(json.dumps(thaw_json(a.normalized_arguments), ensure_ascii=False))
+        + len(json.dumps(thaw_json(a.observation), ensure_ascii=False))
+        for a in actions
+    )
+    # The final tool is not a termination reason. CanonicalEpisode v1 does not
+    # carry the source termination declaration.
+    termination = None
     return HarnessMetrics(
         episode_id=episode.episode_id,
         tool_call_count=call_count,
         first_action_latency_ms=first_action_latency,
         time_to_patch_ms=time_to_patch,
         redundant_call_count=redundant,
-        repeated_failure_count=failures,
+        repeated_failure_count=repeated_failures,
         path_tokens_approx=path_tokens,
         context_bytes_approx=context_bytes,
         termination_reason=termination,

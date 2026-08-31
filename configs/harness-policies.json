@@ -1,0 +1,23 @@
+{
+  "schema_version": "harness-policy-set/v1",
+  "policies": {
+    "baseline-v1": {
+      "description": "Bounded Pi coding agent with explicit inspection and final diff requirements.",
+      "instructions": [
+        "Inspect the repository before proposing a change.",
+        "Make the smallest correct code and test change needed to resolve the issue.",
+        "Run focused relevant tests when feasible.",
+        "Before finishing, inspect git diff and leave the fix in the worktree."
+      ]
+    },
+    "reproduce-diff-verify-v1": {
+      "description": "Candidate policy that requires a reproduction-first loop before editing.",
+      "instructions": [
+        "First locate the affected code and reproduce or otherwise validate the reported behavior.",
+        "Then make the smallest correct code and test change needed to resolve the issue.",
+        "Run focused relevant tests after editing.",
+        "Before finishing, inspect git diff; do not finish without either a diff or a clearly recorded blocker."
+      ]
+    }
+  }
+}

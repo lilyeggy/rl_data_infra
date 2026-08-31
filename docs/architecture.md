@@ -1,15 +1,19 @@
-# Agent Infra Architecture：Trace / Data / Observability
+# Agent Improvement Data Plane：可信执行内核
+
+> 当前系统边界和双闭环决策见 [ADR-0002](adr/0002-agent-improvement-data-plane.md)。本文保留并说明仍然有效的 Trace、Episode、storage 与 Harness-analysis 内核。
 
 ## 1. 系统定位
 
 Harness 是 Agent 的控制平面：它决定 context、tool、retry、compaction、verification 和 termination。当前项目是执行数据平面：它保存 Harness 运行时发生的可观测事实，把事实转成可以回放、查询、诊断和比较的数据产品。
 
+默认执行入口是 Local Docker Launcher。它先分配 `ExecutionIdentity`，再在受限容器中启动任意 Harness。Polar 与 Pi Direct 是可插拔 producer，而不是系统中心。Model Proxy 可以位于 Mac 上并把请求转发到云端受控模型；模型不要求与 sandbox 同机。
+
 ```text
                     Control Plane
-       Harness: context / loop / retry / terminate
+       Local Launcher → Harness: context / loop / retry / terminate
                             │
                             ▼
-Model API ─── Tool ─── Sandbox ─── Verifier
+Model Proxy ─── Tool ─── Docker Sandbox ─── Verifier
     │           │          │            │
     └────────── Capture / Hook ──────────┘
                             │
@@ -22,7 +26,9 @@ Model API ─── Tool ─── Sandbox ─── Verifier
                     Regression Gate
 ```
 
-系统不执行模型训练，也不自动生成 Harness patch。它负责让修改前后的行为变化有证据可查。
+系统核心不实现训练算法，也不自动生成 Harness patch。它负责让 Harness 修改和模型训练都只消费可验证、可回溯的证据；正式训练由 Slime 等外部 trainer 执行。
+
+Model Proxy 捕获请求、响应、采样配置、延迟和后端版本。外部 API 只返回文本时，证据仍可用于 observability 与受认证的文本学习视图；只有受控后端返回原生 response token IDs、对齐 behavior logprobs，并绑定不可变 policy fingerprint 时，调用证据才具备 RL capability。禁止在 proxy 中对文本重新 tokenize 后冒充采样 token。
 
 ## 2. 为什么先写 Event Log，而不是直接保存 Episode
 
@@ -95,7 +101,7 @@ GRPO Training View         requires target-policy token/logprob semantics
 
 Harness A/B 只能让目标 Harness 变量变化。模型 provider/revision、sampling、task revision、Sandbox、tool schema、Verifier、seed 或 timeout 不一致，都会形成 confounder。
 
-V1 已把 Harness、Model、Environment 和 Evaluator manifest 固定进 Episode，但尚未执行跨 run compatibility check。V2 会把检查放在 comparison 之前：不兼容时返回 `INSUFFICIENT_EVIDENCE`，而不是生成一个看似精确的涨跌百分比。
+当前实现已把 Harness、Model、Environment 和 Evaluator manifest 固定进 Episode，并在 comparison 之前执行兼容性检查：不兼容时返回 `INSUFFICIENT_EVIDENCE`，而不是生成一个看似精确的涨跌百分比。
 
 ## 7. Raw Fact、Metric 与 Diagnosis 的边界
 
@@ -132,10 +138,10 @@ stdout、stderr、patch 和 verifier report 可能很大，不适合复制到每
 
 Artifact 缺失不会被静默忽略；Assembler 会把 Episode 标成 `PARTIAL` 并列出缺失引用。
 
-## 9. V1 的可靠性边界
+## 9. 当前可靠性边界
 
-当前 writer 保证单进程内幂等和落盘 `fsync`，但没有实现多进程 file lock 或分布式事务。多 writer 部署需要 Kafka partition、数据库 unique constraint 或显式锁。
+轻量 `EventWriter` 只保证单进程内幂等和落盘 `fsync`；`PartitionedEventStore` 已提供多进程锁、冲突 quarantine 与 manifest recovery，但仍不是跨主机分布式事务。多机 writer 部署需要 Kafka partition、数据库 unique constraint 或等价机制。
 
-当前 metric 是 per-Episode deterministic derivation，没有统计置信区间。当前 attribution 是小型规则引擎，没有使用 LLM Judge，也不声称单因果真相。当前演示是机制证据，不是 benchmark 泛化证据。
+当前 metric 是 per-Episode deterministic derivation，没有统计置信区间。当前 attribution 是小型规则引擎，没有使用 LLM Judge，也不声称单因果真相。Local Launcher、Model Proxy、Harness event ingress、Verifier 和 finalizer 已通过真实 Docker + fake controlled model 的无 GPU 全链路验证；Pi + A6000 14B 受控模型也已完成 native token/logprob/policy revision、Verifier 与 ExecutionBundle 的 live 验证。canonical-v2 SFT candidate 在固定 unseen DEV 上未优于 base，Gate 正确输出 `REJECT / NO_IMPROVEMENT`。Polar live adapter 已通过 schema/transport 单测，Slime 训练尚未验证。当前演示是机制证据，不是 benchmark 泛化证据。
 
 这些限制会直接进入 V2 的 Gate 和 release artifact，而不是只写在口头说明中。

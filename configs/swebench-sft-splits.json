@@ -1,0 +1,21 @@
+{
+  "schema_version": "swebench-sft-splits/v1",
+  "train": [
+    "psf__requests-2931",
+    "psf__requests-5414",
+    "psf__requests-6028",
+    "pytest-dev__pytest-10051",
+    "sympy__sympy-23534",
+    "sympy__sympy-23824",
+    "sympy__sympy-23950",
+    "sympy__sympy-24213",
+    "sympy__sympy-24539"
+  ],
+  "development": [
+    "pytest-dev__pytest-10081"
+  ],
+  "test": [
+    "pallets__flask-5014"
+  ],
+  "policy": "Task IDs are disjoint. Teacher trajectories are admitted only for TRAIN. DEVELOPMENT and TEST remain Teacher-unseen and are used only for student evaluation."
+}

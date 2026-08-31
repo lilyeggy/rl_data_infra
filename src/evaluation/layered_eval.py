@@ -226,11 +226,15 @@ def evaluate_action_selection(
 
     attempted = len(submissions)
     correct_tool = semantic = exact = arg_norm = verifier_valid = invalid = repeated = 0
+    start_index = len(history)
+    if start_index > len(episode.actions):
+        raise ValueError("history is longer than the reference episode")
     for idx, submission in enumerate(submissions):
         chosen = _tool_name_of(submission)
-        if idx >= len(episode.actions):
+        reference_index = start_index + idx
+        if reference_index >= len(episode.actions):
             break
-        reference = episode.actions[idx]
+        reference = episode.actions[reference_index]
         ref_tool = reference.canonical_tool_name
         # tool-name correctness
         if chosen == ref_tool:
@@ -251,21 +255,21 @@ def evaluate_action_selection(
         if sub_args == norm_ref:
             exact += 1
         # semantic match = same tool + at least same path (normalized) if present
-        if "path" in sub_args and "path" in norm_ref:
-            if sub_args["path"] == norm_ref["path"]:
-                semantic += 1
-            elif "pattern" in sub_args or "pattern" in norm_ref:
+        if sub_args == norm_ref:
+            semantic += 1
+        elif "path" in sub_args and "path" in norm_ref:
+            if sub_args["path"] == norm_ref["path"] and _args_overlap(sub_args, norm_ref):
                 semantic += 1
         # argument normalization match
         if _args_overlap(sub_args, norm_ref):
             arg_norm += 1
         # verifier-assisted validity: if a prior action failed, choosing a
         # different, valid tool to inspect is good; repeating the failed call is bad.
-        prev = episode.actions[idx - 1] if idx > 0 else None
+        prev = episode.actions[reference_index - 1] if reference_index > 0 else None
         if prev is not None and prev.result_status.value in {"FAILED", "ERROR", "TIMEOUT"}:
             if chosen != prev.canonical_tool_name:
                 verifier_valid += 1
-            elif chosen == ref_tool and idx == len(episode.actions) - 1:
+            elif chosen == ref_tool and reference_index == len(episode.actions) - 1:
                 # last action producing a result after retry
                 verifier_valid += 1
             else:
@@ -340,12 +344,15 @@ def evaluate_trajectory_replay(
 
     recovered = failure_ctx = avoided = adjusted = 0
     total_steps = 0
-    reference_total = len(episode.actions)
+    continuations_within_reference = True
     ref_tools = [a.canonical_tool_name for a in episode.actions]
 
     for after_index, continuation in rewound_states:
         steps = len(continuation)
         total_steps += steps
+        continuations_within_reference = continuations_within_reference and (
+            steps <= max(0, len(episode.actions) - (after_index + 1))
+        )
         prior_index = after_index
         prior_failed = (
             episode.actions[prior_index].result_status.value
@@ -372,7 +379,7 @@ def evaluate_trajectory_replay(
         # A model that continues from state `after_index` should pick the next
         # reference action next (or a reasonable alternative after a failure).
         next_ref = after_index + 1
-        if steps > 0 and 0 <= next_ref < len(episode.actions):
+        if prior_failed and prior_tool == "run_command" and steps > 0 and 0 <= next_ref < len(episode.actions):
             ref_next = ref_tools[next_ref]
             if _tool_name_of(continuation[0]) != ref_next:
                 adjusted += 1
@@ -384,5 +391,5 @@ def evaluate_trajectory_replay(
         failure_contexts=failure_ctx,
         avoided_repeat_invalid=avoided,
         adjusted_after_test_error=adjusted,
-        shorter_or_equal_steps=total_steps <= reference_total,
+        shorter_or_equal_steps=continuations_within_reference,
     )

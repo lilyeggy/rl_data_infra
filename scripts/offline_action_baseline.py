@@ -63,11 +63,13 @@ def main() -> int:  # pragma: no cover - server-invoked
     if args.limit > 0:
         rows = rows[: args.limit]
 
-    prompts: list[str] = []
+    conversations: list[list[dict[str, str]]] = []
     expected_tools: list[str] = []
     for row in rows:
-        user = next(m for m in row["messages"] if m["role"] == "user")
-        prompts.append(user["content"])
+        conversations.append([
+            {"role": m["role"], "content": m["content"]}
+            for m in row["messages"] if m["role"] != "assistant"
+        ])
         expected_tools.append(row.get("target_action", {}).get("action_type", ""))
 
     import torch
@@ -92,7 +94,10 @@ def main() -> int:  # pragma: no cover - server-invoked
 
         submissions: list[Any] = []
         with torch.no_grad():
-            for p in prompts:
+            for messages in conversations:
+                p = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
                 enc = tokenizer(p, return_tensors="pt").to(model.device)
                 out = model.generate(
                     **enc, max_new_tokens=args.max_new_tokens, do_sample=False,

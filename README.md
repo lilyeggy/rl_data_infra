@@ -1,82 +1,118 @@
-# Multi-Harness Agent Execution Data Plane
+# Agent Improvement Data Plane
 
-面向 Agent Infra / Harness Runtime 的 Trace、Data 与 Observability 基础设施。系统把模型、工具、Sandbox、Harness Hook 和 Verifier 产生的异构事实统一为不可变 `TraceEvent`，再确定性组装为 `AgentEpisode`，用于回放、指标、故障归因、Harness 版本对比和回归决策；训练数据是可选下游视图，不是当前主链路。
+把一次真实 Agent/Harness 执行转化为可验证、可归因、可训练的证据，分别驱动：
 
-## 当前可运行版本
-
-`v2-harness-decision` 已在 V1 单次运行纵向闭环上，实现真实 Pi 的横向 Harness 决策闭环：
+1. Harness 改进：诊断、受控 A/B、回归 Gate；
+2. 模型改进：认证后的 SFT、Preference 和 Agentic RL 数据。
 
 ```text
-Capture adapters
-      ↓
-append-only raw-events.jsonl
-      ↓
-EpisodeAssembler
-      ↓
-AgentEpisode + integrity/lineage
-      ↓
-Metrics + evidence-linked attribution
+Task + Environment + Harness + Policy
+                  │
+        Local Docker Launcher (default)
+        Pi Direct / Polar Live (plugins)
+                  │
+       Model Proxy + Tool/Sandbox + Hook
+                  │
+      immutable execution evidence
+                  │
+      assemble → verify → certify
+                  │
+       ┌──────────┴──────────┐
+       ▼                     ▼
+Harness analysis         Learning datasets
+compare / gate           SFT / pref / RL
+                              │
+                         Slime trainer
 ```
 
-当前覆盖：
+## 当前状态
 
-- 严格且不可变的 `TraceEvent`、manifest、`ArtifactRef`、`AgentEpisode`；
-- append-only JSONL、`event_id` 幂等、冲突 quarantine、坏行隔离；
-- 内容寻址 artifact store；
-- model/tool/environment/verifier capture 与 optional Harness Hook；
-- 乱序、重复、sequence gap、orphan span、missing terminal、partial/corrupt 组装语义；
-- outcome、token、延迟、工具行为和 verifier 指标；
-- SANDBOX / MODEL_BACKEND / EVALUATOR / HARNESS / UNKNOWN 的证据关联归因；
-- 成功、有效任务失败和 infra-invalid 三类冻结演示数据。
-- Pi 0.84.2 + 固定 `opencode-go/gpt-5.6-luna` 的真实 NDJSON capture/adapter；
-- `ExperimentManifest`、逐对 compatibility、paired comparison；
-- 三态 Regression Gate、只读 Observatory、`TrainingCandidateView`；
-- 3 对真实 error-recovery reference case：control 0/3、candidate 3/3，但因 token/latency 超预算，Gate 诚实输出 `REJECT`。
+已完成且保留的可信内核：
 
-## 快速开始
+- 不可变 `TraceEvent` 与确定性 `AgentEpisode`；
+- append-only storage、checksum、lineage、quarantine；
+- task failure 与 infrastructure invalid 分离；
+- verifier-backed Episode certification；
+- Harness metrics、attribution、paired comparison、regression gate；
+- policy fingerprint 与 fail-closed training eligibility；
+- 统一 `ExecutionIdentity`、`ExecutionBundle`、producer 边界和 consumer certification 入口；
+- content-addressed `DatasetManifest` / compiler，并阻断 task split leakage 与残缺 preference pair；
+- Polar 官方 HTTP boundary、batch producer 和 stable `TaskResult/SessionResult/Trajectory` 严格适配。
+- Local Docker Launcher：统一 identity 注入、资源限制、只读 root、cap-drop、no-new-privileges 与显式网络策略；
+- Model Proxy evidence：外部 API 保持 observability-only，受控服务原生 token/logprob 才能声明 RL capability；
+- OpenAI-compatible Model Proxy HTTP forwarder、逐 execution bearer token 和耐久 model-evidence log；
+- `ExecutionRunManifest` 与 Local Run finalizer，将 events/model evidence/launcher artifact 严格 join 为 Episode/Bundle；
+- `execute-local` 单事务编排器，统一负责 proxy、Harness、verifier、terminal event、finalize 与 cleanup；
+- Harness event ingress/SDK：Harness 只提交事实描述，identity、sequence、timestamp 和 event ID 由宿主生成；
+- stdout/stderr、workspace diff/patch 与 verifier report 的内容寻址落盘；
+- 单 GPU phase/evidence 状态契约，阻断 serving/training 资源重叠和越级训练。
+- `ExecutionBundle` 严格组装器与 bundle-bound RL certification；
+- Slime admission envelope：重新核验 manifest/decision/bundle/artifact 后才输出 token-faithful traces；
+- 单 GPU 原子状态存储、checksum CAS、断点恢复和不执行命令的 dry-run plan。
+- A6000 上的真实 Pi → Model Proxy → 14B LoRA → Verifier → ExecutionBundle live 闭环；
+- base 与 SFT candidate 的固定 unseen DEV 对照，以及读取报告结论的 fail-closed supervisor Gate。
 
-项目核心只依赖 Python 3.10+ 标准库，不需要 GPU、Polar、Slime 或训练框架。
+正在建设：
+
+- 在真实 Polar 服务上验证可选 live rollout，而不只依赖 transport unit test；
+- 在真实 live session 上验证 Harness capture 与 Polar artifact 的 bundle join；
+- 将单 GPU phase contract 接到真实进程启停与 artifact 持久化；
+- 把已 admission 的 envelope 交给官方 Polar–Slime bridge 并完成正式训练验证。
+
+当前没有完成、不得宣称完成：
+
+- Slime 端到端模型更新；
+- 通过固定 unseen DEV Gate 的 policy-v1；当前 canonical-v2 SFT candidate 为 `REJECT / NO_IMPROVEMENT`；
+- 大规模 Agentic RL；
+- benchmark 泛化提升。
+
+## 快速验证
+
+核心代码只依赖 Python 3.10+ 标准库：
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m src.cli demo-v1 --output artifacts/v1-observability
-python3 -m src.cli demo-v2 --output artifacts/v2-harness-decision
 python3 -m src.cli inspect \
   --episodes artifacts/v1-observability/episodes.jsonl \
   --episode-id episode-tool-loop
+python3 -m src.cli quality-report \
+  --artifacts artifacts/current/producer-artifacts.jsonl \
+  --decisions artifacts/current/eligibility-decisions.jsonl \
+  --output artifacts/current/data-quality-report.json
+python3 -m src.cli admit-slime \
+  --manifest artifacts/current/dataset-manifest.json \
+  --decisions artifacts/current/eligibility-decisions.jsonl \
+  --bundles artifacts/current/execution-bundles.jsonl \
+  --artifacts artifacts/current/producer-artifacts.jsonl \
+  --output artifacts/current/slime-admission.json
+python3 -m src.cli prepare-local \
+  --spec configs/local-execution.example.json \
+  --output-dir artifacts/prepared-run
+python3 -m src.cli execute-local \
+  --spec configs/local-execution.example.json \
+  --output-dir artifacts/run-001 \
+  --upstream-auth-env MODEL_SERVER_AUTHORIZATION
 ```
 
-生成结果：
+`quality-report` 会严格重载每条版本化记录；未知字段、旧 schema、损坏 JSON
+都会直接失败，不会被当作可训练数据跳过。
+`admit-slime` 会从磁盘重新核验整条 checksum/identity/policy lineage，并通过
+原子替换写出 trainer-neutral admission envelope。
 
-```text
-artifacts/v1-observability/
-├── raw-events.jsonl       # append-only facts
-├── blobs/                 # content-addressed evidence
-├── episodes.jsonl         # canonical assembled executions
-├── metrics.json           # derived observations
-├── diagnoses.jsonl        # versioned rules + evidence IDs
-└── summary.json            # release scope and limits
-```
+旧 demo 已迁到 `examples/legacy_scenarios/`，只由回归测试直接调用，不再暴露为生产 CLI 命令。旧硬件 lock、主机脚本和自定义训练代码见 `archive/`。
 
-## 三条必须守住的语义
+## 权威阅读顺序
 
-1. `FAILURE + VALID` 是一次可信的任务失败；`UNKNOWN + INFRA_INVALID` 是执行系统没有产生可信任务结果。二者不能都写成 reward 0。
-2. `NOT_OBSERVABLE` 表示采集能力不存在，不能用 `0` 或文本猜测填补；`UNKNOWN` 表示能力存在但当前事实不足以判定。
-3. raw event 是事实；metric、diagnosis 和 Gate 是带输入 checksum 与规则版本的派生结论，不能反写原始数据。
+1. [项目范围](PROJECT_SCOPE.md)
+2. [实施计划](PROJECT_PLAN.md)
+3. [架构决策 ADR-0002](docs/adr/0002-agent-improvement-data-plane.md)
+4. [数据契约](docs/data-contract.md)
+5. [历史归档索引](archive/README.md)
 
-## 阅读入口
+## 组件边界
 
-- 项目边界：[PROJECT_SCOPE.md](PROJECT_SCOPE.md)
-- 架构与工程取舍：[docs/architecture.md](docs/architecture.md)
-- V1 复盘教程：[docs/learning/v1-agent-infra-review-guide.md](docs/learning/v1-agent-infra-review-guide.md)
-- 两版迭代计划：[docs/v1-v2-roadmap.md](docs/v1-v2-roadmap.md)
-- V1 交付记录：[docs/releases/v1-observability.md](docs/releases/v1-observability.md)
-- V2 教学复盘：[docs/learning/v2-harness-decision-guide.md](docs/learning/v2-harness-decision-guide.md)
-- V2 交付记录：[docs/releases/v2-harness-decision.md](docs/releases/v2-harness-decision.md)
-- Canonical contract：[docs/data-contract.md](docs/data-contract.md)
-
-## 准确的面试表述
-
-> 我实现了一个 Harness-neutral 的 Agent Execution Data Plane。它把 model/tool/sandbox/verifier/harness 事实确定性组装成可审计 Episode，并在真实 Pi 轨迹上完成受控 Harness A/B、failure attribution 和三态 Regression Gate；每个上线结论都能下钻到原始事件证据。
-
-当前不应表述为“已完成大规模 benchmark 提升”或“teacher trace 已经是 on-policy RL rollout”。
+- Local Docker Launcher：默认运行真实 Harness 和隔离 workspace；
+- Polar：可选地运行批量 Harness rollout、重建 token-faithful trajectory；
+- 本项目：不可变证据、验证、认证、数据集、Harness/模型双闭环；
+- Slime：正式 GRPO/PPO 训练、Megatron、SGLang 和权重同步；
+- 自定义旧 GRPO/SFT：已归档，不是生产训练路径。

@@ -96,6 +96,15 @@ class ActionSelectionTest(unittest.TestCase):
         self.assertEqual(result.correct_tool, 1)
         self.assertEqual(result.exact_match, 1)
 
+    def test_history_offsets_reference_action(self) -> None:
+        ep = _episode()
+        result = evaluate_action_selection(
+            episode=ep,
+            history=({"name": "read_file", "arguments": {"path": "sympy/core/a.py"}},),
+            submissions=({"name": "run_command", "arguments": {"command": "$WORKSPACE && pytest"}},),
+        )
+        self.assertEqual(result.correct_tool, 1)
+
     def test_verifier_assisted_recovery(self) -> None:
         # after action[1] (run_command) FAILED, a good model avoids repeating it.
         ep = _episode()

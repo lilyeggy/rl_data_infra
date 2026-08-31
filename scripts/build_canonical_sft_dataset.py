@@ -13,7 +13,7 @@ import argparse
 import glob
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from src.contracts._json import canonical_json_bytes, sha256_json
 from src.capture.pi_canonical_adapter import CanonicalEpisode
@@ -24,6 +24,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--canonical-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--tasks-json", type=Path, required=True,
+        help="SWE-bench JSON list containing instance_id and problem_statement",
+    )
+    parser.add_argument(
+        "--workspace-root-prefix", type=str,
+        help="absolute workspace parent; task suffix is appended before rendering observations",
+    )
     args = parser.parse_args()
 
     output = args.output_dir
@@ -33,10 +41,35 @@ def main() -> int:
     for path in sorted(glob.glob(str(args.canonical_dir / "canonical-*.json"))):
         episodes.append(CanonicalEpisode.from_dict(json.loads(Path(path).read_text())))
 
+    task_rows = json.loads(args.tasks_json.read_text())
+    if isinstance(task_rows, Mapping):
+        task_statements = {
+            str(task_id): row["problem_statement"]
+            for task_id, row in task_rows.items()
+            if isinstance(row, Mapping) and row.get("problem_statement")
+        }
+    elif isinstance(task_rows, list):
+        task_statements = {
+            str(row.get("instance_id") or row.get("task_id")): row["problem_statement"]
+            for row in task_rows
+            if isinstance(row, Mapping) and row.get("problem_statement")
+        }
+    else:
+        raise ValueError("--tasks-json must contain an object or a list of task records")
+
+    workspace_roots = {}
+    if args.workspace_root_prefix:
+        prefix = args.workspace_root_prefix.rstrip("/")
+        workspace_roots = {
+            ep.episode_id: f"{prefix}/{ep.task_id.split('__', 1)[-1]}"
+            for ep in episodes
+        }
+
     examples, report = build_canonical_sft_dataset(
         tuple(episodes),
         task_ids={ep.episode_id: ep.task_id for ep in episodes},
-        workspace_roots={ep.episode_id: "" for ep in episodes},
+        task_statements=task_statements,
+        workspace_roots=workspace_roots,
     )
 
     lines = [canonical_json_bytes(ex.to_dict()) + b"\n" for ex in examples]

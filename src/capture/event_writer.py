@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from src.contracts._json import canonical_json_bytes, sha256_bytes
+from src.contracts._json import canonical_json_bytes, sha256_bytes, sha256_json
 from src.contracts.artifacts import ArtifactRef
 from src.contracts.trace_event import TraceEvent
 from src.errors import ContractValidationError
@@ -126,7 +126,7 @@ class ArtifactStore:
     """Write immutable evidence blobs under a content-addressed filename."""
 
     def __init__(self, root: str | Path, *, uri_prefix: str | None = None) -> None:
-        self.root = Path(root)
+        self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.uri_prefix = uri_prefix
 
@@ -156,8 +156,16 @@ class ArtifactStore:
             if self.uri_prefix is not None
             else path.as_posix()
         )
+        reference_digest = sha256_json(
+            {
+                "sha256": digest,
+                "kind": kind,
+                "media_type": media_type,
+                "producer_event_id": producer_event_id,
+            }
+        )
         return ArtifactRef(
-            artifact_id=f"artifact-{digest[:20]}",
+            artifact_id=f"artifact-{reference_digest[:20]}",
             kind=kind,
             uri=uri,
             media_type=media_type,

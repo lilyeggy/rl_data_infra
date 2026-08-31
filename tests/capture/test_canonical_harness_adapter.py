@@ -79,6 +79,40 @@ class CanonicalToPiCallTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             canonical_to_pi_call({"action_type": "transmute", "arguments": {}})
 
+    def test_workspace_placeholder_resolved(self) -> None:
+        # ``cd $WORKSPACE && X`` collapses to X since Pi cwd == workspace.
+        call = canonical_to_pi_call(
+            {
+                "action_type": "run_command",
+                "arguments": {"command": "cd $WORKSPACE && git status"},
+            },
+            workspace_root=".",
+        )
+        self.assertEqual(call["name"], "bash")
+        self.assertNotIn("$WORKSPACE", call["arguments"]["command"])
+        self.assertEqual(call["arguments"]["command"], "git status")
+
+    def test_workspace_placeholder_bare_token(self) -> None:
+        # Model emits ``$WORKSPACE && X`` (no cd) -> should yield X.
+        call = canonical_to_pi_call(
+            {
+                "action_type": "run_command",
+                "arguments": {"command": "$WORKSPACE && python -m pytest"},
+            },
+            workspace_root=".",
+        )
+        self.assertEqual(call["arguments"]["command"], "python -m pytest")
+
+    def test_workspace_placeholder_path_prefix(self) -> None:
+        call = canonical_to_pi_call(
+            {
+                "action_type": "run_command",
+                "arguments": {"command": "cat $WORKSPACE/sympy/x.py"},
+            },
+            workspace_root=".",
+        )
+        self.assertEqual(call["arguments"]["command"], "cat sympy/x.py")
+
     def test_prob_resolution(self) -> None:
         # The mapping is a subset: every Pi-tool-adjacent canonical maps to a Pi tool.
         import src.contracts.canonical_action as ca
