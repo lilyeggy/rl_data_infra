@@ -13,8 +13,8 @@ from typing import Any
 from src.contracts._json import canonical_json_bytes, sha256_json
 
 
-PACKAGE_VERSION = "teacher-sft-training-package/v6"
-QUALITY_POLICY_VERSION = "teacher-trajectory-quality/v1"
+PACKAGE_VERSION = "teacher-sft-training-package/v7"
+QUALITY_POLICY_VERSION = "teacher-trajectory-quality/v2"
 RUNTIME_FORMAT_POLICY_VERSION = "pi-qwen-runtime-format/v1"
 TURN_SELECTION_POLICY_VERSION = "teacher-turn-selection/v2"
 MESSAGE_CHAR_CAP = 2000
@@ -127,6 +127,8 @@ def _trajectory_quality(row: Mapping[str, Any]) -> dict[str, Any]:
     duplicate_rate = duplicate_calls / len(signatures) if signatures else 0.0
     final_answer = row.get("final_answer")
     reasons: list[str] = []
+    if row.get("schema_version") != "teacher-sft-example/v2":
+        reasons.append("example lacks action-observation-closed SFT schema v2")
     if row.get("certification_verdict") != "ELIGIBLE":
         reasons.append("trajectory is not SFT ELIGIBLE")
     if not isinstance(final_answer, str) or not final_answer.strip():

@@ -70,6 +70,12 @@ export PORT=8000
 export QWEN_SERV_CONTEXT_TOKENS="${QWEN_SERV_CONTEXT_TOKENS:-32768}"
 export QWEN_SERV_MAX_TOKENS="${QWEN_SERV_MAX_TOKENS:-8192}"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# This service is PyTorch-only.  The shared environment also contains
+# TensorFlow, whose binary may be built against a different NumPy ABI.  Tell
+# Transformers not to probe it, so an unrelated optional backend cannot make
+# model-server startup fail.
+export USE_TF=0
+export TRANSFORMERS_NO_TF=1
 
 printf '=== canonical-v2 model service %s ===\n' "$(date -Is)" >"$server_log"
 setsid nohup python3 -u experiments/local_model/openai_server.py >>"$server_log" 2>&1 </dev/null &

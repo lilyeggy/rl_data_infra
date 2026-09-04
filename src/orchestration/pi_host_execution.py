@@ -298,16 +298,57 @@ class PiHostExecutionOrchestrator:
             "all_model_calls_rl_usable": all_model_calls_usable,
             "model_endpoint": "controlled-proxy" if controlled_model else "provider-managed"},
             issues=tuple(issue.message for issue in issues) + tuple(adapted.backend_error_messages) + before.issues + after.issues)
+        # Keep policy evidence distinct from the harness artifact.  The terminal
+        # verifier reward is attached only after a valid verifier run; failed
+        # tasks therefore carry an observed 0.0, while infra-invalid attempts
+        # carry no invented reward at all.
+        policy_traces = []
+        if valid and all_model_calls_usable and score is not None:
+            for item in evidence:
+                policy_traces.append({
+                    "request_id": item.request.request_id,
+                    "response_ids": list(item.backend.response_token_ids or ()),
+                    "action_mask": [1] * len(item.backend.response_token_ids or ()),
+                    "response_logprobs": list(item.backend.response_logprobs or ()),
+                    "reward": score,
+                    "backend_model_revision": item.backend.backend_model_revision,
+                })
+        policy_capabilities = set()
+        if policy_traces:
+            policy_capabilities |= {
+                ProducerCapability.TOKEN_IDS,
+                ProducerCapability.ACTION_MASK,
+                ProducerCapability.BEHAVIOR_LOGPROBS,
+                ProducerCapability.POLICY_VERSION,
+            }
+        if report_ref:
+            policy_capabilities.add(ProducerCapability.VERIFIER_EVIDENCE)
+        policy_artifact = ProducerArtifact(
+            identity=spec.identity,
+            status=ProducerExecutionStatus.COMPLETED if policy_traces else ProducerExecutionStatus.INFRA_INVALID,
+            capabilities=frozenset(policy_capabilities),
+            payload={"trajectory": {"traces": policy_traces},
+                     "model_evidence_checksums": [item.checksum for item in evidence],
+                     "verifier_report_checksum": report_ref.sha256 if report_ref else None},
+            issues=() if policy_traces else ("RL policy evidence is incomplete or lacks a valid verifier reward",),
+        )
         refs = (*all_harness_refs, *verifier_refs)
         _write_json(root / "producer-artifact.json", producer.to_dict())
+        _write_json(root / "policy-artifact.json", policy_artifact.to_dict())
         _write_json(artifacts_path, [item.to_dict() for item in refs])
         finalization = finalize_local_run(manifest=manifest, producer_artifact=producer, events_path=events_path,
-            model_evidence_path=evidence_path, artifacts_path=artifacts_path)
+            policy_artifact=policy_artifact, model_evidence_path=evidence_path, artifacts_path=artifacts_path)
         _write_json(root / "finalized" / "episode.json", finalization.episode.to_dict())
         _write_json(root / "finalized" / "execution-bundle.json", finalization.execution_bundle.to_dict())
         from src.certification import ConsumerProfile, certify_for
         sft_decision = certify_for(finalization.episode, ConsumerProfile.SFT)
         _write_json(root / "finalized" / "sft-eligibility.json", sft_decision.to_dict())
+        rl_decision = certify_for(
+            finalization.episode, ConsumerProfile.ON_POLICY_RL,
+            execution_bundle=finalization.execution_bundle, policy_artifact=policy_artifact,
+            target_policy_fingerprint=spec.identity.policy_fingerprint,
+        )
+        _write_json(root / "finalized" / "on-policy-rl-eligibility.json", rl_decision.to_dict())
         summary = {"run_id": spec.identity.run_id, "task_id": spec.identity.task_id, "pi_returncode": result.returncode,
                    "model_call_count": len(evidence_rows) if controlled_model else sum(
                        event.event_type is EventType.MODEL_RESPONSE for event in adapted.events
@@ -315,6 +356,7 @@ class PiHostExecutionOrchestrator:
                    "execution_validity": finalization.episode.outcome.execution_validity.value,
                    "integrity": finalization.episode.integrity.state.value,
                    "sft_verdict": sft_decision.verdict.value,
+                   "on_policy_rl_verdict": rl_decision.verdict.value,
                    "execution_bundle_checksum": finalization.execution_bundle.checksum}
         _write_json(root / "summary.json", summary)
         return summary

@@ -98,6 +98,85 @@ def _message(value: Mapping[str, Any]) -> dict[str, Any] | None:
     return normalized
 
 
+def _tool_observation(step: Mapping[str, Any]) -> dict[str, Any]:
+    """Render one executed tool result as a standard chat observation."""
+    result = step.get("result")
+    if result is None:
+        raise ValueError(f"tool call {step.get('tool_call_id')!r} has no result")
+    call_id = step.get("tool_call_id")
+    tool_name = step.get("tool_name")
+    if not isinstance(call_id, str) or not call_id:
+        raise ValueError("tool result has no stable tool_call_id")
+    if not isinstance(tool_name, str) or not tool_name:
+        raise ValueError(f"tool result {call_id!r} has no tool name")
+    result_text = _text(result.get("content")) if isinstance(result, Mapping) else _text(result)
+    return {
+        "role": "tool",
+        "tool_call_id": call_id,
+        "name": tool_name,
+        "content": result_text or json.dumps(result, ensure_ascii=False, sort_keys=True),
+    }
+
+
+def _assemble_agent_sft_messages(
+    messages: Sequence[Mapping[str, Any]], steps: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """Insert verified tool observations after the assistant action that issued them.
+
+    The captured model-request history can omit tool results even though the
+    canonical trace has them.  A training view must not silently train on that
+    incomplete history: every emitted tool call is closed by exactly one
+    observation before a subsequent assistant decision is admitted.
+    """
+    results_by_id: dict[str, Mapping[str, Any]] = {}
+    for step in steps:
+        call_id = step.get("tool_call_id")
+        if not isinstance(call_id, str) or not call_id:
+            raise ValueError("tool step has no stable tool_call_id")
+        if call_id in results_by_id:
+            raise ValueError(f"duplicate tool result for {call_id!r}")
+        results_by_id[call_id] = step
+
+    assembled: list[dict[str, Any]] = []
+    consumed: set[str] = set()
+    for message in messages:
+        normalized = dict(message)
+        # Pi may already include toolResult entries in a future runtime. Keep
+        # them only when they are not regenerated from canonical steps.
+        if normalized.get("role") == "tool":
+            call_id = normalized.get("tool_call_id")
+            if isinstance(call_id, str) and call_id in results_by_id:
+                continue
+            assembled.append(normalized)
+            continue
+        assembled.append(normalized)
+        if normalized.get("role") != "assistant":
+            continue
+        calls = normalized.get("tool_calls", ())
+        if not isinstance(calls, Sequence) or isinstance(calls, (str, bytes)):
+            continue
+        for call in calls:
+            if not isinstance(call, Mapping):
+                raise ValueError("assistant tool call is not an object")
+            call_id = call.get("id")
+            function = call.get("function")
+            if not isinstance(call_id, str) or not call_id:
+                raise ValueError("assistant tool call has no stable id")
+            if call_id in consumed:
+                raise ValueError(f"duplicate assistant tool call id {call_id!r}")
+            step = results_by_id.get(call_id)
+            if step is None:
+                raise ValueError(f"assistant tool call {call_id!r} has no canonical result")
+            if isinstance(function, Mapping) and function.get("name") != step.get("tool_name"):
+                raise ValueError(f"tool name mismatch for {call_id!r}")
+            assembled.append(_tool_observation(step))
+            consumed.add(call_id)
+    unreferenced = sorted(set(results_by_id) - consumed)
+    if unreferenced:
+        raise ValueError(f"canonical tool results have no assistant call: {unreferenced}")
+    return assembled
+
+
 def _conversation(episode: AgentEpisode) -> tuple[list[dict[str, Any]], str]:
     requests = [event for event in episode.events if event.event_type is EventType.MODEL_REQUEST]
     responses = [event for event in episode.events if event.event_type is EventType.MODEL_RESPONSE]
@@ -111,6 +190,8 @@ def _conversation(episode: AgentEpisode) -> tuple[list[dict[str, Any]], str]:
                 normalized = _message(item)
                 if normalized is not None:
                     messages.append(normalized)
+    steps = _steps(episode)
+    messages = _assemble_agent_sft_messages(messages, steps)
     final_native = {
         "role": "assistant",
         "content": responses[-1].attributes.get("content", ()),
@@ -157,7 +238,7 @@ def _example(
         final_answer = "[verifier] benchmark tests passed"
         final_answer_source = "verifier-attestation"
     return {
-        "schema_version": "teacher-sft-example/v1",
+        "schema_version": "teacher-sft-example/v2",
         "episode_id": episode.episode_id,
         "episode_checksum": episode.checksum,
         "task_id": episode.task_id,

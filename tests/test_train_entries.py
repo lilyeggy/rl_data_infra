@@ -57,11 +57,27 @@ class BuildSftDatasetTest(unittest.TestCase):
                 "messages": [{"role": "assistant", "content": "ok"}],
                 "final_answer": '{"answer": 42}',
                 "certification_verdict": "ELIGIBLE",
-                "steps": [{"content": '{"action":"read"}', "result": "file-content"}],
+                "steps": [],
             }
         )
         self.assertTrue(trainable)
         self.assertEqual(reasons, ())
+
+    def test_missing_observation_in_messages_never_trains(self) -> None:
+        trainable, reasons = classify_sft_example(
+            {
+                "messages": [
+                    {"role": "user", "content": "fix it"},
+                    {"role": "assistant", "tool_calls": [{"id": "call-1"}]},
+                    {"role": "assistant", "content": "done"},
+                ],
+                "final_answer": "done",
+                "certification_verdict": "ELIGIBLE",
+                "steps": [{"tool_call_id": "call-1", "content": "x", "result": "y"}],
+            }
+        )
+        self.assertFalse(trainable)
+        self.assertTrue(any("before prior tool observations" in reason for reason in reasons))
 
 
 class SwebenchTest(unittest.TestCase):

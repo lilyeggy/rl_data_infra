@@ -217,6 +217,14 @@ class ModelProxyService:
                     else None
                 ),
                 latency_ms=latency_ms,
+                token_ids=backend.response_token_ids,
+                logprobs=backend.response_logprobs,
+                action_mask=(
+                    tuple(1 for _ in backend.response_token_ids)
+                    if backend.response_token_ids is not None
+                    else None
+                ),
+                backend_model_revision=backend.backend_model_revision,
                 status=event_status,
                 attempt=self.identity.attempt_id,
             )

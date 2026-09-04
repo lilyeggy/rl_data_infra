@@ -152,6 +152,10 @@ class TraceRecorder:
         response: Mapping[str, Any],
         usage: Mapping[str, Any] | None = None,
         latency_ms: float | None = None,
+        token_ids: tuple[int, ...] | None = None,
+        logprobs: tuple[float, ...] | None = None,
+        action_mask: tuple[int, ...] | None = None,
+        backend_model_revision: str | None = None,
         status: EventStatus = EventStatus.SUCCEEDED,
         attempt: int = 1,
     ) -> TraceEvent:
@@ -160,6 +164,17 @@ class TraceRecorder:
             attributes["usage"] = usage
         if latency_ms is not None:
             attributes["latency_ms"] = latency_ms
+        # These arrays are observed from the controlled serving response.  They
+        # are intentionally optional: callers must never retokenize text or
+        # fabricate behavior logprobs merely to make a trajectory RL-shaped.
+        if token_ids is not None:
+            attributes["token_ids"] = list(token_ids)
+        if logprobs is not None:
+            attributes["logprobs"] = list(logprobs)
+        if action_mask is not None:
+            attributes["action_mask"] = list(action_mask)
+        if backend_model_revision is not None:
+            attributes["backend_model_revision"] = backend_model_revision
         return self.emit(
             EventType.MODEL_RESPONSE,
             EventComponent.MODEL_BACKEND,

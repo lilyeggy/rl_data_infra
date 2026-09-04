@@ -32,6 +32,7 @@ def finalize_local_run(
     *,
     manifest: ExecutionRunManifest,
     producer_artifact: ProducerArtifact,
+    policy_artifact: ProducerArtifact | None = None,
     events_path: str | Path,
     model_evidence_path: str | Path,
     artifacts_path: str | Path | None = None,
@@ -78,10 +79,12 @@ def finalize_local_run(
         and episode.outcome.verifier_status is not verifier_report.verifier_status
     ):
         raise ContractValidationError("verifier report/terminal outcome mismatch")
+    if policy_artifact is not None and policy_artifact.identity != manifest.identity:
+        raise ContractValidationError("policy artifact/run manifest identity mismatch")
     bundle = assemble_execution_bundle(
         identity=manifest.identity,
         episode=episode,
-        producer_artifacts=(producer_artifact,),
+        producer_artifacts=(producer_artifact, *(() if policy_artifact is None else (policy_artifact,))),
         source_artifact_checksums=(
             *(item.checksum for item in evidence),
             *(item.sha256 for item in artifacts),
