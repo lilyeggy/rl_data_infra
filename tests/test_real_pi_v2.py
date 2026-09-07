@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.capture.pi_adapter import read_pi_ndjson
 from src.contracts.agent_episode import TaskStatus
-from src.real_pi_v2 import verify_reference_answer
+from examples.legacy_scenarios.real_pi_v2 import verify_reference_answer
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pi" / "v2-real"

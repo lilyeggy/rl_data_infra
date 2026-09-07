@@ -1,4 +1,15 @@
-"""Non-mutating training eligibility view over a canonical Episode."""
+"""Compatibility projection over the unified training eligibility decision.
+
+New dataset code should consume ``certification.EligibilityDecision`` and
+``learning.compile_dataset``.  This view remains for historical scenario
+outputs; it does not own a second eligibility policy.
+
+The view reports, per episode, whether it is an SFT candidate and an on-policy
+RL candidate by consuming the unified, fail-closed ``TrainingEligibility``.
+Capability *declarations* are no longer treated as proof: SFT/on-policy RL now
+require real verifier evidence, real observation/action evidence and, for RL,
+actual token/logprob/mask fields plus a fully matching policy fingerprint.
+"""
 
 from __future__ import annotations
 
@@ -6,14 +17,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.contracts._json import sha256_json
-from src.contracts.agent_episode import (
-    AgentEpisode,
-    CaptureCapability,
-    ExecutionValidity,
-    IntegrityState,
-    TaskStatus,
-)
-
+from src.contracts.agent_episode import AgentEpisode, CaptureCapability
 
 TRAINING_CANDIDATE_VERSION = "training-candidate-view/v1"
 
@@ -60,31 +64,66 @@ def build_training_candidate_view(
     episode: AgentEpisode,
     *,
     target_policy_model: str | None = None,
+    target_policy: Any | None = None,
+    eligibility: Any | None = None,
 ) -> TrainingCandidateView:
-    reasons: list[str] = []
-    if episode.integrity.state is not IntegrityState.COMPLETE:
-        reasons.append("integrity is not COMPLETE")
-    if episode.outcome.execution_validity is not ExecutionValidity.VALID:
-        reasons.append("execution is not VALID")
-    if episode.outcome.task_status is not TaskStatus.SUCCESS:
-        reasons.append("task is not SUCCESS")
-    sft_candidate = not reasons
-    required = {CaptureCapability.MODEL_TOKEN_IDS, CaptureCapability.MODEL_LOGPROBS}
-    missing = tuple(sorted(item.value for item in required - episode.capabilities))
-    same_policy = target_policy_model is not None and target_policy_model == episode.model_manifest.model_id
-    if not same_policy:
-        reasons.append("behavior model differs from target policy or target policy is unspecified")
-    if missing:
-        reasons.append("exact behavior token IDs/logprobs are unavailable")
-    on_policy = sft_candidate and same_policy and not missing
+    """Build the view by consuming unified eligibility (fail-closed).
+
+    The legacy ``target_policy_model`` string alone can never prove a complete
+    policy fingerprint, so it only affects labelling and never grants on-policy
+    RL eligibility on its own.  Provide a full ``target_policy`` fingerprint and
+    real behavior token/logprob/mask/reward evidence for on-policy eligibility.
+    """
+
+    # lazy imports avoid a circular dependency with the contracts package
+    from src.training.eligibility import evaluate_training_eligibility
+    from src.validation.episode_semantics import certify_episode
+
+    if eligibility is None:
+        target_fp = None
+        if target_policy is not None:
+            target_fp = target_policy
+        eligibility = evaluate_training_eligibility(
+            episode, target_policy=target_fp
+        )
+
+    reasons: list[str] = list(eligibility.reasons)
+
+    sft_candidate = eligibility.sft_eligible
+    on_policy = eligibility.on_policy_rl_eligible
+
+    if target_policy is not None:
+        same_identity = target_policy.model_id == episode.model_manifest.model_id
+    else:
+        same_identity = target_policy_model == episode.model_manifest.model_id
+    target_provided = target_policy is not None or target_policy_model is not None
+    policy_relation = (
+        "ON_POLICY" if on_policy else ("OFF_POLICY" if target_provided else "UNSPECIFIED")
+    )
+    training_role = "TARGET_POLICY" if same_identity else "TEACHER"
+
+    cert = certify_episode(episode)
+    capability_evidence = cert.capability_evidence
+    missing = tuple(
+        sorted(
+            cap
+            for cap in (
+                CaptureCapability.MODEL_TOKEN_IDS.value,
+                CaptureCapability.MODEL_LOGPROBS.value,
+                "ACTION_MASK",
+            )
+            if capability_evidence.get(cap) != "EVIDENCE_PRESENT"
+        )
+    )
+
     return TrainingCandidateView(
         episode_id=episode.episode_id,
         episode_checksum=episode.checksum,
         behavior_provider=episode.model_manifest.provider,
         behavior_model=episode.model_manifest.model_id,
         behavior_model_revision=episode.model_manifest.revision,
-        training_role="TEACHER" if not same_policy else "TARGET_POLICY",
-        policy_relation="ON_POLICY" if same_policy else "OFF_POLICY",
+        training_role=training_role,
+        policy_relation=policy_relation,
         sft_candidate=sft_candidate,
         on_policy_rl_candidate=on_policy,
         missing_rl_capabilities=missing,

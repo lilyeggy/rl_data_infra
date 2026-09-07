@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
@@ -13,7 +14,7 @@ from src.contracts.trace_event import (
     EventType,
     TraceEvent,
 )
-
+from src.recovery.file_not_found_policy import RecoveryDecision
 
 SENSITIVE_KEYS = frozenset(
     {
@@ -83,6 +84,7 @@ class TraceRecorder:
         self._next_sequence = initial_sequence
         self._clock = clock
         self._id_factory = id_factory or (lambda: uuid.uuid4().hex)
+        self._lock = threading.Lock()
 
     def emit(
         self,
@@ -98,28 +100,29 @@ class TraceRecorder:
         event_id: str | None = None,
         timestamp: str | None = None,
     ) -> TraceEvent:
-        event = TraceEvent(
-            event_id=event_id or f"evt-{self._id_factory()}",
-            run_id=self.run_id,
-            episode_id=self.episode_id,
-            trace_id=self.trace_id,
-            span_id=span_id,
-            parent_span_id=parent_span_id,
-            sequence=self._next_sequence,
-            timestamp=timestamp or self._clock(),
-            event_type=event_type,
-            component=component,
-            status=status,
-            attempt=attempt,
-            attributes=redact_secrets(attributes or {}),
-            artifact_refs=artifact_refs,
-        )
-        self.writer.append(event)
-        # An exact replay is still one logical producer step. Advancing the
-        # local cursor makes a deterministic capture safe to resume/replay
-        # against an existing append-only log.
-        self._next_sequence += 1
-        return event
+        with self._lock:
+            event = TraceEvent(
+                event_id=event_id or f"evt-{self._id_factory()}",
+                run_id=self.run_id,
+                episode_id=self.episode_id,
+                trace_id=self.trace_id,
+                span_id=span_id,
+                parent_span_id=parent_span_id,
+                sequence=self._next_sequence,
+                timestamp=timestamp or self._clock(),
+                event_type=event_type,
+                component=component,
+                status=status,
+                attempt=attempt,
+                attributes=redact_secrets(attributes or {}),
+                artifact_refs=artifact_refs,
+            )
+            self.writer.append(event)
+            # An exact replay is still one logical producer step. Advancing the
+            # local cursor makes a deterministic capture safe to resume/replay
+            # against an existing append-only log.
+            self._next_sequence += 1
+            return event
 
     def model_request(
         self,
@@ -149,6 +152,10 @@ class TraceRecorder:
         response: Mapping[str, Any],
         usage: Mapping[str, Any] | None = None,
         latency_ms: float | None = None,
+        token_ids: tuple[int, ...] | None = None,
+        logprobs: tuple[float, ...] | None = None,
+        action_mask: tuple[int, ...] | None = None,
+        backend_model_revision: str | None = None,
         status: EventStatus = EventStatus.SUCCEEDED,
         attempt: int = 1,
     ) -> TraceEvent:
@@ -157,6 +164,17 @@ class TraceRecorder:
             attributes["usage"] = usage
         if latency_ms is not None:
             attributes["latency_ms"] = latency_ms
+        # These arrays are observed from the controlled serving response.  They
+        # are intentionally optional: callers must never retokenize text or
+        # fabricate behavior logprobs merely to make a trajectory RL-shaped.
+        if token_ids is not None:
+            attributes["token_ids"] = list(token_ids)
+        if logprobs is not None:
+            attributes["logprobs"] = list(logprobs)
+        if action_mask is not None:
+            attributes["action_mask"] = list(action_mask)
+        if backend_model_revision is not None:
+            attributes["backend_model_revision"] = backend_model_revision
         return self.emit(
             EventType.MODEL_RESPONSE,
             EventComponent.MODEL_BACKEND,
@@ -241,10 +259,42 @@ class TraceRecorder:
 
 
 class HarnessHook:
-    """Optional observability surface for decisions black-box capture cannot see."""
+    """Optional observability surface for decisions black-box capture cannot see.
+
+    Hook events are raw Harness facts.  They may link to trigger events and carry
+    policy/budget metadata, but they never mutate the triggering event or encode
+    a derived diagnosis.  When a Harness cannot provide these facts, callers
+    must leave the corresponding capability absent rather than synthesizing a
+    decision from the external action sequence.
+    """
 
     def __init__(self, recorder: TraceRecorder) -> None:
         self.recorder = recorder
+
+    @staticmethod
+    def _decision_attributes(
+        *,
+        trigger_event_ids: tuple[str, ...],
+        policy_name: str | None,
+        policy_version: str | None,
+        scope_key: str | None,
+        budget_before: int | None,
+        budget_after: int | None,
+        cache_hit: bool | None,
+    ) -> dict[str, Any]:
+        attributes: dict[str, Any] = {
+            "trigger_event_ids": list(trigger_event_ids),
+        }
+        optional = {
+            "policy_name": policy_name,
+            "policy_version": policy_version,
+            "scope_key": scope_key,
+            "budget_before": budget_before,
+            "budget_after": budget_after,
+            "cache_hit": cache_hit,
+        }
+        attributes.update({key: value for key, value in optional.items() if value is not None})
+        return attributes
 
     def emit_decision(
         self,
@@ -254,18 +304,63 @@ class HarnessHook:
         decision: str,
         reason_code: str,
         details: Mapping[str, Any] | None = None,
+        trigger_event_ids: tuple[str, ...] = (),
+        policy_name: str | None = None,
+        policy_version: str | None = None,
+        scope_key: str | None = None,
+        budget_before: int | None = None,
+        budget_after: int | None = None,
+        cache_hit: bool | None = None,
     ) -> TraceEvent:
+        attributes = self._decision_attributes(
+            trigger_event_ids=trigger_event_ids,
+            policy_name=policy_name,
+            policy_version=policy_version,
+            scope_key=scope_key,
+            budget_before=budget_before,
+            budget_after=budget_after,
+            cache_hit=cache_hit,
+        )
+        attributes.update(
+            {
+                "decision": decision,
+                "reason_code": reason_code,
+                "details": details or {},
+            }
+        )
         return self.recorder.emit(
             EventType.HARNESS_DECISION,
             EventComponent.HARNESS,
             EventStatus.SUCCEEDED,
             span_id=span_id,
             parent_span_id=parent_span_id,
-            attributes={
-                "decision": decision,
-                "reason_code": reason_code,
-                "details": details or {},
+            attributes=attributes,
+        )
+
+    def emit_recovery_decision(
+        self,
+        *,
+        span_id: str,
+        parent_span_id: str | None,
+        decision: RecoveryDecision,
+    ) -> TraceEvent:
+        return self.emit_decision(
+            span_id=span_id,
+            parent_span_id=parent_span_id,
+            decision=decision.action.value,
+            reason_code=decision.reason_code,
+            details={
+                "arguments": decision.arguments,
+                "selected_candidates": decision.selected_candidates,
+                "decision_checksum": decision.checksum,
             },
+            trigger_event_ids=decision.trigger_event_ids,
+            policy_name="bounded-file-recovery",
+            policy_version=decision.policy_version,
+            scope_key=decision.scope_key,
+            budget_before=decision.budget_before,
+            budget_after=decision.budget_after,
+            cache_hit=decision.cache_hit,
         )
 
     def emit_retry_scheduled(
@@ -276,7 +371,22 @@ class HarnessHook:
         attempt: int,
         reason: str,
         delay_ms: int,
+        trigger_event_ids: tuple[str, ...] = (),
+        policy_name: str | None = None,
+        policy_version: str | None = None,
+        budget_before: int | None = None,
+        budget_after: int | None = None,
     ) -> TraceEvent:
+        attributes = self._decision_attributes(
+            trigger_event_ids=trigger_event_ids,
+            policy_name=policy_name,
+            policy_version=policy_version,
+            scope_key=None,
+            budget_before=budget_before,
+            budget_after=budget_after,
+            cache_hit=None,
+        )
+        attributes.update({"reason": reason, "delay_ms": delay_ms})
         return self.recorder.emit(
             EventType.RETRY_SCHEDULED,
             EventComponent.HARNESS,
@@ -284,7 +394,7 @@ class HarnessHook:
             span_id=span_id,
             parent_span_id=parent_span_id,
             attempt=attempt,
-            attributes={"reason": reason, "delay_ms": delay_ms},
+            attributes=attributes,
         )
 
     def emit_termination_decided(
@@ -293,14 +403,87 @@ class HarnessHook:
         span_id: str,
         reason: str,
         verifier_observed: bool,
+        trigger_event_ids: tuple[str, ...] = (),
+        policy_name: str | None = None,
+        policy_version: str | None = None,
     ) -> TraceEvent:
+        attributes = self._decision_attributes(
+            trigger_event_ids=trigger_event_ids,
+            policy_name=policy_name,
+            policy_version=policy_version,
+            scope_key=None,
+            budget_before=None,
+            budget_after=None,
+            cache_hit=None,
+        )
+        attributes.update({"reason": reason, "verifier_observed": verifier_observed})
         return self.recorder.emit(
             EventType.TERMINATION_DECIDED,
             EventComponent.HARNESS,
             EventStatus.SUCCEEDED,
             span_id=span_id,
             parent_span_id=None,
-            attributes={"reason": reason, "verifier_observed": verifier_observed},
+            attributes=attributes,
+        )
+
+    def emit_context_selected(
+        self,
+        *,
+        span_id: str,
+        parent_span_id: str | None,
+        selection: str,
+        trigger_event_ids: tuple[str, ...] = (),
+        policy_name: str | None = None,
+        policy_version: str | None = None,
+        details: Mapping[str, Any] | None = None,
+    ) -> TraceEvent:
+        attributes = self._decision_attributes(
+            trigger_event_ids=trigger_event_ids,
+            policy_name=policy_name,
+            policy_version=policy_version,
+            scope_key=None,
+            budget_before=None,
+            budget_after=None,
+            cache_hit=None,
+        )
+        attributes.update({"selection": selection, "details": details or {}})
+        return self.recorder.emit(
+            EventType.CONTEXT_SELECTED,
+            EventComponent.HARNESS,
+            EventStatus.SUCCEEDED,
+            span_id=span_id,
+            parent_span_id=parent_span_id,
+            attributes=attributes,
+        )
+
+    def emit_context_compacted(
+        self,
+        *,
+        span_id: str,
+        parent_span_id: str | None,
+        before_tokens: int,
+        after_tokens: int,
+        trigger_event_ids: tuple[str, ...] = (),
+        policy_name: str | None = None,
+        policy_version: str | None = None,
+    ) -> TraceEvent:
+        attributes = self._decision_attributes(
+            trigger_event_ids=trigger_event_ids,
+            policy_name=policy_name,
+            policy_version=policy_version,
+            scope_key=None,
+            budget_before=None,
+            budget_after=None,
+            cache_hit=None,
+        )
+        attributes.update({"before_tokens": before_tokens, "after_tokens": after_tokens})
+        return self.recorder.emit(
+            EventType.CONTEXT_COMPACTED,
+            EventComponent.HARNESS,
+            EventStatus.SUCCEEDED,
+            span_id=span_id,
+            parent_span_id=parent_span_id,
+            attributes=attributes,
         )
 
 
@@ -358,6 +541,7 @@ class EnvironmentCapture:
         span_id: str,
         runtime_id: str,
         status: EventStatus,
+        artifact_refs: tuple[str, ...] = (),
     ) -> TraceEvent:
         return self.recorder.emit(
             EventType.SANDBOX_FINISHED,
@@ -366,6 +550,7 @@ class EnvironmentCapture:
             span_id=span_id,
             parent_span_id=None,
             attributes={"runtime_id": runtime_id},
+            artifact_refs=artifact_refs,
         )
 
     def verification_started(self, *, span_id: str, verifier: str) -> TraceEvent:

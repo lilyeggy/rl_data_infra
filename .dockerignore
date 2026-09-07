@@ -1,0 +1,20 @@
+# Source control and local runtime state
+.git
+.gitignore
+.DS_Store
+
+# Generated artifacts and caches
+artifacts
+__pycache__
+*.py[cod]
+.ruff_cache
+.pytest_cache
+
+# Pre-existing learner-owned/untracked presentation files; do not package them.
+agentic-rl-framework.html
+project-guide-site
+
+# Local editor/runtime state
+.venv
+venv
+.env

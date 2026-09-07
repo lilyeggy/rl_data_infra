@@ -1,0 +1,410 @@
+{
+  "model": "/home/cxr/agentic/models/qwen2.5-coder-14b-instruct",
+  "adapter": "/home/cxr/agentic/rl-runs/apps-rl-cycle-002/candidate_policy_adapter",
+  "total_tasks": 50,
+  "passed_tasks": 48,
+  "pass_at_1": 0.96,
+  "pass_percentage": "96.00%",
+  "results": [
+    {
+      "task_id": "HumanEval/0",
+      "entry_point": "has_close_elements",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.32,
+      "generated_tokens": 183
+    },
+    {
+      "task_id": "HumanEval/1",
+      "entry_point": "separate_paren_groups",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.77,
+      "generated_tokens": 204
+    },
+    {
+      "task_id": "HumanEval/2",
+      "entry_point": "truncate_number",
+      "passed": true,
+      "error": "",
+      "time_seconds": 4.89,
+      "generated_tokens": 102
+    },
+    {
+      "task_id": "HumanEval/3",
+      "entry_point": "below_zero",
+      "passed": true,
+      "error": "",
+      "time_seconds": 7.16,
+      "generated_tokens": 150
+    },
+    {
+      "task_id": "HumanEval/4",
+      "entry_point": "mean_absolute_deviation",
+      "passed": true,
+      "error": "",
+      "time_seconds": 7.57,
+      "generated_tokens": 159
+    },
+    {
+      "task_id": "HumanEval/5",
+      "entry_point": "intersperse",
+      "passed": true,
+      "error": "",
+      "time_seconds": 6.82,
+      "generated_tokens": 143
+    },
+    {
+      "task_id": "HumanEval/6",
+      "entry_point": "parse_nested_parens",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.0,
+      "generated_tokens": 189
+    },
+    {
+      "task_id": "HumanEval/7",
+      "entry_point": "filter_by_substring",
+      "passed": true,
+      "error": "",
+      "time_seconds": 5.0,
+      "generated_tokens": 105
+    },
+    {
+      "task_id": "HumanEval/8",
+      "entry_point": "sum_product",
+      "passed": true,
+      "error": "",
+      "time_seconds": 7.2,
+      "generated_tokens": 151
+    },
+    {
+      "task_id": "HumanEval/9",
+      "entry_point": "rolling_max",
+      "passed": true,
+      "error": "",
+      "time_seconds": 7.01,
+      "generated_tokens": 147
+    },
+    {
+      "task_id": "HumanEval/10",
+      "entry_point": "make_palindrome",
+      "passed": true,
+      "error": "",
+      "time_seconds": 13.6,
+      "generated_tokens": 286
+    },
+    {
+      "task_id": "HumanEval/11",
+      "entry_point": "string_xor",
+      "passed": true,
+      "error": "",
+      "time_seconds": 7.85,
+      "generated_tokens": 165
+    },
+    {
+      "task_id": "HumanEval/12",
+      "entry_point": "longest",
+      "passed": true,
+      "error": "",
+      "time_seconds": 5.24,
+      "generated_tokens": 110
+    },
+    {
+      "task_id": "HumanEval/13",
+      "entry_point": "greatest_common_divisor",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.96,
+      "generated_tokens": 83
+    },
+    {
+      "task_id": "HumanEval/14",
+      "entry_point": "all_prefixes",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.77,
+      "generated_tokens": 79
+    },
+    {
+      "task_id": "HumanEval/15",
+      "entry_point": "string_sequence",
+      "passed": true,
+      "error": "",
+      "time_seconds": 4.05,
+      "generated_tokens": 85
+    },
+    {
+      "task_id": "HumanEval/16",
+      "entry_point": "count_distinct_characters",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.85,
+      "generated_tokens": 81
+    },
+    {
+      "task_id": "HumanEval/17",
+      "entry_point": "parse_music",
+      "passed": false,
+      "error": "Traceback (most recent call last):\n  File \"/tmp/tmpyj0p_jad.py\", line 55, in <module>\n    check(parse_music)\n  File \"/tmp/tmpyj0p_jad.py\", line 50, in check\n    assert candidate('.| .| .| .|') == [1, 1, 1, 1]\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/tmpyj0p_jad.py\", line 35, in parse_music\n    raise ValueError(f\"Unexpected token: {tokens[i]}\")\nValueError: Unexpected token: .|",
+      "time_seconds": 13.69,
+      "generated_tokens": 287
+    },
+    {
+      "task_id": "HumanEval/18",
+      "entry_point": "how_many_times",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.44,
+      "generated_tokens": 72
+    },
+    {
+      "task_id": "HumanEval/19",
+      "entry_point": "sort_numbers",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.69,
+      "generated_tokens": 203
+    },
+    {
+      "task_id": "HumanEval/20",
+      "entry_point": "find_closest_elements",
+      "passed": true,
+      "error": "",
+      "time_seconds": 15.92,
+      "generated_tokens": 319
+    },
+    {
+      "task_id": "HumanEval/21",
+      "entry_point": "rescale_to_unit",
+      "passed": true,
+      "error": "",
+      "time_seconds": 25.26,
+      "generated_tokens": 207
+    },
+    {
+      "task_id": "HumanEval/22",
+      "entry_point": "filter_integers",
+      "passed": true,
+      "error": "",
+      "time_seconds": 21.92,
+      "generated_tokens": 105
+    },
+    {
+      "task_id": "HumanEval/23",
+      "entry_point": "strlen",
+      "passed": true,
+      "error": "",
+      "time_seconds": 13.35,
+      "generated_tokens": 64
+    },
+    {
+      "task_id": "HumanEval/24",
+      "entry_point": "largest_divisor",
+      "passed": true,
+      "error": "",
+      "time_seconds": 23.36,
+      "generated_tokens": 112
+    },
+    {
+      "task_id": "HumanEval/25",
+      "entry_point": "factorize",
+      "passed": true,
+      "error": "",
+      "time_seconds": 36.06,
+      "generated_tokens": 173
+    },
+    {
+      "task_id": "HumanEval/26",
+      "entry_point": "remove_duplicates",
+      "passed": true,
+      "error": "",
+      "time_seconds": 23.11,
+      "generated_tokens": 111
+    },
+    {
+      "task_id": "HumanEval/27",
+      "entry_point": "flip_case",
+      "passed": true,
+      "error": "",
+      "time_seconds": 14.21,
+      "generated_tokens": 68
+    },
+    {
+      "task_id": "HumanEval/28",
+      "entry_point": "concatenate",
+      "passed": true,
+      "error": "",
+      "time_seconds": 13.0,
+      "generated_tokens": 62
+    },
+    {
+      "task_id": "HumanEval/29",
+      "entry_point": "filter_by_prefix",
+      "passed": true,
+      "error": "",
+      "time_seconds": 18.87,
+      "generated_tokens": 99
+    },
+    {
+      "task_id": "HumanEval/30",
+      "entry_point": "get_positive",
+      "passed": true,
+      "error": "",
+      "time_seconds": 1.84,
+      "generated_tokens": 36
+    },
+    {
+      "task_id": "HumanEval/31",
+      "entry_point": "is_prime",
+      "passed": true,
+      "error": "",
+      "time_seconds": 10.23,
+      "generated_tokens": 202
+    },
+    {
+      "task_id": "HumanEval/32",
+      "entry_point": "find_zero",
+      "passed": true,
+      "error": "",
+      "time_seconds": 19.92,
+      "generated_tokens": 393
+    },
+    {
+      "task_id": "HumanEval/33",
+      "entry_point": "sort_third",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.33,
+      "generated_tokens": 184
+    },
+    {
+      "task_id": "HumanEval/34",
+      "entry_point": "unique",
+      "passed": true,
+      "error": "",
+      "time_seconds": 4.13,
+      "generated_tokens": 82
+    },
+    {
+      "task_id": "HumanEval/35",
+      "entry_point": "max_element",
+      "passed": true,
+      "error": "",
+      "time_seconds": 2.43,
+      "generated_tokens": 48
+    },
+    {
+      "task_id": "HumanEval/36",
+      "entry_point": "fizz_buzz",
+      "passed": true,
+      "error": "",
+      "time_seconds": 6.38,
+      "generated_tokens": 126
+    },
+    {
+      "task_id": "HumanEval/37",
+      "entry_point": "sort_even",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.68,
+      "generated_tokens": 191
+    },
+    {
+      "task_id": "HumanEval/38",
+      "entry_point": "decode_cyclic",
+      "passed": false,
+      "error": "Traceback (most recent call last):\n  File \"/tmp/tmp88622trg.py\", line 47, in <module>\n    check(decode_cyclic)\n  File \"/tmp/tmp88622trg.py\", line 42, in check\n    encoded_str = encode_cyclic(str)\n                  ^^^^^^^^^^^^^\nNameError: name 'encode_cyclic' is not defined. Did you mean: 'decode_cyclic'?",
+      "time_seconds": 13.43,
+      "generated_tokens": 263
+    },
+    {
+      "task_id": "HumanEval/39",
+      "entry_point": "prime_fib",
+      "passed": true,
+      "error": "",
+      "time_seconds": 17.98,
+      "generated_tokens": 351
+    },
+    {
+      "task_id": "HumanEval/40",
+      "entry_point": "triples_sum_to_zero",
+      "passed": true,
+      "error": "",
+      "time_seconds": 13.28,
+      "generated_tokens": 260
+    },
+    {
+      "task_id": "HumanEval/41",
+      "entry_point": "car_race_collision",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.93,
+      "generated_tokens": 77
+    },
+    {
+      "task_id": "HumanEval/42",
+      "entry_point": "incr_list",
+      "passed": true,
+      "error": "",
+      "time_seconds": 6.33,
+      "generated_tokens": 124
+    },
+    {
+      "task_id": "HumanEval/43",
+      "entry_point": "pairs_sum_to_zero",
+      "passed": true,
+      "error": "",
+      "time_seconds": 2.21,
+      "generated_tokens": 43
+    },
+    {
+      "task_id": "HumanEval/44",
+      "entry_point": "change_base",
+      "passed": true,
+      "error": "",
+      "time_seconds": 8.09,
+      "generated_tokens": 158
+    },
+    {
+      "task_id": "HumanEval/45",
+      "entry_point": "triangle_area",
+      "passed": true,
+      "error": "",
+      "time_seconds": 3.1,
+      "generated_tokens": 61
+    },
+    {
+      "task_id": "HumanEval/46",
+      "entry_point": "fib4",
+      "passed": true,
+      "error": "",
+      "time_seconds": 9.78,
+      "generated_tokens": 191
+    },
+    {
+      "task_id": "HumanEval/47",
+      "entry_point": "median",
+      "passed": true,
+      "error": "",
+      "time_seconds": 5.47,
+      "generated_tokens": 107
+    },
+    {
+      "task_id": "HumanEval/48",
+      "entry_point": "is_palindrome",
+      "passed": true,
+      "error": "",
+      "time_seconds": 5.88,
+      "generated_tokens": 115
+    },
+    {
+      "task_id": "HumanEval/49",
+      "entry_point": "modp",
+      "passed": true,
+      "error": "",
+      "time_seconds": 2.47,
+      "generated_tokens": 48
+    }
+  ]
+}

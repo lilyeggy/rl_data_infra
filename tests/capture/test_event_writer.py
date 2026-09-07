@@ -87,8 +87,16 @@ class EventWriterTest(unittest.TestCase):
                 media_type="text/plain",
                 created_at="2026-08-14T00:00:00Z",
             )
+            different_kind = store.put(
+                b"same bytes",
+                kind="stderr",
+                media_type="text/plain",
+                created_at="2026-08-14T00:00:00Z",
+            )
 
             self.assertEqual(first.artifact_id, second.artifact_id)
+            self.assertNotEqual(first.artifact_id, different_kind.artifact_id)
+            self.assertEqual(first.uri, different_kind.uri)
             self.assertTrue(Path(first.uri).is_file())
 
 

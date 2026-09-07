@@ -9,6 +9,7 @@ terminal semantic state comes from Pi message events and an external verifier.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping
@@ -23,7 +24,6 @@ from src.contracts.agent_episode import (
 )
 from src.contracts.trace_event import EventComponent, EventStatus, EventType, TraceEvent
 from src.errors import AdapterIssue, ErrorCode
-
 
 PI_ADAPTER_VERSION = "pi-json-adapter/v1"
 
@@ -165,10 +165,15 @@ class PiJsonAdapter:
         config: PiRunConfig,
         declared_outcome: PiOutcomeDeclaration,
         source_issues: Iterable[AdapterIssue] = (),
+        normalize_tool_errors: bool = False,
     ) -> PiAdapterResult:
         raw_records = tuple(records)
         session = next((item for item in raw_records if item.get("type") == "session"), None)
-        session_id = str(session.get("id")) if session and session.get("id") else "pi-session-unknown"
+        session_id = (
+            str(session.get("id"))
+            if session and session.get("id")
+            else "pi-session-unknown"
+        )
         base = self._base_time(session)
         tool_result_times = self._tool_result_timestamps(raw_records)
         events: list[TraceEvent] = []
@@ -363,17 +368,22 @@ class PiJsonAdapter:
                 is_error = bool(record.get("isError"))
                 if isinstance(result, Mapping):
                     is_error = is_error or bool(result.get("isError"))
+                tool_attributes: dict[str, Any] = {
+                    "tool_name": record.get("toolName", tool_name),
+                    "pi_tool_call_id": tool_call_id,
+                    "result": result,
+                }
+                if normalize_tool_errors:
+                    tool_error = self._normalize_tool_error(result, is_error=is_error)
+                    if tool_error is not None:
+                        tool_attributes.update(tool_error)
                 emit(
                     EventType.TOOL_RESULT,
                     EventComponent.TOOL,
                     EventStatus.ERROR if is_error else EventStatus.SUCCEEDED,
                     span_id=tool_span,
                     parent_span_id=parent_span,
-                    attributes={
-                        "tool_name": record.get("toolName", tool_name),
-                        "pi_tool_call_id": tool_call_id,
-                        "result": result,
-                    },
+                    attributes=tool_attributes,
                     source_index=source_index,
                     source_timestamp_ms=tool_result_times.get(tool_call_id),
                 )
@@ -503,6 +513,49 @@ class PiJsonAdapter:
             return datetime.fromtimestamp(float(value) / 1000.0, tz=timezone.utc)
         except (OverflowError, OSError, ValueError):
             return None
+
+    @staticmethod
+    def _normalize_tool_error(
+        result: Any,
+        *,
+        is_error: bool,
+    ) -> Mapping[str, Any] | None:
+        """Normalize only structured Pi tool errors into stable error facts.
+
+        The original result remains in the event.  This helper does not inspect
+        assistant prose; it only handles a tool protocol result explicitly
+        marked as an error and recognizes the provider-independent ENOENT form.
+        """
+
+        if not is_error:
+            return None
+        texts: list[str] = []
+
+        def collect(value: Any) -> None:
+            if isinstance(value, Mapping):
+                text = value.get("text")
+                if isinstance(text, str):
+                    texts.append(text)
+                for item in value.values():
+                    collect(item)
+            elif isinstance(value, (list, tuple)):
+                for item in value:
+                    collect(item)
+            elif isinstance(value, str):
+                texts.append(value)
+
+        collect(result)
+        message = " ".join(texts)
+        if "ENOENT" not in message and "no such file or directory" not in message.lower():
+            return None
+        path_match = re.search(r"(?:access|path) ['\\\"]([^'\\\"]+)['\\\"]", message)
+        normalized: dict[str, Any] = {
+            "error_code": "FILE_NOT_FOUND",
+            "error_source": "pi_tool_protocol",
+        }
+        if path_match is not None:
+            normalized["error_path"] = path_match.group(1)
+        return normalized
 
     @staticmethod
     def _tool_result_timestamps(

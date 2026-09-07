@@ -1,0 +1,85 @@
+{
+  "capture_capabilities": [
+    "HARNESS_DECISIONS",
+    "CONTEXT_SELECTION",
+    "CONTEXT_COMPACTION",
+    "RETRY_DECISIONS",
+    "TERMINATION_DECISIONS",
+    "TOOL_IO"
+  ],
+  "capture_response_logprobs": true,
+  "default_sampling_seed": 20260831,
+  "endpoint_kind": "CONTROLLED",
+  "evaluator_manifest": {
+    "config_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "name": "task-verifier",
+    "revision": "replace-with-verifier-revision",
+    "schema_version": "evaluator-manifest/v1"
+  },
+  "experiment_manifest_ref": "replace-with-experiment-manifest-ref",
+  "harness_argv": [
+    "python",
+    "-m",
+    "your_harness",
+    "/workspace/task.json"
+  ],
+  "harness_manifest": {
+    "config_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "hook_version": "harness-event-ingress/v1",
+    "name": "your-harness",
+    "policy_flags": {},
+    "revision": "replace-with-harness-revision",
+    "schema_version": "harness-manifest/v1",
+    "version": "v1"
+  },
+  "harness_timeout_seconds": 600.0,
+  "identity": {
+    "attempt_id": 1,
+    "episode_id": "replace-with-episode-id",
+    "group_id": null,
+    "policy_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "producer_id": "local-docker",
+    "producer_version": "local-docker-launcher/v1",
+    "run_id": "replace-with-run-id",
+    "sampling_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "schema_version": "execution-identity/v1",
+    "task_id": "replace-with-task-id"
+  },
+  "image": "your-harness-image",
+  "image_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "limits": {
+    "cpus": 2.0,
+    "memory_mb": 4096,
+    "pids": 256,
+    "tmpfs_mb": 512
+  },
+  "model_manifest": {
+    "model_id": "your-14b-model",
+    "provider": "self-hosted",
+    "revision": "replace-with-weight-revision",
+    "sampling_config": {
+      "temperature": 0.7
+    },
+    "schema_version": "model-manifest/v1",
+    "tokenizer_revision": "replace-with-tokenizer-revision"
+  },
+  "network_policy": "BRIDGE_UNRESTRICTED",
+  "sandbox_profile": "FAST",
+  "sandbox_runtime": "runc",
+  "platform": "linux/amd64",
+  "docker_host_gateway": false,
+  "proxy_bind_host": "0.0.0.0",
+  "run_as_host_user": true,
+  "schema_version": "local-execution-spec/v5",
+  "task_snapshot": "replace-with-task-snapshot",
+  "trace_id": "replace-with-trace-id",
+  "upstream_chat_completions_url": "http://GPU_HOST:30000/v1/chat/completions",
+  "verifier_argv": [
+    "python",
+    "-m",
+    "your_verifier",
+    "/workspace"
+  ],
+  "verifier_timeout_seconds": 300.0,
+  "workspace": "/absolute/path/to/task-workspace"
+}

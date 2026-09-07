@@ -1,0 +1,23 @@
+{
+  "schema_version": "rollout-benchmark-contract/v1",
+  "local_data_plane": {
+    "task_revision": "deterministic-pi-smoke/v1",
+    "model_id": "Qwen2.5-Coder-14B-Instruct",
+    "model_revision": "replace-with-checkpoint-digest",
+    "harness_revision": "replace-with-pi-revision",
+    "sampling_fingerprint": "replace-with-sampling-checksum",
+    "vllm_endpoint_fingerprint": "replace-with-shared-endpoint-fingerprint",
+    "sandbox_profile": "FAST",
+    "sandbox_runtime": "runc"
+  },
+  "polar": {
+    "task_revision": "deterministic-pi-smoke/v1",
+    "model_id": "Qwen2.5-Coder-14B-Instruct",
+    "model_revision": "replace-with-checkpoint-digest",
+    "harness_revision": "replace-with-pi-revision",
+    "sampling_fingerprint": "replace-with-sampling-checksum",
+    "vllm_endpoint_fingerprint": "replace-with-shared-endpoint-fingerprint",
+    "sandbox_profile": "FAST",
+    "sandbox_runtime": "runc"
+  }
+}
