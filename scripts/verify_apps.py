@@ -6,7 +6,11 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
+
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
 
 
 def _line_text(value: object) -> str:

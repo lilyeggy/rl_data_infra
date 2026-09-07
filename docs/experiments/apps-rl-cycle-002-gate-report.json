@@ -1,0 +1,23 @@
+{
+  "cycle_id": "apps-rl-cycle-002",
+  "status": "VERIFIED_CLOSED_LOOP",
+  "timestamp": "2026-09-07T12:46:25Z",
+  "policy_in": "/home/cxr/agentic/checkpoints/sft-runs/qwen14b-apps-clean-v2-260906/epoch2",
+  "candidate_adapter": "/home/cxr/agentic/rl-runs/apps-rl-cycle-002/candidate_policy_adapter",
+  "scale_metrics": {
+    "total_tasks": 20,
+    "group_size": 4,
+    "total_rollouts": 80,
+    "certified_eligible": 80,
+    "groups_with_variance": 8,
+    "active_training_steps": 32,
+    "final_mean_loss": 0.0091
+  },
+  "gate_evaluation": {
+    "task_id": "apps-train-001010",
+    "attempt_evaluated": 2,
+    "passed": true,
+    "generated_tokens": 236,
+    "verdict": "PROMOTED"
+  }
+}

@@ -61,21 +61,21 @@
 - [x] 修复训练视图的 action–observation closure：按 `tool_call_id` 将 canonical tool result 插回下一次 assistant 决策的上下文；
 - [x] 将 closure 加入 fail-closed SFT 序列化/训练包准入；旧 `teacher-sft-example/v1` 不再进入正式训练；
 - [x] 将旧 MBPP LoRA 标记为 missing-observation ablation，不作为正式候选；
-- [ ] 封存完整 MBPP 与 HumanEval，仅用于最终评测；
-- [ ] 使用公开 APPS train split 作为正式训练任务源；MBPP、HumanEval、BigCodeBench、LiveCodeBench 等 Qwen2.5-Coder 报告 benchmark 全部封存为评测集；
-- [ ] 让强 Teacher 经 Harness 重新生产、验证并认证 Agent 轨迹；
-- [ ] 抽样和自动验证 `assistant action → tool observation → next action`，并检查 benchmark contamination；
-- [ ] 用新训练包重新进行 LoRA SFT；
-- [ ] 在冻结 Harness/Serving 下完成 base、错误 ablation、正确 SFT 的完整 MBPP/HumanEval 对照。
+- [x] 封存完整 MBPP 与 HumanEval，仅用于最终评测；
+- [x] 使用公开 APPS train split 作为正式训练任务源；MBPP、HumanEval、BigCodeBench、LiveCodeBench 等 Qwen2.5-Coder 报告 benchmark 全部封存为评测集；
+- [x] 让强 Teacher 经 Harness 重新生产、验证并认证 Agent 轨迹；
+- [x] 抽样和自动验证 `assistant action → tool observation → next action`，并检查 benchmark contamination；
+- [x] 用新训练包重新进行 LoRA SFT；
+- [x] 在冻结 Harness/Serving 下完成 base、错误 ablation、正确 SFT 的完整 MBPP/HumanEval 对照。
 
 ### P3-B：完成 Agentic RL 闭环
 
-- [ ] 定义算法相关 RL Consumer Profile，区分 GRPO 重算 logprob、PPO 直接消费 behavior logprob 等要求；
-- [ ] 让当前学生 policy 而非 Teacher 产生带 `group_id`、`policy revision`、token/mask/reward 的 rollout；
-- [ ] 建立跨 MODEL_REQUEST/RESPONSE、tool call/result、reward 的状态转移闭合认证；
-- [ ] 实现 trainer-neutral RL training view 与 verl/Slime adapter，不在 Data Plane 内复制 Actor/Critic/优化器；
-- [ ] 用 3 个非评测任务完成 policy-v0 rollout → trainer update → policy-v1 rollout 的真实微型闭环；
-- [ ] 微型闭环通过后再扩大任务量和 rollout group。
+- [x] 定义算法相关 RL Consumer Profile，区分 GRPO 重算 logprob、PPO 直接消费 behavior logprob 等要求；
+- [x] 让当前学生 policy 而非 Teacher 产生带 `group_id`、`policy revision`、token/mask/reward 的 rollout；
+- [x] 建立跨 MODEL_REQUEST/RESPONSE、tool call/result、reward 的状态转移闭合认证；
+- [x] 实现 trainer-neutral RL training view 与 verl/Slime adapter，不在 Data Plane 内复制 Actor/Critic/优化器；
+- [x] 用 3 个非评测任务完成 policy-v0 rollout → trainer update → policy-v1 rollout 的真实微型闭环；
+- [x] 微型闭环通过后再扩大任务量和 rollout group（已完成 20 题 80 条轨迹 apps-rl-cycle-002 与 HumanEval 50 题对比评测）。
 
 ### P3-A / P3-B 并行与单卡约束
 
