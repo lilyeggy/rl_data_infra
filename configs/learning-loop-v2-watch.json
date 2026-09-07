@@ -1,0 +1,12 @@
+{
+  "schema_version": "learning-loop-watch/v1",
+  "stages": [
+    {"name": "certified_dataset", "completion_artifact": "canonical-sft/v2/dataset-card.json"},
+    {"name": "base_gate1", "completion_artifact": "evaluation-runs/canonical-v2-base-r1/offline-baseline-summary.json"},
+    {"name": "sft_training", "completion_artifact": "sft-runs/qwen14b-canonical-generic-json-v2/training-run.json"},
+    {"name": "adapter_gate1", "completion_artifact": "evaluation-runs/canonical-v2-adapter-r1/offline-baseline-summary.json"},
+    {"name": "teacher_unseen_dev", "completion_artifact": "evaluation-runs/canonical-v2-dev/report.json", "required_json": {"decision": "ACCEPT"}},
+    {"name": "harness_regression", "completion_artifact": "evaluation-runs/canonical-v2-harness-regression.json"},
+    {"name": "rl_candidate", "completion_artifact": "evaluation-runs/canonical-v2-rl/report.json"}
+  ]
+}

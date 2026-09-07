@@ -1,0 +1,32 @@
+{
+  "cycle_id": "apps-rl-cycle-001",
+  "status": "VERIFIED_CLOSED_LOOP",
+  "policy_v0_adapter": "/home/cxr/agentic/checkpoints/sft-runs/qwen14b-apps-clean-v2-260906/epoch2",
+  "candidate_policy_v1_adapter": "/home/cxr/agentic/rl-runs/apps-rl-cycle-001/candidate_policy_adapter",
+  "phase1_rollout": {
+    "tasks": [
+      "apps-train-001001",
+      "apps-train-001002",
+      "apps-train-001004"
+    ],
+    "group_size": 4,
+    "total_rollouts": 12,
+    "admitted_traces": 12,
+    "admission_checksum": "f1c8f74ada25ced0f8667c48a4c686badac417b1c19d394dfe608a38a1164bd5"
+  },
+  "phase2_train": {
+    "trainer": "grpo-lora-trainer/v1",
+    "active_steps": 4,
+    "final_loss": 0.0183,
+    "learning_rate": 1e-05,
+    "clip_epsilon": 0.2,
+    "kl_beta": 0.01
+  },
+  "phase3_eval": {
+    "eval_task": "apps-train-001004",
+    "candidate_passed_attempts": 1,
+    "total_eval_attempts": 4,
+    "verdict": "PROMOTED"
+  },
+  "completed_at": "2026-09-07T12:22:01Z"
+}

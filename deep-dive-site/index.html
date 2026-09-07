@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic RL · Agent Improvement Data Plane 深度讲解</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}]});"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-logo">◈</div>
+    <div>
+      <div class="brand-name">Agentic RL</div>
+      <div class="brand-sub">Agent Improvement Data Plane</div>
+    </div>
+  </div>
+  <ul class="nav">
+    <li><a href="#overview" class="active">① 项目总览</a></li>
+    <li><a href="#problem">② 解决什么问题 <span class="tag done">深度</span></a></li>
+    <li><a href="#architecture">③ 整体架构</a></li>
+    <li><a href="#dataflow">④ 数据流水线 <span class="tag done">深度</span></a></li>
+    <li><a href="#modules">⑤ 代码模块走读 <span class="tag done">深度</span></a></li>
+    <li><a href="#loops">⑥ 双闭环 <span class="tag done">深度</span></a></li>
+    <li><a href="#trust">⑦ 可信内核 <span class="tag done">深度</span></a></li>
+    <li><a href="#status">⑧ 当前进度与验收</a></li>
+    <li><a href="#roadmap">⑨ 路线图 P0–P4</a></li>
+    <li><a href="#docs">⑩ 文档与入口导航</a></li>
+  </ul>
+  <div class="sidebar-footer">深度讲解系列 · 分块更新中</div>
+</nav>
+
+<main class="content">
+
+<header class="hero">
+  <div class="badge"><span class="dot"></span>本地闭环已通过真实 Docker 冒烟 · GPU live 进行中</div>
+  <h1>把一次真实的 Agent 执行<br>变成<em>可验证 · 可归因 · 可训练</em>的证据</h1>
+  <p class="lead">Harness-neutral、trainer-neutral 的 Agent 改进数据基础设施。从真实执行中同时保存执行证据与
+  policy evidence，经 fail-closed certification 后编译为 Harness 分析、SFT / Preference / RL / Evaluation 所需的数据视图。</p>
+  <div class="stats">
+    <div class="stat"><b>20+</b><span>src 核心模块</span></div>
+    <div class="stat"><b>73</b><span>Python 源文件</span></div>
+    <div class="stat"><b>40</b><span>测试目录</span></div>
+    <div class="stat"><b>0</b><span>第三方运行时依赖*</span></div>
+  </div>
+  <p class="footnote">* 核心代码只依赖 Python 3.10+ 标准库</p>
+</header>
+
+<!-- ① 项目总览 -->
+<section id="overview" class="section">
+  <h2>① 项目总览</h2>
+  <p>一句话定义：<b>一个 Harness-neutral、trainer-neutral 的 Agent 改进数据基础设施。</b>
+  它不训练模型，也不修改 Harness——它保证两者只消费「可验证、可回溯」的证据。</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>🎯 它做什么</h3>
+      <ul>
+        <li>捕获一次 Agent 执行的<b>不可变事实</b>（TraceEvent → AgentEpisode）</li>
+        <li>同时保存<b>执行证据</b>与 <b>policy evidence</b>（token/logprob/policy fingerprint）</li>
+        <li>经版本化 verifier 与 fail-closed certification 后输出<b>认证数据集</b></li>
+        <li>分别驱动 Harness 改进（A/B、回归 Gate）与模型改进（SFT/Pref/RL 数据）</li>
+      </ul>
+    </div>
+    <div class="card danger-border">
+      <h3>🚫 它明确不做什么</h3>
+      <ul>
+        <li>不把普通 Trace 宣称为 RL rollout</li>
+        <li>不让 infrastructure failure 变成 reward 0</li>
+        <li>不在一次实验里同时改 Harness 和模型</li>
+        <li>不重写分布式 trainer / Megatron / SGLang / 权重同步</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ② 解决什么问题 -->
+<section id="problem" class="section">
+  <h2>② 解决什么问题 —— RL 工程原理深度版</h2>
+  <p>你已经了解 PPO/GRPO 的算法原理，这一节回答更底层的问题：<b>为什么这些算法在 Agent 场景下经常“跑起来但不学”？</b>
+  答案几乎从不在梯度公式里，而在喂进公式的<b>数据</b>里。</p>
+
+  <h3 class="sub">2.1 从目标函数倒推：RL 训练到底消费什么样的数据？</h3>
+  <p>PPO 的 clipped surrogate objective：</p>
+  <div class="math">$$L^{\text{CLIP}}(\theta)=\hat{\mathbb{E}}_t\Big[\min\big(r_t(\theta)\hat{A}_t,\ \text{clip}(r_t(\theta),\,1-\epsilon,\,1+\epsilon)\hat{A}_t\big)\Big],\qquad r_t(\theta)=\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\text{old}}(a_t\mid s_t)}$$</div>
+  <p>GRPO（DeepSeekMath 提出）去掉 critic，对同一 prompt 采样一组 G 条轨迹，用组内统计做 baseline：</p>
+  <div class="math">$$A_i=\frac{r_i-\operatorname{mean}(\{r_1,\dots,r_G\})}{\operatorname{std}(\{r_1,\dots,r_G\})},\qquad
+  L_{\text{GRPO}}(\theta)=-\hat{\mathbb{E}}\Big[\frac{1}{G}\sum_{i=1}^{G}\frac{1}{|o_i|}\sum_{t=1}^{|o_i|}
+  \min\big(\rho_{i,t}\hat{A}_i,\ \text{clip}(\rho_{i,t},1-\epsilon,1+\epsilon)\hat{A}_i\ -\beta\,\mathbb{D}_{\mathrm{KL}}[\pi_\theta\|\pi_{\text{ref}}]\Big]$$</div>
+  <p>其中 <b>\(\rho_{i,t}=\pi_\theta(o_{i,t}\mid q,o_{i,\lt t})/\pi_{\text{old}}(o_{i,t}\mid q,o_{i,\lt t})\)</b> 是<b>逐 token</b> 的概率比。
+  这两个公式隐含了三个关于数据的假设，Agent 工程恰恰在这三处断裂：</p>
+  <ol class="steps">
+    <li><div><b>概率一致性</b>：每个 \(o_{i,t}\) 确实由 \(\pi_{\text{old}}\) 在该 context 下采样，且 logprob 由该模型计算。<br><span class="dim">断裂点 → trace ≠ rollout（2.2）</span></div></li>
+    <li><div><b>奖励语义</b>：\(r_i\) 度量「行为质量」，而非「环境是否故障」。<br><span class="dim">断裂点 → infra failure 污染组内统计（2.3）</span></div></li>
+    <li><div><b>因果归因</b>：advantage 反映的差异来自你刻意改变的那个变量。<br><span class="dim">断裂点 → confounder / credit assignment（2.4）</span></div></li>
+  </ol>
+
+  <h3 class="sub">2.2 断裂一：trace ≠ rollout —— importance sampling 的数据前提</h3>
+  <p>把目标函数改写成对采样分布的期望，就能看清数据要求来自哪里。策略梯度本质是一个 importance-sampling 修正：</p>
+  <div class="math">$$J(\theta)=\mathbb{E}_{\tau\sim\pi_{\text{old}}}\!\Big[\frac{\pi_\theta(\tau)}{\pi_{\text{old}}(\tau)}\,A(\tau)\Big]
+  \;\approx\;\sum_{t}\underbrace{\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\text{old}}(a_t\mid s_t)}}_{\text{必须有 }\pi_{\text{old}}\text{ 的 logprob}}\,A_t$$</div>
+  <p>如果拿事后文本「重新 tokenize」来构造训练样本，会产生<b>三重错误</b>，每一重都足以让梯度失效：</p>
+  <div class="cards-3">
+    <div class="card num-card"><span class="num">1</span><h4>Tokenization 不唯一</h4>
+      <p>同一段文字存在多种合法切分。re-tokenize 得到的 \(o_{i,t}\) 序列可能根本不是当时采样的序列——你在优化一个从未发生过的轨迹的概率。</p></div>
+    <div class="card num-card"><span class="num">2</span><h4>\(\pi_{\text{old}}\) 无从得知</h4>
+      <p>没有采样时的 behavior logprob，ratio 只能取 1。这等于偷偷假设数据是 on-policy 的——但权重早已更新过 N 个 step，off-policy drift 完全没有被修正。</p></div>
+    <div class="card num-card"><span class="num">3</span><h4>Policy 身份不明</h4>
+      <p>没有 policy fingerprint 就不知道这条数据出自哪版权重。多轮迭代后新旧 rollout 混在一起，\(\pi_{\text{old}}\) 这个概念本身失去定义。</p></div>
+  </div>
+  <div class="callout rule">因此本项目在 Model Proxy 层立下铁律：
+  <ul><li>外部 API 只回文本 → 证据降级为 <b>observability-only</b> / 受认证的文本学习视图</li>
+  <li>受控后端回原生 response token IDs + 对齐 behavior logprobs + 不可变 policy fingerprint → 才声明 <b>RL capability</b></li>
+  <li><b>禁止在 proxy 中 re-tokenize 文本冒充采样 token</b>；缺失的能力输出结构化的 CAPABILITY_MISSING，绝不伪造数值</li></ul></div>
+  <p class="dim">对应实现：capability 是 Episode 的显式字段（如 “GRPO Training View requires target-policy token/logprob semantics”），
+  consumer 在使用前机器检查，而不是靠约定。</p>
+
+  <h3 class="sub">2.3 断裂二：infrastructure failure ≠ reward 0 —— 组内统计的敏感性</h3>
+  <p>GRPO 的 advantage 是<b>相对量</b>，组内任何一条轨迹的 reward 都会通过 mean/std 影响其他所有成员。做个具体演算——8 条轨迹，其中 3 条因容器 OOM 中断：</p>
+  <table class="tbl">
+    <tr><th>处理方式</th><th>组内统计</th><th>后果</th></tr>
+    <tr><td>记 \(r{=}0\)（常见错误）</td><td>\(\mu=3R/8\)，成功轨迹的 \(\hat A\) 被系统性放大</td><td>失败轨迹里的<b>正确推理步骤</b>也被打上负 advantage 遭到惩罚——模型学会回避好行为</td></tr>
+    <tr><td>直接丢弃</td><td>幸存 5 条重新归一化，std 失真</td><td>advantage 尺度错误；且“哪些题容易 infra 失败”这个信号本身丢失</td></tr>
+    <tr><td><b>分离 + quarantine</b>（本项目做法）</td><td>infra 失败不参与 advantage 计算，进入重采样队列</td><td>学习信号只反映真实行为差异</td></tr>
+  </table>
+  <p>关键在于：<b>这不是零均值的随机噪声，而是系统性偏差（bias）</b>。策略梯度的无偏性建立在 \(\mathbb{E}[\text{gradient}]\) 的期望意义上，
+  一个与行为无关、只与环境故障相关的负 reward 分量会让期望梯度指向错误方向——batch 再大也消不掉。</p>
+  <p>本项目把这件事做成正交的三元组，从 schema 层面杜绝混淆：</p>
+  <div class="math">$$\begin{aligned}
+&\text{TaskStatus}: \text{SUCCESS}\mid\text{FAILURE}\mid\text{UNKNOWN}\\
+&\text{ExecutionValidity}: \text{VALID}\mid\text{INFRA\_INVALID}\\
+&\text{IntegrityState}: \text{COMPLETE}\mid\text{PARTIAL}\mid\text{CORRUPT}
+\end{aligned}$$
+<p class="dim" style="margin-top:8px">三者两两正交（⊥），任意组合都有明确语义。</p></div>
+  <p class="dim">例如 UNKNOWN + INFRA_INVALID + COMPLETE 表示“完整记录了一次无效执行”——trace 本身是好的，只是不该进训练。
+  certification 引擎发现 reward 证据不完整（非有限值、缺 trace）即拒绝准入：宁可 fail-closed，不带噪声进训练。</p>
+
+  <h3 class="sub">2.4 断裂三：credit assignment 与因果归因</h3>
+  <p><b>(a) 算法侧的已知难题。</b>GRPO 把序列级 \(\hat A_i\) 均匀广播到每个 token（coarse broadcast）：一条成功轨迹中第 1 个和第 10,000 个 token 拿到相同信用。
+  在 10–100+ 轮交互、数十万 token 的 agent 轨迹里，真正的因果信号被严重稀释。近年改进方向都围绕“把粒度做细”：
+  DAPO 动态采样 + 松弛 clip 稳定更新；GiGPO / turn-level advantage 把分组下沉到环境步；
+  高熵 token 分析表明学习信号集中在少数关键决策点。这些方法有一个共同的工程前提——
+  <b>数据必须保留 turn / span 结构</b>，否则细粒度 advantage 根本无从计算。这正是本项目 TraceEvent 用 span_id/parent_span_id 表达因果嵌套、Episode 保留完整事件序列的原因：今天只做 outcome reward，但证据结构为明天的 turn-level credit assignment 留好了接口。</p>
+  <p><b>(b) 实验侧的 confounder。</b>Harness A/B 若不同时冻结 model revision / sampling 参数 / task 版本 / sandbox / verifier / seed / timeout，涨跌就无法归因。本项目把这些全部固化成 manifest 并在比较前做兼容性检查，不兼容直接返回 INSUFFICIENT_EVIDENCE——宁可不出数字，不出错误的数字。</p>
+  <div class="callout warn"><b>Reward hacking 视角：</b>当 verifier 成为 reward 来源（RLVR），模型会寻找 verifier 的漏洞而非学会任务。
+   verifier 必须像 Harness 一样有版本号并进入 lineage——否则 verifier 一升级，历史数据的 reward 语义全部漂移且不可察觉。</div>
+
+  <h3 class="sub">2.5 汇总：每个工程机制守护哪条算法性质</h3>
+  <table class="tbl">
+    <tr><th>工程机制</th><th>守护的算法性质</th><th>若无此机制的失败模式</th></tr>
+    <tr><td>原生 token/logprob 捕获 + policy fingerprint</td><td>IS ratio 有定义；on-policy 假设可控</td><td>ratio 无意义 → 梯度方向系统性错误</td></tr>
+    <tr><td>TaskStatus ⊥ ExecutionValidity ⊥ IntegrityState</td><td>reward 只反映行为质量</td><td>环境故障作为负 advantage 惩罚好行为</td></tr>
+    <tr><td>append-only event log + 幂等 event_id + fsync</td><td>长事务执行的证据完整性（WAL 思想）</td><td>中途崩溃丢失整段轨迹，样本静默变少</td></tr>
+    <tr><td>checksum / lineage / content-addressed artifact</td><td>结论可回溯到原始证据；派生记录可用新规则重算</td><td>verifier 升级后历史 reward 语义漂移不可察</td></tr>
+    <tr><td>fail-closed schema 校验（未知字段即拒绝）</td><td>schema drift 不被静默吞掉</td><td>旧格式/损坏数据混入训练集</td></tr>
+    <tr><td>ExperimentManifest 兼容性检查 + 配对比较</td><td>A/B 的因果有效性</td><td>confounder 导致的错误晋升决策</td></tr>
+  </table>
+
+  <div class="callout interview"><b>面试速答</b>：「你的 Agent RL 数据基础设施解决什么问题？」
+  —— PPO/GRPO 的数学只在数据满足三个隐含假设时成立：token 概率一致（trace≠rollout，禁止 re-tokenize）、
+  reward 语义纯净（infra failure 与 task failure 正交分离，避免组内统计被系统性偏置）、
+  变量控制严格（manifest 冻结 + 配对比较）。我的项目就是用 append-only evidence、checksum lineage、
+  fail-closed certification 和 capability 显式声明，把这三个假设从“口头约定”变成“机器可检查的不变量”。</div>
+</section>
+
+<!-- ③ 整体架构 -->
+<section id="architecture" class="section">
+  <h2>③ 整体架构</h2>
+  <pre class="ascii">Task + Environment + Harness + Policy
+                 │
+       Local Docker Launcher (default)
+       Pi Direct / Polar Live (plugins)
+                 │
+      Model Proxy + Tool/Sandbox + Hook
+                 │
+     immutable execution evidence
+                 │
+     assemble → verify → certify
+                 │
+      ┌──────────┴──────────┐
+      ▼                     ▼
+Harness analysis      Learning datasets
+compare / gate        SFT / pref / RL
+                           │
+                      Slime trainer</pre>
+  <div class="placeholder small">🚧 待讲解：Control Plane vs Data Plane 边界；为什么 Producer 是插件而非中心。</div>
+</section>
+
+<!-- ④ 数据流水线 -->
+<section id="dataflow" class="section">
+  <h2>④ 数据流水线 —— 从原始事件到训练准入</h2>
+  <p>第②章讲了「为什么」；本章讲「怎么做」。整条流水线的核心设计哲学只有一句话：
+  <b>每一步只做一件事，且每一步的失败都是结构化、可观测、fail-closed 的。</b></p>
+
+  <h3 class="sub">4.1 六步总览与各步产物</h3>
+  <table class="tbl">
+    <tr><th>阶段</th><th>输入</th><th>输出（版本化对象）</th><th>失败语义</th></tr>
+    <tr><td>Capture</td><td>Harness / Proxy / Sandbox 实时事实</td><td><code>TraceEvent/v1</code> + <code>ArtifactRef</code></td><td>单条损坏不影响邻居；重复 ID 幂等去重</td></tr>
+    <tr><td>Assemble</td><td>事件流 + artifacts + model evidence</td><td><code>AgentEpisode/v1</code> + <code>ExecutionBundle/v2</code></td><td>缺引用 → PARTIAL 并列出缺失清单，不静默</td></tr>
+    <tr><td>Verify</td><td>Episode + verifier report</td><td><code>EpisodeCertification/v1</code></td><td>语义证据不足 → UNKNOWN，不猜</td></tr>
+    <tr><td>Certify</td><td>Bundle + policy artifact</td><td><code>EligibilityDecision/v2</code>（按 consumer profile）</td><td>ELIGIBLE / REJECTED / INSUFFICIENT_EVIDENCE 三值</td></tr>
+    <tr><td>Compile</td><td>认证决策集合</td><td><code>DatasetManifest/v1</code></td><td>split 泄漏 / 残缺 preference pair → 直接拒绝编译</td></tr>
+    <tr><td>Admit</td><td>manifest + decisions + bundles + artifacts</td><td>Slime admission envelope</td><td>从磁盘重新核验全链 lineage，任何一环不符即中止</td></tr>
+  </table>
+  <p class="dim">关键观察：每一层的输出都带 schema_version 和 checksum，下一层只认上一层的<b>校验和</b>而非“文件存在”。这构成一条类似 Merkle DAG 的信任链。</p>
+
+  <h3 class="sub">4.2 Capture：为什么是 append-only Event Log（WAL 思想）</h3>
+  <p>Agent 执行是典型的<b>长事务</b>：一次任务持续数分钟，中间有模型重试、工具超时、进程崩溃。
+  如果只在结束时写最终对象，中途崩溃就丢掉全部证据——这和数据 库不用内存页而用 Write-Ahead Log 是同一个问题。所以：</p>
+  <ul class="plainlist">
+    <li>每个事实完成后<b>立即追加</b>到 JSONL；已写事实永不原地修改；落盘带 <code>fsync</code></li>
+    <li><code>event_id</code> 是幂等键：相同 ID 相同内容的 at-least-once 重放被<b>去重</b>；相同 ID 不同内容意味着 producer 违反不可变约束 → <b>quarantine</b>（隔离而不是丢弃或覆盖）</li>
+    <li>单行损坏只影响该行，合法相邻事件不受牵连</li>
+    <li>大负载（stdout、patch、verifier report）不入事件体，改存 <b>SHA-256 内容寻址</b>的 ArtifactRef——天然去重、能发现内容漂移、可独立审计</li>
+  </ul>
+  <p>事件信封里同时携带四类身份：<code>run_id</code>（哪次实验）、<code>episode_id</code>（哪次任务尝试）、
+  <code>trace_id</code>（哪棵调用链）、<code>span_id/parent_span_id</code>（因果嵌套）。
+  稳定排序键是 \((\text{sequence}, \text{timestamp}, \text{event\_id})\)——注意一个容易被面试官追问的点：
+  <b>排序解决的是展示确定性，integrity 元数据解决的是数据质量</b>，sequence 出现 gap 时系统报告 SEQUENCE_GAP，
+  绝不会把它悄悄修成“完整数据”。</p>
+
+  <h3 class="sub">4.3 Assemble：Episode 与 ExecutionBundle 的严格组装</h3>
+  <div class="math">$$\text{ExecutionBundle} = \text{join}\big(\underbrace{\text{AgentEpisode}}_{\text{执行证据}},\ \underbrace{\text{policy traces}}_{\text{token/logprob}},\ \underbrace{\text{verifier report}}_{\text{结果证据}}\big)\quad\text{keyed by } \text{ExecutionIdentity}$$</div>
+  <p>组装器做四件事，每件都有对应的错误码：</p>
+  <ol class="steps">
+    <li><div><b>按 identity join</b> — Episode、policy trace、verifier report 必须属于同一个 ExecutionIdentity；同名匹配不算数。<span class="dim">（ORPHAN_SPAN / identity 冲突 → CORRUPT）</span></div></li>
+    <li><div><b>期望事件类型检查</b> — 缺少 terminal event 或期望类型时记录缺失清单，Episode 标记为部分。<span class="dim">（SEQUENCE_GAP）</span></div></li>
+    <li><div><b>Artifact 引用核验</b> — 引用不可达时不静默忽略，标记 PARTIAL 并列出缺失引用。<span class="dim">（ARTIFACT_MISSING）</span></div></li>
+    <li><div><b>派生 terminal 状态</b> — TaskStatus × ExecutionValidity × IntegrityState 三元组在此固化。</div></li>
+  </ol>
+  <div class="callout rule">一个精巧的设计细节：<b>Bundle 刻意不包含 certification 的 checksum</b>。
+  因为 certification 是对 bundle 的判定——若 bundle 里再存 certification 的哈希，就形成循环依赖的 checksum 图。
+  认证通过“指向已寻址的 bundle”来引用它，DAG 保持无环。</div>
+
+  <h3 class="sub">4.4 Certify：三值判定与六种 Consumer Profile</h3>
+  <p>统一认证引擎对每个 Episode × Consumer 组合给出独立判定。注意<b>不是二值的</b>：</p>
+  <div class="cards-3">
+    <div class="card"><h4 style="color:var(--green)">ELIGIBLE</h4><p>所有 capability 与语义检查通过，可进入该 consumer 的数据视图</p></div>
+    <div class="card"><h4 style="color:var(--red)">REJECTED</h4><p>明确不满足（如 infra invalid 却带 reward、policy fingerprint 缺失）</p></div>
+    <div class="card"><h4 style="color:var(--yellow)">INSUFFICIENT_EVIDENCE</h4><p>无法判断 ≠ 通过也 ≠ 拒绝——比如 capture 能力没开，根本不知道有没有问题</p></div>
+  </div>
+  <p>六个 profile 各有门槛：HARNESS_ANALYSIS / EVALUATION / SFT / PREFERENCE / OFF_POLICY_RL / ON_POLICY_RL。
+  例如 ON_POLICY_RL 要求完整 policy fingerprint + 原生 token/logprob capability；
+  SFT 只需要可信文本。这就是第②章说的 “RL capability 是显式声明” 在代码里的样子。
+  每个 <code>EligibilityDecision</code> 自身也被 JSON-checksum 化，并携带 episode_checksum、bundle_checksum、policy_artifact_checksum 五级校验链。</p>
+
+  <h3 class="sub">4.5 Compile：DatasetManifest 的三条安全门</h3>
+  <ol class="steps">
+    <li><div><b>Split 一致性</b> — 同一逻辑任务的所有 attempts 必须同 split，阻断 train/test leakage（模型可能见过同一任务的另一次尝试）。</div></li>
+    <li><div><b>Preference 配对完整性</b> — 每个 preference group 必须恰含同一任务的 1 个 CHOSEN + 1 个 REJECTED，残缺 pair 无法编译。</div></li>
+    <li><div><b>Membership 只来自认证</b> — 历史 JSONL 文件、任意 <code>verified=true</code> 标志都不能授予成员资格；只有对应 consumer profile 的 ELIGIBLE decision 可以。</div></li>
+  </ol>
+  <p class="dim">反序列化同样 fail-closed：strict_fields 校验下未知顶层字段、旧 schema、损坏 JSON 一律抛错——schema drift 不可能静默滑进训练集。</p>
+
+  <h3 class="sub">4.6 Admit：进入训练前的最后一道重验</h3>
+  <p><code>admit-slime</code> 不是简单转发 manifest，而是<b>从磁盘重新核验整条 checksum/identity/policy lineage</b>
+  （manifest → decisions → bundles → artifacts 四类输入全部重载重验），然后以原子替换方式写出 trainer-neutral 的
+  Slime admission envelope。即使前面所有步骤都正确，这一步仍假设“磁盘上的东西可能是坏的”——防御性设计贯穿到底。</p>
+
+  <h3 class="sub">4.7 业界对标：这些设计不是过度工程</h3>
+  <p>把本项目的机制放到 2025–26 年 LLM 后训练数据工程的公共讨论里对照，可以看到每一条都有明确的行业对应物：</p>
+  <table class="tbl">
+    <tr><th>业界共识 / 研究</th><th>本项目对应实现</th></tr>
+    <tr><td><b>Immutable snapshots + content hashing</b>——对每份数据切片固定字节级内容与哈希，检测静默损坏（arXiv RLVR 数据溯源研究指出：多数公开 RLVR 数据集互为变体、来源不清）</td><td>ArtifactRef 的 SHA-256 内容寻址；全链 JSON-checksum；admit-slime 磁盘重验</td></tr>
+    <tr><td><b>Lineage graphs</b>——记录每次过滤/tokenization 变换的父子依赖，保证可复现</td><td>派生记录（Diagnosis/Decision）强制携带 input_episode_checksum、rule_version、evidence_event_ids——规则升级可对同一事实重算，无需篡改历史</td></tr>
+    <tr><td><b>Fail-closed validation gates</b>——schema 校验、分布边界、污染检查失败即中断流水线而非跳过</td><td>strict_fields 严格反序列化（未知字段抛错）；三值判定中 INSUFFICIENT_EVIDENCE 与 REJECTED 分离</td></tr>
+    <tr><td><b>Contamination blocks / domain separation</b>——自动清洗 benchmark 重叠与时序泄漏</td><td>DatasetManifest 的 split 一致性门（同任务所有 attempts 强制同 split）</td></tr>
+    <tr><td><b>偏好数据清洗</b>（NeurIPS 有专门 benchmark 研究偏好对噪声对训练的影响）</td><td>preference group 恰含同任务 1 CHOSEN + 1 REJECTED 的编译门</td></tr>
+    <tr><td><b>Executable rewards / 可验证奖励</b>——reward 必须来自确定性校验而非模型自评</td><td>verifier report 内容寻址入库并版本化，进入 certification 证据链</td></tr>
+    <tr><td><b>Attribution tracking</b>——度量每个数据源的边际效用，剔除负迁移源</td><td>EligibilityDecision 按 profile 分轨道 + 数据质量报告 CLI（quality-report）</td></tr>
+  </table>
+  <p class="dim">差异点也值得说：业界的 ensemble judges / LLM-as-a-judge 清洗本项目刻意未采用——attribution 目前是带 rule_version 的小型规则引擎，
+  不声称“单因果真相”；这是有限资源下的明确取舍，且已写入文档的可靠性边界声明。</p>
+
+  <div class="callout interview"><b>面试速答</b>：「讲讲你的数据从产生到进训练的全链路。」
+  —— Capture 层用 WAL 式 append-only event log（幂等 event_id + fsync + 内容寻址 artifact）保证长事务执行的证据完整；
+  Assemble 层按 ExecutionIdentity 严格 join 出 Episode 和 Bundle（缺引用标 PARTIAL，bundle 不含认证哈希避免循环 checksum）；
+  Certify 层对六种 consumer profile 给出 ELIGIBLE/REJECTED/INSUFFICIENT_EVIDENCE 三值判定；
+  Compile 层用 DatasetManifest 阻断 split 泄漏和残缺 preference pair；
+  最后 admit-slime 从磁盘重验整条 lineage 才原子写出训练 envelope。每一环 fail-closed：宁可不出数据，不出错的数据。</div>
+</section>
+
+<!-- ⑤ 模块走读 -->
+<section id="modules" class="section">
+  <h2>⑤ 代码模块走读 <code class="path">src/</code></h2>
+  <p>20 个模块按依赖方向天然分成五层——<b>契约层被所有层依赖，集成层不依赖任何内部模块</b>（Polar/Slime 是外部系统，只通过 HTTP 边界交互）。
+  点击任意模块展开源码级细节：</p>
+  <pre class="ascii">┌─ integrations/ ────────────────────── 外部系统边界（不反向依赖）┐
+│  launchers/ producers/ capture/      ← I/O 与执行入口          │
+│    orchestration/                    ← 单事务编排              │
+│      assembly/ certification/ analysis/ learning/ training/   │
+│        contracts/ storage/ recovery/  ← 地基（被所有人依赖）    │
+└────────────────────────────────────────────────────────────────┘</pre>
+
+  <h3 class="sub">5.1 契约层：contracts/ + storage/ + recovery/</h3>
+
+  <details class="mod-detail" open><summary><b>contracts/</b> — 全部版本化数据对象（18 个文件）<span class="tag done">地基</span></summary>
+  <div class="detail-body">
+    <p>每个对象都是 frozen dataclass + schema_version + <code>__post_init__</code> 内联校验 + checksum 属性 + strict from_dict。
+    四个值得记住的设计点：</p>
+    <ul>
+      <li><code>execution_identity.py</code>：run/task/episode/attempt 四级身份 + policy/sampling fingerprint（SHA-256，不是模型名），见⑦章</li>
+      <li><code>trace_event.py</code>：不可变事件信封，event_id 幂等键、sequence 单调、span 因果嵌套、attempt 区分重试</li>
+      <li><code>_validation.py::strict_fields</code>：未知与缺失字段一律抛错——整个项目的 fail-closed 立场从这里辐射出去</li>
+      <li><code>agent_episode.py</code>：TaskStatus × ExecutionValidity × IntegrityState 正交三元组的家；<code>capabilities.py</code> 定义 14 项观测能力</li>
+    </ul>
+    <p class="dim">checksum 用 sha256_json 对规范化 JSON 计算——同内容必同哈希，这是全链信任链的原子操作。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>storage/</b> — append-only 事件存储<span class="tag done">WAL</span></summary>
+  <div class="detail-body">
+    <p><code>event_store.py</code> 提供 PartitionedEventStore：分区分文件写 JSONL、多进程锁、fsync 落盘、
+    幂等去重（同 event_id 同内容）、冲突 quarantine、manifest recovery。<code>schema.py</code> 管 schema 版本注册。
+    已知边界（文档明示）：单进程幂等 + 单机锁，跨主机需要 Kafka partition 或数据库 unique constraint 替换 backend——canonical contract 不变。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>recovery/</b> — 断点恢复与重放</summary>
+  <div class="detail-body">
+    <p>单 GPU 状态机的持久化底座：<code>controller.py/dispatch.py/execution.py</code> 实现原子状态存储 + checksum CAS
+    （写入前比对旧校验和，防止并发覆盖），<code>replay.py</code> 支持从持久化证据重放，dry-run 模式输出执行计划但不真正执行命令。</p>
+  </div></details>
+
+  <h3 class="sub">5.2 执行与捕获层：launchers/ + capture/ + producers/</h3>
+
+  <details class="mod-detail"><summary><b>launchers/local_docker.py</b> — 默认执行入口</summary>
+  <div class="detail-body">
+    <p>把「启动一个受限容器」变成纯函数式计划：<code>build_docker_launch_plan(request) → DockerLaunchPlan</code>。
+    安全边界全部显式且强制：<code>--memory</code> 限制、pids 上限、tmpfs 配额、<code>--cap-drop</code>、
+    <code>no-new-privileges</code>、只读 root，以及三态 SandboxNetworkPolicy（NONE/PROXY_ONLY/…）。
+    一条关键校验：声明了 model_proxy_url 或 trace_ingest_url 却用 NONE 网络策略 → 直接拒绝——
+    <b>网络访问必须显式声明路径，不允许隐式出网</b>。identity 注入让容器内 Harness 无需感知身份体系。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>capture/</b> — 三条证据通道</summary>
+  <div class="detail-body">
+    <ul>
+      <li><code>model_proxy.py / model_proxy_http.py</code> — OpenAI-compatible 转发器 + 逐 execution bearer token + 耐久 model-evidence JSONL。核心类型 ModelCallEvidence 携带 capability 枚举（外部 API 文本 vs 受控后端原生 token/logprob），第②章 RL capability 判定的实现处</li>
+      <li><code>harness_http.py</code> — Harness event ingress：Harness 只提交事实描述，identity、sequence、timestamp、event_id 由宿主生成（防 producer 伪造顺序或身份）</li>
+      <li><code>workspace_evidence.py</code> — workspace diff/patch 内容寻址落盘；stdout/stderr 同理走 ArtifactStore</li>
+    </ul>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>producers/</b> — RolloutProducer 协议的三个实现</summary>
+  <div class="detail-body">
+    <p><code>base.py</code> 定义 trainer-neutral 协议与 ProducerCapability；三个实现按能力递减：
+    <code>polar_live.py</code>（官方 HTTP boundary，严格导入 TaskResult/SessionResult/Trajectory，每个 session 独立身份）、
+    <code>pi_direct.py</code>（Pi 直采，capability-limited——只能声明它真有的能力）、Local（经 launcher 的默认路径）。
+    新增 producer 只需实现协议，下游 certification/consumer 零改动。</p>
+  </div></details>
+
+  <h3 class="sub">5.3 编排与加工层</h3>
+
+  <details class="mod-detail"><summary><b>orchestration/local_execution.py</b> — execute-local 单事务编排器</summary>
+  <div class="detail-body">
+    <p><code>prepare_local_execution</code> 冻结 Manifest/launch plan → <code>LocalExecutionOrchestrator</code>
+    统一负责 proxy 启动 → Harness 运行 → verifier → terminal event → finalize → cleanup，
+    超时/Ctrl-C 时按 identity-bound container name 做<b>确定性清理</b>。这是“一次真实 rollout 同时关联 Episode 与 policy trace”的保证者；
+    另有 single_gpu.py 落实 rollout/train/evaluate 相位互斥契约。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>assembly/</b> — 从事件流到 Bundle</summary>
+  <div class="detail-body">
+    <p><code>episode_assembler.py</code>（稳定排序、去重、quarantine、缺失期望类型检测、派生 terminal）、
+    <code>execution_bundle_assembler.py</code>（identity join，bundle 不含认证哈希避免循环 checksum 图）、
+    <code>local_run_finalizer.py</code>（events × model evidence × artifacts × verifier report 四路 join）。详见④章。</p>
+  </div></details>
+
+  <h3 class="sub">5.4 认证与分析层</h3>
+
+  <details class="mod-detail"><summary><b>certification/engine.py</b> — 统一认证引擎</summary>
+  <div class="detail-body">
+    <p>consumer-certification/v2：六种 ConsumerProfile × ELIGIBLE/REJECTED/INSUFFICIENT_EVIDENCE；
+    EligibilityDecision 五级 checksum 字段全部 validate_sha256；policy artifact 无完整有限 reward 证据即 REJECTED。详见④章 4.4。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>analysis/</b> — Harness 闭环的四件套</summary>
+  <div class="detail-body">
+    <p><code>metrics.py</code>（per-Episode 确定性派生）、<code>compare.py</code>（paired-comparison/v1，兼容性检查 + outcome transition 矩阵）、
+    <code>regression_gate.py</code>（blocking checks + 有界规则，见⑥章）、<code>attribution.py</code>（带 rule_version 的规则引擎，黑盒只报 OBSERVED_* 不冒充内因）。</p>
+  </div></details>
+
+  <h3 class="sub">5.5 学习与训练层</h3>
+
+  <details class="mod-detail"><summary><b>learning/</b> — 数据集编译</summary>
+  <div class="detail-body">
+    <p><code>dataset_compiler.py</code>: compile_dataset 接收 CertifiedArtifact（只认证过的才进得来），输出 content-addressed DatasetManifest；
+    split 一致性与 preference pair 完整性在此强制。<code>sft_examples.py</code> 分类 SFT 样本可用性并给出拒绝理由元组。</p>
+  </div></details>
+
+  <details class="mod-detail"><summary><b>training/</b> — 训练资格与策略指纹</summary>
+  <div class="detail-body">
+    <p><code>eligibility.py</code>: evaluate_training_eligibility 按 ON/OFF_POLICY_RL 等 profile 检查 reward 有效性、观测/动作可观测性、capability 存在性；
+    <code>policy_fingerprint.py</code>: is_complete/matches/checksum——π_old 的锚点，从 model manifest 派生而非手工填写。
+    本目录<b>不含任何训练算法</b>：Slime 是外部 consumer，本项目只产出 admission envelope（trainer-neutral）。</p>
+  </div></details>
+
+  <div class="callout interview"><b>面试速答</b>：「讲一下代码结构。」
+  —— 五层单向依赖：contracts/storage/recovery 地基（版本化对象 + WAL 存储 + CAS 恢复）；launchers/capture/producers 是三条可插拔的执行与证据通道；orchestration 把它们串成 prepare→execute→finalize 单事务；assembly/certification/analysis/learning/training 做组装、认证、比较、编译；integrations 是唯一允许知道 Polar/Slime 存在的地方。新增 producer 或 harness 只动插件层，契约与认证零改动。</div>
+</section>
+
+<!-- ⑥ 双闭环 -->
+<section id="loops" class="section">
+  <h2>⑥ 双闭环的实现：配对比较 · 回归 Gate · 归因</h2>
+  <p>第②章从因果推断角度论证了「一次只改一个变量」；本章讲这个原则<b>落成代码后的样子</b>：
+  Harness 闭环的三个组件——严格配对比较、多规则回归 Gate、版本化归因引擎。</p>
+
+  <h3 class="sub">6.1 为什么必须是配对比较，而不是两组均值对比</h3>
+  <p>比较两个 Harness 版本时最直觉的做法是各跑 N 个任务然后比成功率。但这在 Agent 场景下统计功效极差，
+  因为<b>方差的主要来源不是 Harness，而是任务难度的异质性</b>：</p>
+  <div class="math">$$\mathrm{Var}\big[\bar{X}_A-\bar{X}_B\big]=\frac{\sigma^2_{\text{task}}+\sigma^2_{\text{harness}}}{N}
+  \qquad\text{vs.}\qquad
+  \mathrm{Var}\big[\overline{(X_A-X_B)}\big]=\frac{\sigma^2_{\text{diff}}}{N},\quad \sigma^2_{\text{diff}}\ll \sigma^2_{\text{task}}$$</div>
+  <p>同一任务在两个 Harness 下各跑一次做差，任务难度项被<b>完全消掉</b>，剩下的才是 Harness 真正引起的差异——
+  这就是 RCT 中的 blocking / 配对设计，对二值结果对应经典的 McNemar 检验（只看不一致的配对 discordant pairs）。
+  在 agent 任务上这意味着：<b>同样的 token 预算能分辨小得多的差异</b>——而真实 rollout 很贵，这正是有限资源项目的生命线。</p>
+  <p>项目实现（<code>paired-comparison/v1</code>）按 pair 输出三类结构化结果：</p>
+  <ul class="plainlist">
+    <li><b>outcome_transition</b> — 每个任务对的成败转移（SUCCESS→FAILURE、FAILURE→SUCCESS…），构成一个可审计的转移矩阵而非单个百分比</li>
+    <li><b>metric_deltas</b> — tokens / duration 等逐对差值，保留分布而不只留均值</li>
+    <li><b>control/candidate reason_codes</b> — 双方的归因码并列展示，涨跌可以直接追到具体失败模式的变化</li>
+  </ul>
+  <div class="callout warn">同时有一个容易忽视的细节：<b>infra-invalid Episode 被排除出成功率分母但排除数量必须显式可见</b>。
+  否则一个“碰巧在候选版本少踩了 infra 坑”的运行会伪装成 harness 改进——第②章的 failure 分离原则在这里再次生效。</div>
+
+  <h3 class="sub">6.2 Gate 不是一条阈值，而是一组前置条件 + 有序规则</h3>
+  <p><code>evaluate_gate</code> 的真实结构值得细看，因为它体现了“结论可信度分层”的思想。</p>
+  <p><b>第一阶段（blocking checks，任一失败 → 直接 INSUFFICIENT_EVIDENCE，根本不看指标）：</b></p>
+  <ol class="steps">
+    <li><div><b>compatibility = 0</b> — ExperimentManifest 除 candidate_variable 外所有字段必须兼容，任何 confounder 都一票否决</div></li>
+    <li><div><b>minimum_episode_pairs</b> — 配对数下限：样本太少时连 REJECT 都是过度声明</div></li>
+    <li><div><b>minimum_paired_coverage</b> — 配对覆盖率下限：大量无法配对的执行意味着实验失控，因果解释力不足</div></li>
+  </ol>
+  <p><b>第二阶段（有界指标规则，全部带显式 threshold 与解释）：</b></p>
+  <table class="tbl">
+    <tr><th>规则</th><th>守护什么</th><th>若缺失会怎样</th></tr>
+    <tr><td>success_rate_drop_tolerance</td><td>候选版成功率回退不超过容忍度</td><td>为优化次要指标牺牲主指标</td></tr>
+    <tr><td>max_token_increase_ratio</td><td>token 增长有上界</td><td>“用 10 倍预算换 1% 提升”的伪改进通过晋升</td></tr>
+    <tr><td>max_latency_increase_ratio</td><td>墙钟时间有上界</td><td>重试风暴被当成“更努力”</td></tr>
+    <tr><td>max_infra_invalid_increase</td><td>不得引入新的 infra 失效率</td><td>不稳定的 harness 版本带病上线污染后续所有数据</td></tr>
+    <tr><td>require_target_slice_improvement（可选）</td><td>目标切片必须真的改善</td><td>平均提升掩盖目标场景退步（Simpson’s paradox）</td></tr>
+  </table>
+  <p>两个工程细节：① 决策是三值的——ACCEPT / REJECT / <b>INSUFFICIENT_EVIDENCE</b>，“证据不足”与“拒绝”严格分离；
+  ② 同一 comparison + gate config 必须产出<b>确定性输出</b>（GateResult 自身带 config_checksum 和 comparison_checksum），
+  审计时可以逐位复现当时的判定。</p>
+
+  <h3 class="sub">6.3 归因：派生判断永远携带证据链和规则版本</h3>
+  <p>比较告诉你“哪里变了”，归因回答“为什么”。Diagnosis 是<b>派生记录</b>，永不改写 Episode 事实：</p>
+  <pre class="ascii">layer=HARNESS   ← 七层枚举：MODEL/HARNESS/SANDBOX/MODEL_BACKEND/EVALUATOR/EXTERNAL_SERVICE/UNKNOWN
+reason_code=TOOL_ERROR_FEEDBACK_LOSS
+confidence=0.8
+evidence_event_ids=[failed_result, retry_decision, repeated_call]   ← 逐条指回原始事件
+rule_version=failure-attribution/v1                                  ← 规则升级可对同一事实重算</pre>
+  <p>关键边界：<b>黑盒轨迹下同样的重复调用行为，只能诊断为 UNKNOWN / OBSERVED_TOOL_ERROR_LOOP</b>——
+  系统可以报告观察到的模式，但不能把“Harness 内部没发 feedback”这种未观测原因伪装成事实。
+  这就是 capability 系统（⑦章）与归因系统的接合点：规则需要的 capability 不满足时返回 INSUFFICIENT_EVIDENCE，
+  绝不输出低质量猜测。归因允许多标签（一次失败可能同时涉及 MODEL + SANDBOX），因为现实故障本来就不是单因果的。</p>
+
+  <h3 class="sub">6.4 Failure Regression Bank：把每次失败变成永久资产</h3>
+  <p>P2 计划中的 failure regression bank 思想来自软件工程的 CI 回归测试：每个被 Gate 拦下的严重退化，
+  其对应的 episode 对被固化为可重放样本。此后任何 Harness 变更都要先过这批“历史已知坑”再谈新功能。
+  与普通单元测试不同，这些样本天然是<b>真实执行证据</b>（content-addressed、可精确重放），而不是手写 mock。</p>
+
+  <div class="callout interview"><b>面试速答</b>：「Harness A/B 你怎么做才可信？」
+  —— 三件事：① 严格配对设计消掉任务难度方差（同任务做差，等价于 blocking/McNemar），infra-invalid 排除出分母但计数可见；
+  ② Gate 是分层规则组：confounder 兼容性、样本下限、覆盖率是 blocking 前置，成功率先降容忍、token/延迟增长上界、目标切片改善是有界规则，决策三值且确定性可复现；
+  ③ 归因是带 rule_version 和 evidence_event_ids 的派生记录，黑盒观测不到的原因报 UNKNOWN 不脑补。晋升的每一步都能回放到不可变原始证据。</div>
+</section>
+
+<!-- ⑦ 可信内核 -->
+<section id="trust" class="section">
+  <h2>⑦ 可信内核：Identity · Capability · Fail-closed</h2>
+  <p>第④章按流水线顺序讲了「每步做什么」；本章纵向深入三个横切地基：<b>身份、能力声明、失败语义</b>。
+  它们决定了流水线上所有环节的可信度上限。</p>
+
+  <h3 class="sub">7.1 ExecutionIdentity：RL 数据系统最容易翻车的地方</h3>
+  <p>分布式追踪领域已经证明：没有稳定身份，因果性无从谈起。W3C Trace Context / OpenTelemetry 用
+  <code>trace_id</code>（整条事务链）+ <code>span_id</code>（单一工作单元）+ <code>parent_span_id</code>（调用方 span）
+  把执行建模成 DAG。本项目的 TraceEvent 完整采纳了这套模型，但<b>额外加了一层 RL 特有的身份维度</b>：</p>
+  <div class="math">$$\text{ExecutionIdentity} = \big(\text{run\_id},\ \text{task\_id},\ \text{episode\_id},\ \text{attempt\_id},\ \text{producer\_id/version},\ \underbrace{\text{group\_id}}_{\text{GRPO 组}},\ \underbrace{\text{policy/sampling fingerprint}}_{\text{SHA-256}}\big)$$</div>
+  <p>为什么要比 OTel 多这几层？因为 <b>RL 训练提出了可观测性系统从不面对的要求</b>：</p>
+  <table class="tbl">
+    <tr><th>RL 场景</th><th>身份要求</th><th>翻车方式（若无此设计）</th></tr>
+    <tr><td>GRPO 同题采 G 条轨迹</td><td><code>task_id</code> 与 <code>episode_id</code> 分离 + <code>group_id</code></td><td>Polar 的 num_samples=N 会产生 N 条 session；若拿 task id 当 episode id，G 条轨迹被误当成一条的不同片段，组内 advantage 彻底算错</td></tr>
+    <tr><td>同任务多次重试</td><td><code>attempt_id</code> 从 1 开始的正整数</td><td>重试样本与首次尝试混淆，同一行为被重复计入损失</td></tr>
+    <tr><td>多 producer 并存（Local/Pi/Polar）</td><td><code>producer_id/version</code></td><td>不同 capture 能力的数据混在一起，capability 声明失去意义</td></tr>
+    <tr><td>policy 版本演进</td><td>fingerprint 是<b>校验和而非模型名</b></td><td>"gpt-4" 这类可变名称无法区分权重迭代；π_old 失去锚点</td></tr>
+  </table>
+  <div class="callout rule"><b>核心不变量：</b>同一个 ExecutionIdentity 值必须同时出现在 execution trace、policy trace、verifier report、certification decision 和每个派生数据集成员上。
+  身份是 join 键，而“显示名匹配”永远不算数。</div>
+
+  <h3 class="sub">7.2 Capability：观测权限是显式声明的，不是默认拥有的</h3>
+  <p>黑盒 proxy 能看到 model/tool I/O，却看不到 Harness 为什么 retry；hook-enabled capture 才能记录 context selection 和 termination decision。
+  所以每个 Episode 携带一张能力表（MODEL_TOKEN_IDS、MODEL_LOGPROBS、TOOL_IO、HARNESS_DECISIONS、VERIFIER_EVIDENCE……共 14 项），
+  consumer 在计算前先做交集检查：</p>
+  <pre class="ascii">Tool recovery metric       requires TOOL_IO
+Compaction diagnosis       requires CONTEXT_COMPACTION + HARNESS_DECISIONS
+Verifier gate analysis     requires VERIFIER_EVIDENCE + TERMINATION_DECISIONS
+GRPO Training View         requires target-policy token/logprob semantics</pre>
+  <p>这里有一条测量学层面的铁律：<b>不可观测必须输出 NOT_OBSERVABLE，绝不能写 0</b>。
+  “工具调用次数 = 0” 和 “没采集工具数据” 是两个完全不同的事实；写 0 会把采集缺失伪装成行为事实，
+  下游统计随之系统性失真。这和第②章的 re-tokenize 禁令是同一条原则的两面：<b>系统只输出观测到的，不脑补</b>。
+  多 Agent 场景同理——reward ownership 和 credit assignment 尚未冻结语义时，一律报 INSUFFICIENT_EVIDENCE，
+  不假装单 trace 训练视图能覆盖它。</p>
+
+  <h3 class="sub">7.3 Fail-closed：一个有明确取舍的工程决策</h3>
+  <p>反序列化层的实际实现只有十几行，但立场极端严格：</p>
+  <pre class="code">def strict_fields(value, allowed, object_name):
+    unknown = sorted(set(value) - allowed)
+    missing = sorted(allowed - set(value))
+    if unknown:  raise ContractValidationError(f"unknown {object_name} fields: {unknown}")
+    if missing:  raise ContractValidationError(f"missing {object_name} fields: {missing}")</pre>
+  <p>注意<b>未知字段和缺失字段都抛错</b>。这与主流互操作生态（protobuf、JSON API）的哲学相反——它们保留 unknown fields 以获得前向兼容。
+  两种取舍各有适用场景：</p>
+  <div class="grid-2">
+    <div class="card blue-border"><h4 style="color:var(--indigo)">Fail-open / 向前兼容<br><span class="dim">适合互操作协议</span></h4>
+      <p style="font-size:13px">旧消费者读新生产者的数据时跳过未知字段，系统能继续跑。代价：语义漂移静默发生。</p></div>
+    <div class="card green-border"><h4 style="color:var(--green)">Fail-closed / 篡改可见<br><span class="dim">适合训练数据系统</span></h4>
+      <p style="font-size:13px">schema drift 直接失败并进入人工处理。代价：升级需要显式迁移。收益：进入训练集的每条数据都与认证时的 schema 完全一致。</p></div>
+  </div>
+  <p>选 fail-closed 的根本原因回到第②章：<b>训练是无监督放大器</b>。ETL 系统里一条脏数据的代价是一次报错；
+   训练系统里一条语义漂移数据的代价是被梯度下降放大几万步。类似地，Confluent Schema Registry 用兼容性模式守护流式管道，
+   本项目用「显式 migration 才允许旧版本」守护训练数据——后者更严，因为消费端是不可回滚的模型更新。</p>
+  <p>配套的是<b>三值逻辑</b>贯穿全部错误语义：UNKNOWN 既不是 true 也不是 false；
+  QUARANTINE 不是 DELETE（隔离保留证据供审计）；错误码描述的是<b>数据可靠性</b>（CAPABILITY_MISSING、SEQUENCE_GAP、ARTIFACT_MISSING），
+  它们不会被自动转换成任务失败——这正是第②章 infra failure ≠ reward 0 在错误处理层的延伸。</p>
+
+  <div class="callout interview"><b>面试速答</b>：「你的可信内核怎么设计的？」
+  —— 三块地基：① ExecutionIdentity 把 OTel 的 trace/span 因果模型扩展出 RL 维度（task≠episode、attempt 序号、GRPO group、policy fingerprint 用校验和不用模型名），同一身份贯穿执行/策略/验证/认证/数据集五类对象；② Capability 显式声明观测权限，缺失输出 NOT_OBSERVABLE 绝不写 0；③ Fail-closed 校验（未知字段即拒绝）配合三值错误语义——理由是训练是无监督放大器，宁要显式迁移不要静默漂移。</div>
+</section>
+
+<!-- ⑧ 当前进度 -->
+<section id="status" class="section">
+  <h2>⑧ 当前进度与验收目标</h2>
+  <div class="grid-3">
+    <div class="card ok-border"><h3>✅ 已完成（可信内核）</h3>
+      <ul><li>不可变 TraceEvent / AgentEpisode、checksum、lineage、quarantine</li>
+      <li>Local Docker Launcher + execute-local 单事务全链路（真实 Docker 冒烟通过）</li>
+      <li>Model Proxy evidence + bearer token + model-evidence log</li>
+      <li>Polar HTTP producer + 严格适配 TaskResult/SessionResult/Trajectory</li>
+      <li>Bundle assembler、Slime admission envelope、单 GPU phase 契约 + dry-run</li></ul></div>
+    <div class="card warn-border"><h3>🔨 正在建设</h3>
+      <ul><li>目标 Harness + 租用 GPU 受控模型替换 fake model 闭环</li>
+      <li>真实 Polar 服务上的 crash/timeout/retry 集成测试</li>
+      <li>live session 上 Harness events × policy trace × verifier report 的 bundle join</li>
+      <li>单 GPU phase contract 接到真实进程启停</li>
+      <li>admission envelope → 官方 Polar–Slime bridge 正式训练验证</li></ul></div>
+    <div class="card bad-border"><h3>⛔ 未完成，不得宣称完成</h3>
+      <ul><li>目标 Harness + 真实 14B 权重的 live rollout</li>
+      <li>Slime 端到端模型更新</li>
+      <li>大规模 Agentic RL</li>
+      <li>Benchmark 泛化提升</li></ul></div>
+  </div>
+</section>
+
+<!-- ⑨ 路线图 -->
+<section id="roadmap" class="section">
+  <h2>⑨ 路线图 P0 – P4</h2>
+  <div class="timeline">
+    <div class="phase done"><b>P0 收敛和可信内核</b><span>全部完成 ✅</span></div>
+    <div class="phase done"><b>P1 真实 Producer</b><span>大部分完成；剩 GPU 全链路 / Polar 集成测试 / live bundle join</span></div>
+    <div class="phase partial"><b>P2 Harness 闭环</b><span>manifest 固定已完成；统一 certification 入口、failure regression bank 进行中</span></div>
+    <div class="phase partial"><b>P3 单卡模型闭环</b><span>phase 契约 / 原子状态 / admission envelope 完成；Polar bridge、train-only、policy-v0/v1 对比进行中</span></div>
+    <div class="phase todo"><b>P4 扩容</b><span>未开始：多卡 async、staleness/backpressure、多 Harness 扩展</span></div>
+  </div>
+</section>
+
+<!-- ⑩ 文档导航 -->
+<section id="docs" class="section">
+  <h2>⑩ 文档与快速验证入口</h2>
+  <div class="grid-2">
+    <div class="card"><h3>📚 项目内文档</h3>
+      <ul class="links">
+        <li><code>README.md</code> — 项目总览与快速验证命令</li>
+        <li><code>PROJECT_SCOPE.md</code> — 范围、非目标、验收目标</li>
+        <li><code>PROJECT_PLAN.md</code> — 权威实施计划 P0–P4</li>
+        <li><code>docs/architecture.md</code> — 可信执行内核详解</li>
+        <li><code>docs/data-contract.md</code> · <code>docs/local-launcher.md</code> · <code>docs/polar-integration.md</code></li>
+        <li><code>docs/adr/0002-agent-improvement-data-plane.md</code> — 关键架构决策</li>
+      </ul></div>
+    <div class="card"><h3>⚡ 快速验证命令</h3>
+<pre class="code">python3 -m unittest discover -s tests -v
+
+python3 -m src.cli prepare-local \
+  --spec configs/local-execution.example.json \
+  --output-dir artifacts/prepared-run
+
+python3 -m src.cli execute-local \
+  --spec configs/local-execution.example.json \
+  --output-dir artifacts/run-001 \
+  --upstream-auth-env MODEL_SERVER_AUTHORIZATION
+
+python3 -m src.cli admit-slime ...   # 训练准入核验</pre></div>
+  </div>
+</section>
+
+<footer class="footer">
+  Agentic RL · Agent Improvement Data Plane 深度讲解站 —— 各章节分块补充中。最近更新：<span id="updated"></span>
+</footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

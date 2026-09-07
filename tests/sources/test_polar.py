@@ -14,7 +14,7 @@ from src.contracts import (
     VerifierStatus,
 )
 from src.errors import ErrorCode
-from src.sources import PolarSourceAdapter, SourceAdapter, dumps_jsonl, JsonlSourceAdapter
+from src.sources import JsonlSourceAdapter, PolarFixtureImporter, SourceAdapter, dumps_jsonl
 
 
 REAL_SUCCESS = Path("tests/fixtures/polar/calculator_success")
@@ -101,9 +101,9 @@ def write_fixture(root: Path, *, reward: float = 1.0, failed_runtime: bool = Fal
     (root / "source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
 
-class PolarSourceAdapterTest(unittest.TestCase):
+class PolarFixtureImporterTest(unittest.TestCase):
     def test_implements_protocol_without_importing_upstream_polar(self) -> None:
-        self.assertIsInstance(PolarSourceAdapter(), SourceAdapter)
+        self.assertIsInstance(PolarFixtureImporter(), SourceAdapter)
         self.assertNotIn("polar", sys.modules)
 
     def test_concatenates_native_tokens_and_preserves_response_alignment(self) -> None:
@@ -111,7 +111,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
             fixture = Path(temp_dir) / "fixture"
             write_fixture(fixture)
 
-            result = PolarSourceAdapter().convert(fixture)
+            result = PolarFixtureImporter().convert(fixture)
 
         self.assertTrue(result.ok)
         record = result.records[0]
@@ -130,7 +130,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
             fixture = Path(temp_dir) / "fixture"
             write_fixture(fixture, failed_runtime=True)
 
-            result = PolarSourceAdapter().convert(fixture)
+            result = PolarFixtureImporter().convert(fixture)
 
         self.assertTrue(result.ok)
         record = result.records[0]
@@ -146,7 +146,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
             fixture = Path(temp_dir) / "fixture"
             write_fixture(fixture, reward=0.0)
 
-            result = PolarSourceAdapter().convert(fixture)
+            result = PolarFixtureImporter().convert(fixture)
 
         self.assertTrue(result.ok)
         self.assertEqual(result.records[0].reward, 0.0)
@@ -158,7 +158,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
             fixture = Path(temp_dir) / "fixture"
             write_fixture(fixture)
 
-            result = PolarSourceAdapter(
+            result = PolarFixtureImporter(
                 required_capabilities={Capability.POLICY_VERSION, Capability.GROUP_ID}
             ).convert(fixture)
 
@@ -175,7 +175,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
             write_fixture(fixture)
             (fixture / "summary.json").write_text("{}", encoding="utf-8")
 
-            result = PolarSourceAdapter().convert(fixture)
+            result = PolarFixtureImporter().convert(fixture)
 
         self.assertFalse(result.ok)
         self.assertEqual(result.errors[0].code, ErrorCode.CONTRACT_INVALID)
@@ -184,7 +184,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             fixture = Path(temp_dir) / "fixture"
             write_fixture(fixture)
-            polar_result = PolarSourceAdapter().convert(fixture)
+            polar_result = PolarFixtureImporter().convert(fixture)
 
             jsonl_result = JsonlSourceAdapter().convert(dumps_jsonl(polar_result.records))
 
@@ -199,7 +199,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
         "real Day 2 fixture is not present in this checkout",
     )
     def test_real_day2_fixture_maps_native_token_arrays(self) -> None:
-        result = PolarSourceAdapter().convert(REAL_SUCCESS)
+        result = PolarFixtureImporter().convert(REAL_SUCCESS)
 
         self.assertTrue(result.ok)
         record = result.records[0]
@@ -215,7 +215,7 @@ class PolarSourceAdapterTest(unittest.TestCase):
         "real Day 2 fixture is not present in this checkout",
     )
     def test_real_day2_fault_remains_untrainable(self) -> None:
-        result = PolarSourceAdapter().convert(REAL_FAULT)
+        result = PolarFixtureImporter().convert(REAL_FAULT)
 
         self.assertTrue(result.ok)
         record = result.records[0]
