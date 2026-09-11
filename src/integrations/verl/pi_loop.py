@@ -338,6 +338,14 @@ class PiAgentLoop(AgentLoopBase):
                 "verifier_status": verifier_status,
                 "min_global_steps": transport.global_steps,
                 "max_global_steps": transport.global_steps,
+                # How much of this episode was cut off by a budget rather than
+                # ended by the policy. Truncated turns are trained on -- that is
+                # what verl's own agent loop does -- so the count is what lets a
+                # reader see how much of the batch was cut off.
+                "truncated_turns": transport.truncated_turns,
+                "num_model_requests": transport.calls,
+                "unconfirmed_engine_steps": transport.unconfirmed_steps,
+                "engine_closeout": _read_closeout(output_dir),
             },
         )
 
@@ -437,10 +445,14 @@ class PiAgentLoop(AgentLoopBase):
         )
         summary = PiHostExecutionOrchestrator().run(spec, output_dir=output_dir)
         sequence = _assemble(output_dir, episode_id)
-        # Policy-artifact checksum is recorded by the finalizer.
-        rl_decision = json.loads(
-            (output_dir / "finalized" / "on-policy-rl-eligibility.json").read_text()
-        )
+        # The finalizer writes the eligibility decision the batch gate later
+        # certifies from. Its absence must fail this episode now rather than
+        # surface as a batch-level rejection with no local cause.
+        eligibility_path = output_dir / "finalized" / "on-policy-rl-eligibility.json"
+        if not eligibility_path.is_file():
+            raise ContractValidationError(
+                f"episode {episode_id} has no finalizer eligibility decision"
+            )
         policy_artifact_checksum = summary["policy_artifact_checksum"]
         return summary, sequence, str(policy_artifact_checksum)
 
@@ -484,6 +496,27 @@ def _assemble(output_dir: Path, episode_id: str):
     return assemble_episode_sequence(
         episode_id=episode_id, prompt_ids=frozen_prompt, per_call_segments=segments
     )
+
+
+def _read_closeout(output_dir: Path) -> str | None:
+    """How a budget ended this episode's model turns, if one did.
+
+    Written by the proxy just before it answers a request with its closeout
+    reply. That reply is deliberately not model evidence, so this note is the
+    only record that the episode was cut off rather than concluded -- and an
+    episode cut off by budget must not be readable as one the policy finished.
+    """
+    path = output_dir / "engine-closeout.jsonl"
+    if not path.is_file():
+        return None
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            return str(json.loads(line).get("reason") or "unknown")
+        except (json.JSONDecodeError, AttributeError):
+            return "unparseable"
+    return None
 
 
 def _agent_prompt(task_id: str) -> str:

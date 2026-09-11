@@ -42,6 +42,12 @@ export CUDA_HOME=${CUDA_HOME:-/usr/local/cuda-13.0}
 export RAY_ADDRESS=local
 export PYTHONPATH=$REPO:$VERL_PI_ROOT
 export AGENT_VERIFIER_PYTHON=$VERL_PYTHON
+# The proxy's model-call budget for one episode, kept equal to
+# max_model_requests_per_episode above. The proxy is the gate that closes an
+# episode out: it answers the over-budget request with a tool-free assistant
+# turn instead of a failed call, because one recorded failure invalidates the
+# whole episode's evidence.
+export AGENT_MODEL_MAX_CALLS=5
 # RTX PRO 6000 is SM 12.x: vLLM's FlashInfer path refuses it, so pin the
 # engine to the FlashAttention backend that works on this deployment.
 export VLLM_ATTENTION_BACKEND=${VLLM_ATTENTION_BACKEND:-FLASH_ATTN}
@@ -88,14 +94,16 @@ entry = {
     "verifier_script": f"{run_dir}/verify_mbpp_src.py",
     "tools": ["read", "bash", "write", "edit", "ls"],
     "episode_timeout_seconds": 480.0,
-    # Deliberately the same number as rollout.response_length below: this is no
-    # longer meant to be the binding limit. The transport clamps each request to
-    # min(that, context.remaining), so the episode's real budget is what bounds a
-    # generation. At 1024 every generation of the smoke16 run was cut off
-    # mid-action (12/12), never emitted <|im_end|>, and was therefore rejected by
-    # the native-EOS gate before any tool could run.
-    "max_tokens_per_generation": 3584,
-    "max_model_requests_per_episode": 8,
+    # Per-turn generation cap, and the turn count that has to fit with it inside
+    # rollout.response_length below. A budget-exhausted turn is a legitimate
+    # truncated action -- the transport records it as terminated=false and keeps
+    # training on it, exactly as verl's own tool_agent_loop.py does -- so this
+    # number only has to be large enough to carry a complete tool call, which
+    # 1024 is: the smoke16 run's 1024-token generation contained a whole `read`
+    # call. Episodes get their turns from this, not from one long generation.
+    # Arithmetic: 5 turns x 1024 + 4 observations <= 8192.
+    "max_tokens_per_generation": 1024,
+    "max_model_requests_per_episode": 5,
     "sampling_temperature": 1.0,
     "sampling_top_p": 1.0,
 }
@@ -203,8 +211,8 @@ exec "$VERL_PYTHON" -m verl.trainer.main_ppo \
   actor_rollout_ref.rollout.n_gpus_per_node=2 \
   actor_rollout_ref.rollout.gpu_memory_utilization=0.30 \
   actor_rollout_ref.rollout.prompt_length=2048 \
-  actor_rollout_ref.rollout.response_length=3584 \
-  actor_rollout_ref.rollout.max_model_len=6400 \
+  actor_rollout_ref.rollout.response_length=8192 \
+  actor_rollout_ref.rollout.max_model_len=10240 \
   actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.rollout.calculate_log_probs=true \
   actor_rollout_ref.rollout.load_format=safetensors \
@@ -227,5 +235,5 @@ exec "$VERL_PYTHON" -m verl.trainer.main_ppo \
   data.val_files="$DATASET" \
   data.train_batch_size=1 \
   data.max_prompt_length=2048 \
-  data.max_response_length=3584 \
+  data.max_response_length=8192 \
   "$@"

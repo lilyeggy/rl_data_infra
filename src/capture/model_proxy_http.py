@@ -13,6 +13,7 @@ import urllib.request
 import uuid
 from collections.abc import Callable, Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 from src.capture.harness_http import HarnessEventIngress
@@ -32,7 +33,35 @@ from src.errors import ContractValidationError
 
 MODEL_PROXY_HTTP_VERSION = "model-proxy-http/v1"
 _EVIDENCE_EXTENSION = "agent_data_plane_evidence"
+# What Pi is told when the episode cannot afford another turn. Pi answers every
+# request it makes, so a closeout reply is the difference between an episode cut
+# off by budget and an episode with no usable evidence at all: the orchestrator
+# requires *every* recorded call to carry token ids, logprobs and a status below
+# 400, so a single failed call invalidates the whole episode.
+_CLOSEOUT_MESSAGE = "Execution budget exhausted; stop and report the current result."
 logger = logging.getLogger(__name__)
+
+
+def _closeout_response(model_id: str, reason: str) -> dict[str, Any]:
+    """The answer Pi gets when it may not have another model turn.
+
+    Nothing here is recorded as model evidence, so this turn can never reach a
+    training sequence: it claims no model output at all -- empty content, no tool
+    calls, no token ids -- and exists only to let the harness conclude. The
+    reason travels in the closeout note file instead of the wire shape, so it is
+    auditable without changing what Pi parses.
+    """
+    return {
+        "id": f"budget-{uuid.uuid4().hex}",
+        "object": "chat.completion",
+        "model": model_id,
+        "choices": [{
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {"role": "assistant", "content": _CLOSEOUT_MESSAGE},
+        }],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
 
 
 def _recover_tool_calls(response: Any, tools: Any) -> int:
@@ -87,6 +116,7 @@ class ModelProxyService:
         default_sampling_seed: int | None = None,
         on_first_model_request: Callable[[], None] | None = None,
         upstream_transport: Callable[[dict[str, Any]], tuple[int, dict[str, Any]]] | None = None,
+        closeout_note_path: str | Path | None = None,
     ) -> None:
         if not isinstance(identity, ExecutionIdentity):
             raise TypeError("identity must be ExecutionIdentity")
@@ -126,6 +156,7 @@ class ModelProxyService:
             raise TypeError("on_first_model_request must be callable or null")
         self.on_first_model_request = on_first_model_request
         self.upstream_transport = upstream_transport
+        self.closeout_note_path = Path(closeout_note_path) if closeout_note_path else None
         if self.max_calls < 1:
             raise ContractValidationError("max_calls must be positive")
         self._call_count = 0
@@ -155,23 +186,10 @@ class ModelProxyService:
             raise ContractValidationError("tools must be an array")
         notify_first_model_request = False
         with self._record_lock:
-            if self._call_count >= self.max_calls:
-                if self.upstream_transport is not None:
-                    return 429, {"error": {"type": "episode_request_budget_exhausted"}}
-                return 200, {
-                    "id": f"budget-{uuid.uuid4().hex}",
-                    "object": "chat.completion",
-                    "model": model_id,
-                    "choices": [{
-                        "index": 0,
-                        "finish_reason": "stop",
-                        "message": {
-                            "role": "assistant",
-                            "content": "Execution budget exhausted; stop and report the current result.",
-                        },
-                    }],
-                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-                }
+            reason = self._closeout_reason(payload)
+            if reason is not None:
+                self._note_closeout(reason)
+                return 200, _closeout_response(model_id, reason)
             self._call_count += 1
             if not self._observed_first_model_request:
                 self._observed_first_model_request = True
@@ -285,6 +303,53 @@ class ModelProxyService:
                 attempt=self.identity.attempt_id,
             )
         return status_code, response_payload
+
+    def _closeout_reason(self, payload: Mapping[str, Any]) -> str | None:
+        """Why this request may not be served, or ``None`` if it may.
+
+        Two budgets bound an episode: this proxy's call count, and whatever the
+        `upstream_transport` reports through its own ``can_serve`` hook -- the
+        native token transport knows how much context the episode has left and
+        refuses a turn that cannot fit. Both are decided here, before the
+        upstream call, so neither can produce a recorded model call.
+
+        The caller holds `_record_lock`.
+        """
+        if self._call_count >= self.max_calls:
+            return "model_request_budget"
+        can_serve = getattr(self.upstream_transport, "can_serve", None)
+        if callable(can_serve):
+            return can_serve(payload)
+        return None
+
+    def _note_closeout(self, reason: str) -> None:
+        """Record that a budget, not the policy, ended the episode's turns.
+
+        Not model evidence -- no model call happened -- but the episode must not
+        read as if the policy stopped of its own accord. The caller holds
+        `_record_lock`.
+        """
+        logger.warning(
+            "%s: episode %s cannot afford another model turn (%s); closing out",
+            self.identity.run_id,
+            self.identity.episode_id,
+            reason,
+        )
+        if self.closeout_note_path is None:
+            return
+        record = {
+            "episode_id": self.identity.episode_id,
+            "request": self._call_count + 1,
+            "reason": reason,
+            "max_calls": self.max_calls,
+        }
+        try:
+            self.closeout_note_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.closeout_note_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record) + "\n")
+        except (OSError, TypeError, ValueError):
+            # Diagnostics must never be the reason an episode fails.
+            pass
 
     @staticmethod
     def sse_body(response: Mapping[str, Any]) -> bytes:

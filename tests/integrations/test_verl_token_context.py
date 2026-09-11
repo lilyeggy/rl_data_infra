@@ -69,10 +69,39 @@ class ContextTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractValidationError, "schema"):
             self.ctx.prepare(self.next, [{"function": "changed"}])
 
-    def test_truncated_generation_rejected(self):
+    def test_truncated_generation_is_accepted_as_a_turn(self):
+        """A turn the budget cut off is a turn, as it is in verl's own loop.
+
+        Measured on four smoke22 episodes: every turn spent its whole generation
+        budget and never emitted <|im_end|>. Requiring the terminator yielded no
+        trainable episode at all, while ``tool_agent_loop.py`` masks the ids of
+        such a turn with 1 unconditionally (:246).
+        """
         self.ctx.prepare(self.next, [])
-        with self.assertRaisesRegex(ContractValidationError, "terminator"):
-            self.ctx.accept([1, 2, 3], {"role": "assistant", "content": "done"})
+        truncated = [11, 22, 33]
+        self.ctx.accept(truncated, self.assistant)
+        self.assertTrue(self.ctx.terminator_stripped)
+        self.assertEqual(self.ctx.tokens[-len(truncated):], truncated)
+
+    def test_missing_terminator_is_restored_as_context_only(self):
+        self.ctx.prepare(self.next, [])
+        cut_off = [11, 22, 33]
+        self.ctx.accept(cut_off, self.assistant)
+        ledger_after_cut_off = list(self.ctx.tokens)
+        self.assertEqual(ledger_after_cut_off[-len(cut_off):], cut_off)
+        third = self.next + [self.assistant, {
+            "role": "tool", "tool_call_id": "call1", "content": "second observation",
+        }]
+        prompt = self.ctx.prepare(third, [])
+        # Nothing was rewritten: the ledger is still the first prompt, its native
+        # generation, its observation and then the cut-off generation, with only
+        # the new suffix appended.
+        self.assertEqual(prompt[:len(ledger_after_cut_off)], ledger_after_cut_off)
+        # The terminator the cut-off turn never emitted is restored at the head of
+        # that suffix, so the prompt stays on-template. No logprob was ever
+        # returned for it, which is what makes it context and not an action.
+        self.assertEqual(prompt[len(ledger_after_cut_off)], 999)
+        self.assertGreater(len(prompt), len(ledger_after_cut_off) + 1)
 
     def test_no_continuation_after_terminal(self):
         self.ctx.prepare(self.next, [])

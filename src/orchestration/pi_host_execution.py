@@ -178,6 +178,11 @@ class PiHostExecutionOrchestrator:
                     access_token=token, timeout_seconds=spec.timeout_seconds,
                     backend_model_revision=spec.backend_model_revision,
                     upstream_transport=spec.upstream_transport,
+                    # A budget closeout is not a model call, so it leaves no
+                    # evidence row; without this note an episode cut off by
+                    # budget would be indistinguishable from one the policy
+                    # chose to finish.
+                    closeout_note_path=root / "engine-closeout.jsonl",
                     max_calls=int(os.environ.get("AGENT_MODEL_MAX_CALLS", "128"))), host="127.0.0.1", port=0)
                 server.start_in_thread()
                 pi_home = Path(tempfile.mkdtemp(prefix="pi-certified-"))

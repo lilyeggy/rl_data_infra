@@ -291,5 +291,119 @@ class ModelProxyHttpTest(unittest.TestCase):
             self.assertTrue(evidence.rl_usable_call)
 
 
+class BudgetCloseoutTest(unittest.TestCase):
+    """A turned-down turn must not become a failed model call.
+
+    The orchestrator requires *every* recorded call to carry token ids, logprobs
+    and a status below 400, so one failure invalidates the whole episode. Pi
+    still has to be answered, and a budget-exhausted turn has to be auditable, so
+    the closeout reply is recorded in its own note instead of as evidence.
+    """
+
+    class _Transport:
+        """Stands in for the native token transport, which owns episode context."""
+
+        def __init__(self, affordable: bool = False) -> None:
+            self.affordable = affordable
+            self.asked: list[dict] = []
+            self.generated = 0
+
+        def can_serve(self, payload) -> str | None:
+            self.asked.append(dict(payload))
+            return None if self.affordable else "context_budget"
+
+        def __call__(self, payload):
+            self.generated += 1
+            return 200, {
+                "id": "completion-1",
+                "object": "chat.completion",
+                "model": payload["model"],
+                "choices": [{
+                    "index": 0,
+                    "finish_reason": "stop",
+                    "message": {"role": "assistant", "content": "done"},
+                }],
+                "usage": {"prompt_tokens": 2, "completion_tokens": 1, "total_tokens": 3},
+                "agent_data_plane_evidence": {
+                    "backend_model_revision": "checkpoint-0001",
+                    "prompt_token_ids": [10, 11],
+                    "response_token_ids": [20],
+                    "response_logprobs": [-0.1],
+                },
+            }
+
+    def _service(self, root: Path, transport, **overrides) -> ModelProxyService:
+        settings = dict(
+            identity=_identity(),
+            endpoint_kind=ModelEndpointKind.CONTROLLED,
+            upstream_chat_completions_url="http://127.0.0.1:1/v1/chat/completions",
+            evidence_writer=ModelEvidenceJsonlWriter(root / "model-evidence.jsonl"),
+            recorder=TraceRecorder(
+                EventWriter(root / "events.jsonl"),
+                run_id="run-http-proxy",
+                episode_id="episode-http-proxy",
+                trace_id="trace-http-proxy",
+            ),
+            access_token="execution-proxy-token",
+            upstream_transport=transport,
+            closeout_note_path=root / "engine-closeout.jsonl",
+        )
+        settings.update(overrides)
+        return ModelProxyService(**settings)
+
+    def test_an_unaffordable_turn_becomes_a_closeout_with_no_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            transport = self._Transport()
+            service = self._service(root, transport)
+            status, payload = service.forward_chat_completions({
+                "model": "example-14b",
+                "messages": [{"role": "user", "content": "fix"}],
+            })
+            self.assertEqual(status, 200)
+            choice = payload["choices"][0]
+            self.assertEqual(choice["finish_reason"], "stop")
+            # No model output is claimed: the reply exists only to let Pi stop.
+            self.assertIsNone(choice["message"].get("tool_calls"))
+            self.assertTrue(choice["message"]["content"])
+            self.assertEqual(len(transport.asked), 1)
+            self.assertEqual(
+                transport.generated, 0, "an unaffordable turn reached the engine"
+            )
+            self.assertFalse(
+                (root / "model-evidence.jsonl").exists(),
+                "a closeout is not a model call and must leave no evidence",
+            )
+            note = json.loads(
+                (root / "engine-closeout.jsonl").read_text().splitlines()[0]
+            )
+            self.assertEqual(note["reason"], "context_budget")
+            self.assertEqual(note["episode_id"], "episode-http-proxy")
+
+    def test_the_call_budget_closes_out_without_asking_the_transport(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            transport = self._Transport(affordable=True)
+            service = self._service(root, transport, max_calls=1)
+            request = {
+                "model": "example-14b",
+                "messages": [{"role": "user", "content": "fix"}],
+            }
+            self.assertEqual(service.forward_chat_completions(request)[0], 200)
+            self.assertEqual(transport.generated, 1)
+            status, payload = service.forward_chat_completions(request)
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["choices"][0]["finish_reason"], "stop")
+            # The over-budget request is answered here, so the episode keeps its
+            # one real call and no failure is recorded.
+            self.assertEqual(transport.generated, 1)
+            self.assertEqual(len(transport.asked), 1)
+            note = json.loads(
+                (root / "engine-closeout.jsonl").read_text().splitlines()[0]
+            )
+            self.assertEqual(note["reason"], "model_request_budget")
+            self.assertEqual(note["request"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

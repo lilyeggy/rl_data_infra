@@ -22,7 +22,9 @@ from pathlib import Path
 import numpy
 
 from src.errors import ContractValidationError
+from src.integrations.verl.bridge import BridgeCallRecord, build_per_call_segments
 from src.integrations.verl.native_transport import NativeTokenTransport, _tool_calls
+from src.integrations.verl.sequence import assemble_episode_sequence
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "verl_pi"
 GENERATION_TEXT = (FIXTURES / "smoke16-a0s0-call0-generation.txt").read_text()
@@ -202,7 +204,19 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         self.turn_path = Path(self.tmp.name) / "engine-notes" / "episode.turns.jsonl"
         # The upstream parser sees the same untagged text it saw on the run.
         self.parser = ParserDouble(calls=(), content=GENERATION_TEXT)
-        self.transport = NativeTokenTransport(
+        self.transport = self._transport()
+        self.first_request = {
+            "model": "m",
+            "messages": [
+                {"role": "system", "content": "you are pi"},
+                {"role": "user", "content": "implement Mbpp/118"},
+            ],
+            "tools": DECLARED_TOOLS,
+        }
+
+    def _transport(self, **overrides) -> NativeTokenTransport:
+        """Build the transport under test, with the deployment's defaults."""
+        settings = dict(
             loop=None,
             server_manager=self.server,
             tokenizer=self.tokenizer,
@@ -219,14 +233,8 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
             step_note_path=self.note_path,
             turn_note_path=self.turn_path,
         )
-        self.first_request = {
-            "model": "m",
-            "messages": [
-                {"role": "system", "content": "you are pi"},
-                {"role": "user", "content": "implement Mbpp/118"},
-            ],
-            "tools": DECLARED_TOOLS,
-        }
+        settings.update(overrides)
+        return NativeTokenTransport(**settings)
 
     def _follow_up(self, issued_id: str) -> dict:
         """Pi's next request: real echo shape, with the tool result appended."""
@@ -309,22 +317,103 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractValidationError, "assistant response"):
             asyncio.run(self.transport.generate(request))
 
-    def test_generation_consuming_the_whole_budget_is_rejected(self) -> None:
-        """Truncation is now detected by the budget, not by a missing token.
+    def test_generation_consuming_the_whole_budget_is_a_truncated_turn(self) -> None:
+        """Truncation is detected by the budget, and it is still a turn.
 
-        The engine strips its special stop token, so absence of `<|im_end|>` is
-        normal. What separates a finished turn from a cut-off one is whether the
-        engine stopped early.
+        The engine strips its special stop token, so the absence of `<|im_end|>`
+        is normal; what identifies a cut-off turn is that the engine stopped
+        only because it ran out of budget. Measured on four smoke22 episodes,
+        every turn looked like this, and rejecting it left the run with no
+        trainable episode at all.
         """
         budget = self._first_budget()
-        self.server.token_ids = [_BASE + ord("x")] * budget
-        with self.assertRaisesRegex(ContractValidationError, "terminator"):
-            asyncio.run(self.transport.generate(self.first_request))
+        self.server.token_ids = self._truncated_generation(budget)
+        response = asyncio.run(self.transport.generate(self.first_request))
+        # Pi is answered like any other turn -- and this one is actionable, because
+        # the cut-off text still carries a whole `read` call -- so the episode
+        # carries on instead of dying.
+        self.assertEqual(response["choices"][0]["finish_reason"], "tool_calls")
+        self.assertEqual(
+            response["choices"][0]["message"]["tool_calls"][0]["function"]["name"], "read"
+        )
         self.assertEqual(self.transport.truncated_turns, 1)
+        context = self.transport.context
+        self.assertTrue(context.terminator_stripped)
+        self.assertEqual(context.tokens[context.initial_length:], self.server.token_ids)
         record = json.loads(self.turn_path.read_text().splitlines()[0])
         self.assertEqual(record["tokens"], budget)
         self.assertEqual(record["budget"], budget)
         self.assertFalse(record["terminated"])
+
+    def test_a_truncated_turn_still_lets_the_episode_continue(self) -> None:
+        """The change that unblocks #1: turn two exists after a cut-off turn one."""
+        budget = self._first_budget()
+        self.server.token_ids = self._truncated_generation(budget)
+        first = asyncio.run(self.transport.generate(self.first_request))
+        calls = first["choices"][0]["message"]["tool_calls"]
+        self.assertEqual(calls[0]["function"]["name"], "read")
+        asyncio.run(self.transport.generate(self._follow_up(calls[0]["id"])))
+
+        context = self.transport.context
+        ledger = list(context.tokens)
+        start = context.initial_length
+        self.assertEqual(ledger[start:start + budget], self.server.token_ids)
+        # The terminator the cut-off turn never emitted was restored right after
+        # it, as context: no logprob came back for that token.
+        self.assertEqual(ledger[start + budget], END)
+        second_prompt = self.server.prompts[1]
+        self.assertEqual(second_prompt, ledger[: len(second_prompt)])
+        # The engine cut both turns off -- it serves the same truncated generation
+        # for each -- and both were still accepted as turns.
+        self.assertEqual(self.transport.truncated_turns, 2)
+
+    def test_a_truncated_episode_assembles_into_one_training_sequence(self) -> None:
+        """The whole point, end to end: a cut-off turn is trainable, and masked.
+
+        The episode has to survive the bridge's contiguity check and come out as
+        one sequence in which every native token is in the loss and only the
+        observations and the restored terminator are not.
+        """
+        budget = self._first_budget()
+        self.server.token_ids = self._truncated_generation(budget)
+        first = asyncio.run(self.transport.generate(self.first_request))
+        issued = first["choices"][0]["message"]["tool_calls"][0]["id"]
+        second = asyncio.run(self.transport.generate(self._follow_up(issued)))
+        records = [
+            BridgeCallRecord(
+                request_id=f"call-{index}",
+                prompt_token_ids=tuple(
+                    item["agent_data_plane_evidence"]["prompt_token_ids"]
+                ),
+                response_token_ids=tuple(
+                    item["agent_data_plane_evidence"]["response_token_ids"]
+                ),
+                response_logprobs=tuple(
+                    item["agent_data_plane_evidence"]["response_logprobs"]
+                ),
+            )
+            for index, item in enumerate((first, second))
+        ]
+        segments, prompt = build_per_call_segments(records)
+        sequence = assemble_episode_sequence(
+            episode_id="episode", prompt_ids=prompt, per_call_segments=segments
+        )
+        self.assertEqual(sequence.num_model_calls, 2)
+        self.assertEqual(sequence.num_tool_rounds, 1)
+        self.assertEqual(sequence.response_mask[:budget], (1,) * budget)
+        self.assertEqual(sequence.response_ids[budget], END)
+        self.assertEqual(sequence.response_mask[budget], 0)
+        self.assertGreater(len(sequence.response_ids), budget + 1)
+
+    def _truncated_generation(self, budget: int) -> list[int]:
+        """The real generation, cut to the budget, with no terminator.
+
+        Its `read` call sits at character 85 of the captured text, so a slice
+        still carries a whole action -- which is exactly the measured case the
+        budget-exhausted turn has to handle.
+        """
+        ids = self.tokenizer.encode(GENERATION_TEXT)[:budget]
+        return ids + [_BASE + ord(" ")] * (budget - len(ids))
 
     def test_a_finished_turn_is_recorded_as_terminated(self) -> None:
         asyncio.run(self.transport.generate(self.first_request))
@@ -353,6 +442,103 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         # Nothing has been generated yet, so the whole response budget is free.
         context = self.transport.context
         return min(self.transport.max_tokens, context.max_response)
+
+
+class TurnAffordabilityTest(unittest.TestCase):
+    """A turn the episode cannot afford must be refused before it is spent.
+
+    One failed model call invalidates the whole episode: the orchestrator
+    requires every recorded call to carry token ids, logprobs and a status below
+    400. So the budget question has to be answered ahead of the engine call,
+    which is what the proxy does with this hook.
+    """
+
+    def setUp(self) -> None:
+        self.tokenizer = ReversibleTokenizer()
+        self.parser = ParserDouble(calls=(), content=GENERATION_TEXT)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.server = ServerManagerDouble(self.tokenizer.encode(GENERATION_TEXT) + [END])
+        self.request = {
+            "model": "m",
+            "messages": [
+                {"role": "system", "content": "you are pi"},
+                {"role": "user", "content": "implement Mbpp/118"},
+            ],
+            "tools": DECLARED_TOOLS,
+        }
+
+    def _transport(self, **overrides) -> NativeTokenTransport:
+        settings = dict(
+            loop=None,
+            server_manager=self.server,
+            tokenizer=self.tokenizer,
+            parser=self.parser,
+            episode_id="episode",
+            policy_revision="f" * 64,
+            sampling_params={},
+            max_prompt=8000,
+            max_response=40000,
+            max_tokens=8192,
+            max_requests=4,
+            timeout=5.0,
+        )
+        settings.update(overrides)
+        return NativeTokenTransport(**settings)
+
+    def _follow_up(self, issued_id: str) -> dict:
+        return {
+            "model": "m",
+            "messages": [
+                *self.request["messages"],
+                {"role": "assistant", "content": "", "tool_calls": [
+                    {"id": issued_id, "type": "function",
+                     "function": {"name": "read", "arguments": '{"path":"solution.py"}'}}
+                ]},
+                {"role": "tool", "tool_call_id": issued_id, "content": '"""stub"""\n'},
+            ],
+            "tools": DECLARED_TOOLS,
+        }
+
+    def test_first_turn_of_an_empty_episode_is_served(self) -> None:
+        self.assertIsNone(self._transport().can_serve(self.request))
+
+    def test_a_turn_that_cannot_fit_is_refused(self) -> None:
+        budget = 4000
+        self.server.token_ids = (
+            self.tokenizer.encode(GENERATION_TEXT)[:budget]
+            + [_BASE + ord(" ")] * (budget - budget)
+        )
+        transport = self._transport(max_response=budget)
+        first = asyncio.run(transport.generate(self.request))
+        issued = first["choices"][0]["message"]["tool_calls"][0]["id"]
+        self.assertEqual(transport.context.remaining, 0)
+        self.assertEqual(transport.can_serve(self._follow_up(issued)), "context_budget")
+
+    def test_the_request_budget_is_reported_separately(self) -> None:
+        transport = self._transport(max_requests=1)
+        asyncio.run(transport.generate(self.request))
+        self.assertEqual(transport.can_serve(self.request), "model_request_budget")
+
+    def test_a_protocol_violation_is_not_reported_as_a_budget_problem(self) -> None:
+        """A rewritten history must still fail the episode loudly."""
+        transport = self._transport()
+        asyncio.run(transport.generate(self.request))
+        broken = {
+            "model": "m",
+            "messages": [{"role": "user", "content": "compacted"}],
+            "tools": DECLARED_TOOLS,
+        }
+        self.assertIsNone(transport.can_serve(broken))
+        with self.assertRaisesRegex(ContractValidationError, "prior messages"):
+            asyncio.run(transport.generate(broken))
+
+    def test_aborted_generation_is_still_a_failure(self) -> None:
+        """An abort is not a truncated turn: the request was cancelled."""
+        self.server.stop_reason = "aborted"
+        with self.assertRaisesRegex(ContractValidationError, "aborted"):
+            asyncio.run(self._transport().generate(self.request))
+        self.assertEqual(self.server.prompts and len(self.server.prompts), 1)
 
 
 class EngineStepEvidenceTest(unittest.TestCase):

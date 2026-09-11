@@ -155,22 +155,57 @@ Pi 发来的 `messages` **降级为需要校验的协议证据**，不再是 pro
 - 账本能逐 token 保住原生生成（真实 tokenizer 实测：保留为真，仅追加 20 个后缀 token）。
 - 服务器有 `/usr/bin/bwrap`，隔离方案可落地。
 
-**仍是假设，且实测为假——这三条必须在改代码前解决**：
+**实测为假的假设，以及各自的处置**：
 
-| # | 假设 | 实测 | 后果 |
+| # | 假设 | 实测 | 处置 |
 |---|---|---|---|
-| A | 策略会吐 `<tool_call>` 标签，上游 Hermes parser 能解析 | 10 条真实生成**解析出 0 个调用**（12 条里 0 个标签） | `message` 无 tool_calls → Pi 不执行 → `num_tool_rounds<1` 抛错 |
-| B | 模型会在预算内正常收尾并发 EOS | 12/12 被截断在 1024（launcher 仍写 `max_tokens_per_generation: 1024`） | `accept()` 抛 `generation lacks native EOS` |
-| C | Pi 会原样回传 assistant 消息 | Pi 回 `content: null`，且只保留部分 tool_calls | 回传校验抛 `Pi rewrote prior messages` |
+| A | 策略会吐 `<tool_call>` 标签，上游 Hermes parser 能解析 | 10 条真实生成**解析出 0 个调用**（12 条里 0 个标签） | 已修：`_tool_calls` 在有标签时用上游 parser、无标签时走仓库既有的严格 JSON 抽取（非宽松修复） |
+| B | 模型会在预算内正常收尾并发 EOS | 4/4 回合耗尽整个预算、从不发 `<|im_end|>` | 见 §8：按 verl 语义把截断回合当合法动作 |
+| C | Pi 会原样回传 assistant 消息 | Pi 回 `content: null`，且只保留部分 tool_calls | 已修：只比对承重字段（role + tool_calls），content 非空时才要求一致 |
 
 C 的定位实验（真实消息驱动 `AppendOnlyTokenContext`）：
 
 | pending 构造 | 第二轮 |
 |---|---|
-| content = 正文（代码现状） | 抛 `rewrote prior messages` |
+| content = 正文（当时的代码） | 抛 `rewrote prior messages` |
 | content = `""` + Pi 真实 tool_calls | **通过**，账本原生生成保留为真 |
 
 即：**B 与 C 都不是设计错，而是配置与一行取值错**；A 是真正的设计缺口——数据平面既已认定「Pi 的文本重渲染不可信」，就不能把动作抽取完全交给只认标签的上游 parser。
+
+---
+
+## 8. 截断的回合算不算一个回合（2026-09-11 决定：算）
+
+**问题。** 实测（smoke22，4/4 回合）：`tokens == budget == 3584`、`stop_reason == "completed"`、
+从不出现 `<|im_end|>`。旧实现要求回合必须以原生 EOS 收尾，于是**一个可训练回合都产不出来**，
+#1（多轮组装）在 GPU 上从来没被真正跑过。
+
+**为什么按 verl 的语义处理，而不是加严。** 这不是"放宽标准"，是对齐我们要接进去的框架：
+
+- `tool_agent_loop.py:246`：`agent_data.response_mask += [1] * len(response_ids)` —— **无条件下 mask=1**；
+- `:254`：终止条件只有 `len(agent_data.response_mask) >= self.response_length`；
+- 在整个 `agent_loop` 目录里 grep `im_end|eos|EOS` → **0 命中**。
+
+也就是说 verl 自己的多轮循环从不检查 EOS，长度耗尽就是正常终止。我们比框架更严，而且这种严是
+**自相矛盾**的：`stop_token_ids=[<|im_end|>]` 让引擎在 EOS 处停下，而 vLLM 的契约是
+**特殊 stop token 不返回**——所以"干净收尾"的回合永远拿不到那个 token。
+
+**改法（三层，缺一层都跑不通）。**
+
+1. `accept()`：缺少 terminator 的回合**照样计入账本**。区别（finished vs truncated）挪到证据里
+   （逐回合 `terminated` 字段、`truncated_turns` 计数、`extra_fields`）——台账不再承担这个语义。
+2. 预算重排：原来 `per-generation = response_length = 3584`，**一个截断回合就吃光整个 episode**，
+   第二轮在数学上不可能存在。现在 `5 × 1024 + 4 × observation ≤ 8192`，
+   `max_model_len = 2048 + 8192`。为什么每回合 1024 够：smoke16 那条被 1024 截断的生成里
+   **含一个完整的 `read` 调用**（fixture 实测，位置在正文第 85 字符）。
+3. 预算耗尽必须**干净收尾，而不是失败一次模型调用**：orchestrator 要求**每一条**记录的调用都带
+   token ids / logprobs / status<400，一次失败就让整个 episode 的证据作废（`all_model_calls_usable`），
+   而工具输出过长不是策略的错。所以 proxy 在**调用引擎之前**问 transport 的 `can_serve`：
+   付不起就回一个**不含任何模型输出的** assistant 回合（空 content、无 tool_calls、不记录证据），
+   并把原因写进 `engine-closeout.jsonl`。顺序上必须在引擎之前决定，否则会留下一条失败的 evidence。
+
+**代价（诚实记下）：** 被截断的尾部会以 mask=1 进 loss（verl 亦然）。可核对的口径是
+`truncated_turns` 与 `engine_closeout`，它们会随每个 episode 落盘。
 
 ---
 

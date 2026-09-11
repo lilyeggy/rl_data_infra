@@ -124,9 +124,11 @@ class NativeTokenTransport:
     ) -> None:
         """Record every turn's length, so the policy's stopping behaviour is measured.
 
-        Whether this policy terminates its turn at all is the question that
-        decides how a budget-exhausted generation should be treated, and it can
-        only be answered from real runs. One line per model call.
+        Whether this policy terminates its turn at all can only be answered from
+        real runs, and the answer decides how a budget-exhausted generation is
+        read: as a truncated action (verl's own semantics) rather than a broken
+        one. Measured on four smoke22 episodes, every turn consumed the whole
+        budget without emitting ``<|im_end|>``. One line per model call.
         """
         if not terminated:
             self.truncated_turns += 1
@@ -146,6 +148,33 @@ class NativeTokenTransport:
                 handle.write(json.dumps(record) + "\n")
         except (OSError, TypeError, ValueError):
             pass
+
+    def can_serve(self, payload: dict[str, Any]) -> str | None:
+        """Why this request cannot be served, or ``None`` if it can.
+
+        Asked *before* the engine, so a turn the episode can no longer afford
+        ends the episode by budget instead of failing a model call. One failed
+        call makes the whole episode unusable -- the orchestrator requires every
+        recorded call to carry token ids, logprobs and a status below 400 -- and
+        a long tool output is not the policy's fault. Measured on the smoke16
+        run, one real generation needed its entire 1024-token budget, so running
+        out of episode context is an ordinary event, not an error.
+        """
+        if self.error is not None:
+            # A failed episode must fail loudly, not quietly close out.
+            return None
+        if self.calls >= self.max_requests:
+            return "model_request_budget"
+        try:
+            cost = self.context.next_suffix(
+                payload["messages"], payload.get("tools", [])
+            )
+        except (ContractValidationError, KeyError, TypeError):
+            # Not an affordability question -- the real call must raise it.
+            return None
+        if not self.context.can_afford(len(cost)):
+            return "context_budget"
+        return None
 
     def __call__(self, payload: dict[str, Any]):
         future = asyncio.run_coroutine_threadsafe(self.generate(payload), self.loop)
@@ -197,21 +226,24 @@ class NativeTokenTransport:
         message = {"role": "assistant", "content": content}
         if calls:
             message["tool_calls"] = calls
-        # A turn that ended on its own stops short of the budget. Consuming the
-        # whole budget means the engine hit max_tokens, i.e. the turn was cut off
-        # and the episode must not be treated as having completed it.
-        stopped_early = len(ids) < budget
+        # A turn that ended on its own stops short of its budget. Consuming the
+        # whole budget means the engine hit max_tokens: the policy never emitted
+        # a terminator and the turn is truncated. It is still a turn -- recorded
+        # as not terminated, so the episode evidence shows how much of the batch
+        # was cut off -- because verl's own agent loop trains on one (see
+        # `AppendOnlyTokenContext.accept`). An abort is different: the engine
+        # stopped because the request was cancelled, which is not a turn at all.
         aborted = getattr(output, "stop_reason", None) == "aborted"
-        engine_finished = stopped_early and not aborted
+        if aborted:
+            raise ContractValidationError("generation aborted before the turn ended")
+        terminated = len(ids) < budget
         self._record_turn(
             tokens=len(ids),
             budget=budget,
             stop_reason=getattr(output, "stop_reason", None),
-            terminated=engine_finished,
+            terminated=terminated,
         )
-        self.context.accept(
-            ids, message, engine_finished=engine_finished, budget=budget
-        )
+        self.context.accept(ids, message)
         return {
             "id": f"chatcmpl-{uuid4().hex}", "object": "chat.completion",
             "model": payload["model"],
