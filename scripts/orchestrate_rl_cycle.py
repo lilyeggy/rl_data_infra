@@ -7,6 +7,11 @@ State Machine:
 3. STOP_SERVING: Terminate inference server; ensure GPU VRAM is released.
 4. TRAIN: Execute GRPO update to produce updated policy adapter.
 5. EVAL_AND_GATE: Evaluate new adapter against fixed DEV holdout gate; promote or reject.
+
+Real mode: this orchestrator only wires the cycle end-to-end in mock mode. Real
+training runs scripts/train_grpo_lora.py on CUDA; real gating runs
+scripts/evaluate_apps_holdout.py against the fixed holdout. This orchestrator
+never fabricates gate numbers.
 """
 
 from __future__ import annotations
@@ -91,14 +96,20 @@ class RLCycleOrchestrator:
 
     def step_eval_gate(self, candidate_adapter: Path) -> dict[str, Any]:
         self.log("[Phase 3: Eval & Gate] Evaluating candidate on fixed unseen DEV holdout...")
-        # Evaluation Gate logic: check candidate completion and performance
-        # In mock mode, simulate holdout pass rate comparison
+        if not self.mock:
+            raise NotImplementedError(
+                "Real eval/gate is not performed by this orchestrator: run "
+                "scripts/evaluate_apps_holdout.py against the fixed holdout and judge "
+                "from its summary. This orchestrator does not fabricate gate numbers."
+            )
+        # Mock wiring test only: explicitly simulated pass-rate comparison.
         base_pass_rate = 0.50
-        candidate_pass_rate = 0.65  # Simulating improvement
+        candidate_pass_rate = 0.65  # Simulated improvement
         improved = candidate_pass_rate > base_pass_rate
 
         verdict = "PROMOTED" if improved else "REJECTED"
         gate_report = {
+            "mode": "mock-simulated",
             "candidate_adapter": str(candidate_adapter),
             "dev_tasks_count": len(self.eval_tasks),
             "base_pass_rate": base_pass_rate,
@@ -138,12 +149,13 @@ class RLCycleOrchestrator:
             "rollouts": rollout_summary,
             "train": train_record,
             "gate": gate_report,
-            "status": "COMPLETED",
+            "status": "MOCK_COMPLETED" if self.mock else "COMPLETED",
         }
         (self.output_dir / "cycle-summary.json").write_text(
             json.dumps(cycle_summary, indent=2, ensure_ascii=False) + "\n"
         )
-        self.log(f"=== Cycle {self.cycle_id} Completed Successfully with verdict {gate_report['verdict']} ===")
+        mode_label = "completed (mock)" if self.mock else "completed"
+        self.log(f"=== Cycle {self.cycle_id} {mode_label} with verdict {gate_report['verdict']} ===")
         return cycle_summary
 
 

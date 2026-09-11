@@ -12,13 +12,6 @@ from src.contracts.agent_episode import (
     TaskStatus,
 )
 from src.contracts.artifacts import ArtifactRef
-from src.contracts.capabilities import (
-    TRAINING_CORE_CAPABILITIES,
-    Capability,
-    capabilities_for_record,
-    common_capabilities,
-    require_capabilities,
-)
 from src.contracts.dataset import (
     DatasetManifest,
     DatasetMember,
@@ -28,20 +21,11 @@ from src.contracts.dataset import (
 )
 from src.contracts.execution_bundle import ExecutionBundle
 from src.contracts.execution_identity import ExecutionIdentity
-from src.contracts.experiment import ExperimentManifest
 from src.contracts.manifests import (
     EnvironmentManifest,
     EvaluatorManifest,
     HarnessManifest,
     ModelManifest,
-)
-from src.contracts.resample_request import ResampleRequest
-from src.contracts.rollout_batch import RolloutBatch
-from src.contracts.rollout_record import (
-    ComponentStatus,
-    RolloutRecord,
-    RolloutStatus,
-    VerifierStatus,
 )
 from src.contracts.run_manifest import ExecutionRunManifest
 from src.contracts.trace_event import (
@@ -50,11 +34,6 @@ from src.contracts.trace_event import (
     EventType,
     TraceEvent,
 )
-from src.contracts.training_batch import TrainingReadyBatch
-from src.contracts.training_candidate import (
-    TrainingCandidateView,
-    build_training_candidate_view,
-)
 from src.contracts.verifier_report import (
     LOCAL_VERIFIER_REPORT_VERSION,
     LocalVerifierReport,
@@ -62,9 +41,7 @@ from src.contracts.verifier_report import (
 )
 
 __all__ = [
-    "Capability",
     "CaptureCapability",
-    "ComponentStatus",
     "AgentEpisode",
     "ArtifactRef",
     "EnvironmentManifest",
@@ -73,7 +50,6 @@ __all__ = [
     "DatasetPurpose",
     "DatasetRole",
     "DatasetSplit",
-    "ExperimentManifest",
     "EpisodeOutcome",
     "EpisodeTermination",
     "EpisodeVerifierStatus",
@@ -92,18 +68,6 @@ __all__ = [
     "LocalVerifierReport",
     "VerifierExecutionStatus",
     "ModelManifest",
-    "ResampleRequest",
-    "RolloutBatch",
-    "RolloutRecord",
-    "RolloutStatus",
-    "TRAINING_CORE_CAPABILITIES",
-    "TrainingReadyBatch",
-    "TrainingCandidateView",
     "TraceEvent",
     "TaskStatus",
-    "VerifierStatus",
-    "capabilities_for_record",
-    "build_training_candidate_view",
-    "common_capabilities",
-    "require_capabilities",
 ]

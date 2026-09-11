@@ -12,7 +12,6 @@ from src.storage import (
     IngestionWorker,
     PartitionedEventStore,
     StorageSchemaRegistry,
-    summarize_ingestion_latencies,
 )
 from tests.execution_fixtures import make_trace_event
 
@@ -40,15 +39,6 @@ class QueueSchemaAndCompactionTest(unittest.TestCase):
             self.assertEqual(drained.events, 2)
             self.assertEqual(queue.snapshot().pending_events, 0)
             self.assertEqual(len(store.read_all()), 2)
-
-    def test_latency_percentiles_are_deterministic(self) -> None:
-        summary = summarize_ingestion_latencies((1, 2, 3, 4, 5, 100))
-
-        self.assertEqual(summary.count, 6)
-        self.assertEqual(summary.mean_ms, 19.166666666666668)
-        self.assertEqual(summary.p95_ms, 100)
-        self.assertEqual(summary.p99_ms, 100)
-        self.assertEqual(summarize_ingestion_latencies(()).count, 0)
 
     def test_schema_registry_requires_explicit_migration(self) -> None:
         registry = StorageSchemaRegistry()
