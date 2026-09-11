@@ -298,14 +298,106 @@ list(raw) == list(typed) -> True
 
 **§5.3 第 2 项（实际训练由 verl 执行）由此升级为满足。**
 
-**§5.3 第 9 项仍为部分满足，而且原因很清楚**：这一轮**所有 rollout 都发生在同步之前**，
+**§5.3 第 9 项当时仍为部分满足，而且原因很清楚**：这一轮**所有 rollout 都发生在同步之前**，
 所以"同步后的新权重被 Pi 使用"没有证据。要拿到它需要一个**跑到第二步**的 run——
 smoke26（`total_epochs=2`）本来正是为此，但那一组 16 条**全部 FAILED、组内零方差**，
 被 gate 正确拒绝（`smoke26/` 留档：这本身就是 §5.3 第 6 项的正面证据）。
 
-也就是说：**剩下的约束是数据，不是集成**。在观测到的 ~1/16 解出率下，16 样本一组只有约 60% 的概率
-含有解，而"跑到第二步"每次都要掷这个硬币。要稳定拿到第 9 项证据，要么加大每组样本数，
-要么换一个策略更常解出的任务——**这是实验设计选择，属于用户决定，不是代码问题**。
+当时的结论是"剩下的约束是数据，不是集成"。**这个结论只对了一半**：数据确实是约束，但在它前面
+还站着一个真的代码缺陷——`max_attempts` 从来没生效过。见 §12。
+
+---
+
+## 12. `max_attempts` 是假的；以及第 9 项的证据（smoke27，2026-09-11）
+
+### 12.1 一个看起来像重试循环的单次尝试
+
+`verl_manager.py` 的 `generate_sequences` 里原本写着：
+
+```python
+for attempt in range(self.max_attempts):
+    self._stamp_attempt(prompts, attempt, call_root)
+    batch = await super().generate_sequences(prompts)
+    try:
+        certified = self._certify_from_evidence(call_root, attempt)
+        self._verify_returned_batch(batch, prompts, call_root, attempt)
+    except ContractValidationError as exc:
+        raise ContractValidationError(
+            f"{self.run_id}: batch rejected without resampling: {exc}"
+        ) from exc
+    ...
+```
+
+`except` 分支自己 `raise`，所以**循环体永远只执行一次**：`attempt` 之后的分支不可达，
+`last_error` 是死代码，`max_attempts` 只被读出来校验、从没被使用。报错文案
+"batch rejected **without resampling**"因此是字面属实的——它确实不重采，尽管类注释、
+配置项和 `_stamp_attempt` 的 attempt 参数都在承诺会重采（`pi_loop.py:228` 也确实按
+`attempt-{n}` 分目录，即整套设计都预期会有第二次）。
+
+为什么这个缺陷能活到今天：它**只在一种输入上可见**，而这种输入前面几轮都没走到——smoke18–22
+分别死在 step guard、int64 序列化、EOS 检查、截断语义上；smoke24 死在 `tuple != list`
+（§10）；smoke25 一次就认证通过（`n=16` 且恰好有 1 条解出）；smoke26 第一次真正触发零方差，
+于是整个 run 结束。**一个只在失败路径上存在的缺陷，只有在失败真的发生时才会暴露。**
+
+### 12.2 修法：只重采"退化批"
+
+放行所有失败去重试是错的：像 §10 那种 `tuple != list` 的缺陷每次都会以完全相同的方式复现，
+重采三次只会把同一轮 GPU 花三次，并把一个确定的 bug 报成"偶发"。所以按**能否被新的抽样改变**
+把它分成两类：
+
+- `src/errors.py` 新增 `DegenerateBatchError(ContractValidationError)`：组内奖励方差为零，
+  advantage 恒为 0，GRPO 拿不到任何信号。这是**抽样运气**，新的 rollout 可以改变它。
+- 两处方差检查（`manager.py:certify_batch`、`admission.py:_require_reward_variance`）改抛它。
+- 重试策略单独成模块 `src/integrations/verl/resampling.py`（不含 ray/verl，因此可在无 GPU
+  环境下测）：只重采 `DegenerateBatchError`；其余 `ContractValidationError` **首次即停**；
+  每次被拒的尝试写 `rejected-attempt{n}.json`，让"重采"在事后看得出来，而不是长得像第一次。
+- 被否决：把重试放在 `max_attempts` 之外的地方（例如 trainer 层），因为重试必须重新生成，
+  而生成只发生在这个函数里。
+
+### 12.3 组大小来自实测解题率，不是来自口径
+
+收尾规格把每轮定为 4 条 episode。但 GRPO 需要组内有奖励差，也就是**这一组里必须至少有一条解出**，
+而冻结的 P0 在 Mbpp/118 上的实测解出率约 1/16（smoke24 2/16、smoke25 1/16、smoke26 0/16，
+合计 3/48）：
+
+| n | 一次尝试至少含一条解的概率 | 备注 |
+|---|---|---|
+| 4 | ~22% | 原收尾口径；E 阶段靠它连过两轮，是低概率事件 |
+| 16 | ~60% | smoke25/26 的取值 |
+| 32 | ~87% | smoke27 的取值；配 `max_attempts=3` 后 step-1 过闸 >99% |
+
+### 12.4 结果：两个 step 都跑完，且第二步的 rollout 用的是第一步同步出去的权重
+
+`verlpi-smoke27`，2026-09-11，22m34s，`n=32` / `total_epochs=2` / `max_attempts=3`。
+
+| 事项 | 实测 |
+|---|---|
+| 第一次抽样就被拒（而不是终止整个 run） | `resample.txt`：`attempt 0 carries no learning signal, redrawing: group '53ca36e3…' has no intra-group reward variance` + `rejected-attempt0.json`（`reason: DegenerateBatchError`）。**同样的输入在 smoke26 会直接结束 run** |
+| 重采后过闸 | gen-000 有两个 attempt 目录，`certified-batch-attempt1.json` 存在；该次 32 条中 2 条解出 |
+| 框架跑完两个 step | `step:1` 与 `step:2`、`local_global_step_folder: …/global_step_1` 与 `…/global_step_2`、`Training Progress: 100%\|██\| 2/2 [22:34]` |
+| 两次真实的参数更新 | P1 `15a741e2…`、P2 `30e3f3ad…`，均 ≠ P0 `6db6a40c…`；`actor/grad_norm` 0.1194 / 0.1009 |
+| 框架原地同步 | `timing_s/update_weights` 2.90s（step 1）/ 2.83s（step 2） |
+| **同步之后仍有 rollout，且用的是新权重** | gen-001 的 `policy_generation: P1`、`adapter_revision: 13cc8199…`，而该值 = 对 `global_step_1/actor` 重算的摘要（`smoke27/checkpoints.txt` 标 **MATCH**）；gen-000 则是 P0 / `6db6a40c…` |
+| 两次采样的行为策略确实不同 | episode 级指纹 `e3eca6fe…`（gen-000）vs `aed2a953…`（gen-001），各自等于其轮策略 checksum；批内混指纹会被 gate 拒绝 |
+| 第二步的梯度只能来自第一步的权重 | `global_step_2` = `30e3f3ad…` ≠ `global_step_1` = `15a741e2…`，而 step 2 的 rollout 只有 gen-001 |
+| 我们的 token 契约在框架内仍自洽 | `training/rollout_probs_diff_valid: 1`、`rollout_actor_probs_pearson_corr` 0.99957 / 0.99959 |
+| 真实工具循环 | `timing_s/agent_loop/tool_calls/mean` 0.8125 / 0.875；`num_turns/mean` 1.8125 / 1.875，max 5 |
+
+**§5.3 第 9 项由此升级为满足，十三项全通过，§5.4 的项目宣称启用。**
+
+第 9 项是"框架能允许的最强形式"：引擎仍不能自报它服务的是哪一步
+（`checkpoint_engine.backend=naive` 丢弃 `global_steps`，缺口逐次写进
+`engine-notes/<episode>.step.jsonl`）。把身份钉住的是**框架自己写出的 checkpoint 的摘要**，
+且这一身份在三个层级上一致：轮策略、每条 episode 的指纹、以及会拒绝任何其它指纹的批认证。
+
+**不宣称效果**：2/32、1/32 是噪声，留出评测是 F 的事，这一轮是链路结果。
+
+### 12.5 仍未解决
+
+- 重采只在 smoke27 的第一次抽样上真实触发过一次（attempt 0 被拒 → attempt 1 通过）。
+  "所有尝试都退化"这条耗尽路径目前只有单测覆盖。
+- `checkpoint_engine.backend=naive` 不告知引擎 step（见上），已记录而非假设。
+- 两个序列构造器（`pi_loop.py` 注入的 `training_sequence_builder` 与 `_assemble`）仍并存。
 
 ---
 

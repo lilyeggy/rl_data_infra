@@ -1,6 +1,6 @@
 # Agent Improvement Data Plane：项目范围
 
-> 状态：Local Docker 闭环与 A6000 上真实 Pi/14B live rollout 已验证；APPS clean-v2 SFT 与三轮单卡 on-policy GRPO cycle（apps-rl-cycle-001/002/003）已执行，官方三基准与固定 APPS holdout 显示 candidate 未取得稳定提升；正式 Slime trainer 尚未接入。
+> 状态：Local Docker 闭环与 A6000 上真实 Pi/14B live rollout 已验证；APPS clean-v2 SFT 与三轮单卡 on-policy GRPO cycle（apps-rl-cycle-001/002/003）已执行，官方三基准与固定 APPS holdout 显示 candidate 未取得稳定提升；**verl 自带 trainer 已接入**（双卡 RTX PRO 6000 上两轮 GRPO LoRA 更新及更新后再采样，见 `docs/plans/verl-closeout/acceptance.md`）；正式 Slime trainer 尚未接入。
 
 ## 一句话定义
 
@@ -35,7 +35,8 @@
 
 - Local Docker Launcher 是默认执行入口；
 - Polar 是可选的远程/批量 rollout producer；
-- Slime 是可选的 RL trainer consumer；
+- verl 是**已接入**的 RL trainer consumer（自带 trainer 拥有循环、更新与权重同步，本项目只提供 agent loop 与批认证）；
+- Slime 是另一条可选的 RL trainer consumer，尚未接入；
 - 当前项目不重写分布式 trainer、Megatron、SGLang 或权重同步。
 
 ## 有限资源约束
