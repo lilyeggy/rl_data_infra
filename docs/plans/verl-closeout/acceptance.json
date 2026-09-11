@@ -1,6 +1,6 @@
 {
   "budget_hours_limit": 4.0,
-  "budget_hours_used": "~2.5h dual-GPU wall clock (C smoke 24s; D diagnostics + certified batches + resident infer server), 0 of 4h formally reserved by others",
+  "budget_hours_used": "~2.5h dual-GPU wall clock before 2026-09-11; +~1.5h on 2026-09-11 across nine framework rounds (smoke18-22 ~8-10 min each; smoke23-26 ~10-12 min each: ~2 min engine startup, 5-8 min rollout for 8-16 Pi episodes, ~2.5 min per training step). Estimated total ~4h against the 4h limit, so no further GPU round should be started without the user's call. Every round released the GPUs cleanly; the foreign server-user job was never touched and is still running.",
   "closeout_doc": "docs/plans/verl-integration-closeout.md",
   "constraints": {
     "existing_training_untouched": true,
@@ -38,7 +38,7 @@
         "docs/plans/verl-closeout-evidence/phase-c-dual/run1/smoke.log",
         "docs/plans/verl-closeout-evidence/phase-c-dual/stage_c_dual_gpu.py"
       ],
-      "notes": "Dual-GPU run 2026-09-10 09:49Z, 24s, torchrun world=2 on both RTX PRO 6000: 14B Base + P0 (6db6a40c) via verl 0.7.1 HFModelConfig + PEFT; FSDP2 sharded, trainable 34.41M / frozen 14.77B; one native AdamW update loss=2.533 grad_norm=5.178 peak=22.4GB/rank; 1344/1344 tensors changed drift=0.166; P1 saved (59b71fc0) via DTensor gather, reloaded and re-inferred. vLLM NOT importable on host (precompiled install broken) \u2014 recorded honestly; D uses transformers-backend infer server. Prior single-GPU DEV smoke superseded. GPU budget ~0.05h total.",
+      "notes": "Dual-GPU run 2026-09-10 09:49Z, 24s, torchrun world=2 on both RTX PRO 6000: 14B Base + P0 (6db6a40c) via verl 0.7.1 HFModelConfig + PEFT; FSDP2 sharded, trainable 34.41M / frozen 14.77B; one native AdamW update loss=2.533 grad_norm=5.178 peak=22.4GB/rank; 1344/1344 tensors changed drift=0.166; P1 saved (59b71fc0) via DTensor gather, reloaded and re-inferred. vLLM NOT importable on host (precompiled install broken) — recorded honestly; D uses transformers-backend infer server. Prior single-GPU DEV smoke superseded. GPU budget ~0.05h total.",
       "status": "PASSED",
       "vllm_repair": {
         "evidence": [
@@ -81,16 +81,28 @@
       ],
       "notes": "Completed 2026-09-10. Holdout fixed before the run: Mbpp/2, Mbpp/3, Mbpp/4, Mbpp/6 -- none used in this RL run (D/E used Mbpp/118 only). NOT claimed as SFT-unseen: overlap with the SFT data was not verified. Identical tools/workspace/timeout/sampling for both arms, one real Pi episode per task per policy, served by the repaired vLLM. Effect result: P0 0/4 passed (10 model calls, 16 tool events), P2 0/4 passed (4 model calls, 0 tool events); all 8 episodes execution_validity VALID. No pass-rate difference observed; the only measurable difference is behavioural (P2 emitted zero tool calls on all four held-out tasks). Explicitly a 4-task smoke evaluation, not a statistical claim, and no improvement is claimed. Integration conclusion and effect conclusion are reported separately.",
       "status": "PASSED"
+    },
+    "G": {
+      "status": "PARTIAL",
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/SUMMARY.md",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/certify-lines.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/step-metrics.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/checkpoints.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke26/SUMMARY.md",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke26/certify-and-refusal.txt"
+      ],
+      "notes": "verl's own trainer now owns the loop: verl.trainer.main_ppo -> RayPPOTrainer.fit() ran one complete GRPO step (smoke25, 2026-09-11): 16 real Pi episodes certified -> advantages -> update_actor 117.6s -> update_weights 2.98s -> global_step_1 checkpoint; P1 adapter sha256 f0ddcac8... differs from the frozen P0 6db6a40c..., so the update is real, not a no-op. Rollouts were multi-turn (num_turns mean 2.31, max 5) with every truncated turn accepted as a legitimate action, and rollout logprobs matched the trainer's recomputation (rollout_actor_probs_pearson_corr 0.99951). 5.3 item 2 therefore upgraded to satisfied. Item 9 stays PARTIAL: the framework synced weights in place, but no rollout after the sync consumed them yet -- smoke26 (total_epochs=2) was meant to show exactly that and was instead refused for zero intra-group reward variance (16/16 FAILED), which is the variance gate working. Closing item 9 needs a run that reaches step 2, i.e. a group containing at least one solve; at the observed ~1/16 solve rate a 16-sample group has ~60% odds, so it needs more samples per group or an easier task -- an experiment-design choice, not code. The project claim is therefore NOT upgraded."
     }
   },
   "test_baseline": {
-    "after": "240 passed, 1 skipped, 22 subtests passed",
     "before": "222 passed, 22 subtests passed",
-    "command": "python3 -m pytest tests/ -q -p no:cacheprovider",
-    "new_tests": "tests/integrations/test_verl_closeout.py: 18 passed + 1 skipped (system); 19 passed (full-CPU venv)"
+    "after": "305 passed, 9 skipped, 31 subtests passed",
+    "command": "python3 -m pytest tests/ -q",
+    "new_tests": "test_verl_native_transport.py (truncated-turn acceptance, multi-turn continuation, sequence assembly, can_serve affordability, aborted generation), test_verl_token_context.py (truncated turn accepted, terminator restored as context), test_verl_closeout.py (tool-less sample is trainable, sequence comparison ignores container type, gate diagnostics), test_model_proxy_http.py (budget closeout leaves no evidence)"
   },
   "unresolved": [
-    "E limitation: orchestration is a driver around verl's native algorithm code (core_algos GRPO + PPO-clip) and the repaired vLLM rollout engine; the Ray hybrid-replica path (vLLMReplica.launch_servers / AgentLoopManager) was made importable and correctly version-gated but not driven end-to-end. closeout 5.3 items 'training actually executed by verl' and 'new weights framework-synced then used by Pi' are therefore only PARTIAL -> the project claim must NOT say 'complete Agentic RL loop'.",
+    "5.3 item 9 (new weights framework-synced and then used by Pi) remains PARTIAL: smoke25 proved RayPPOTrainer performs the update and syncs in place (update_weights 2.98s) and that the resulting adapter differs from P0, but every rollout in that run preceded the sync, so no Pi episode consumed the updated weights. smoke26 (total_epochs=2) was refused for zero intra-group reward variance (16/16 FAILED). Two further facts bound this: checkpoint_engine.backend=naive never tells the engine its step (fsdp_workers.py:1735 discards global_steps), so the engine cannot confirm what it serves and the transport records that absence per call; and the framework path's batch gate had a latent tuple-vs-list comparison that made it unsatisfiable (fixed 2026-09-11, commit 6ec0ad5) -- it had simply never been reached before.",
     "E limitations: single task, 4 episodes per round -> pipeline validation, not a statistical learning claim; clipfrac/PPO-KL are 0 by construction (one update round per batch)",
     "F effect result: 0/4 vs 0/4 on a 4-task smoke set with one episode per task; P2 used zero tool calls on held-out tasks. Not significant, no improvement claimed.",
     "APPS 80/80 unresolved -> APPS learning signal absent (MBPP used per user authorization)",

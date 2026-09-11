@@ -209,6 +209,106 @@ C 的定位实验（真实消息驱动 `AppendOnlyTokenContext`）：
 
 ---
 
+## 9. 没有工具调用的回合算不算样本（2026-09-11 决定：算，奖励照实记）
+
+**问题。** smoke23（8 个 episode，n=8）里 8/8 的首回合都被接受了（1024 token、截断、
+`terminated: false`）——§8 的改动生效了；其中 **2 个回合带真实工具调用，并且已经发出第二次模型请求**
+（`MODEL_REQUEST → MODEL_RESPONSE → MODEL_REQUEST`，在 batch 被拆掉时正在跑）。整轮死在我们**自己**的
+门上：`pi_loop` 的 `num_tool_rounds < 1` 抛错，而 `generate_sequences` 的 gather 一旦有异常，
+**同一批里另外两个正在跑第二回合的 episode 也一起被丢掉**。
+
+**为什么该改的是这道门，而不是数据。** 三条实测：
+
+1. 那个"没有动作"的 episode 本身被 ON_POLICY_RL 认证为 `VALID` + `ELIGIBLE`、`score: 0.0`
+   （`termination_reason: PI_PROTOCOL_DECLARATION`）。也就是说这道门**比认证契约更严**——
+   它不是在保护契约，而是在契约之上又加了一条。
+2. **没有调用是被预算截断的**：8/8 都没有停在未闭合的 JSON 里（`cut_off=0`）。
+3. 严格抽取器**没有拒掉任何合法调用**；它拒的是 `{}`、`{...}`、`{j!=i}`、JS 片段这类
+   叙述占位符。真正自发调用的那两条，调用出现在文本偏移 0（即以调用开头）。
+
+结论：**6/8 的首回合是策略"只说不做"**——它把 1024 token 全用来叙述。这不是集成缺陷，
+是**奖励现象**：动作就是策略自己生成的 token，奖励是任务结果，这正是 PPO 类算法要处理的东西；
+把它变成"整批作废"既没有依据，也丢掉了同批其他样本。至于"整批都没有调用"的极端情形，
+**batch gate 的方差不变量**本来就该拦（`manager.py:122`），那才是"没有学习信号"该被拒的地方。
+
+**保留可见性**：`num_tool_rounds` 照旧写进 `admitted-sequence.json` 与 `extra_fields`，
+所以"这条样本没有工具轮"在证据里是可查的，不是被藏起来。
+
+**一处已知的不一致（留给用户决定，未单方面改）**：CPU 认证路径 `admit_on_policy_manifest`
+→ `_admit_episode_sequence` 仍然要求 `num_tool_rounds >= 1`（那是"合格轨迹"的项目定义），
+而 live 的训练路径不再要求。两条路径允许不同，但如果要把"合格轨迹"的定义统一，
+那是方法论决定，不该由我悄悄改掉。
+
+---
+
+## 10. batch gate 的 `tuple != list`：一个不可能满足的比较（smoke24 实测）
+
+**现象。** smoke24（n=16）第一次真正跑到 batch gate，16 个 episode **全部**被拒：
+`policy artifact does not bind actual inference context`。这条消息既没给 episode id，也没给字段，
+而它比较的两侧都是落盘产物——**失败无法从 evidence 复现**，因为"现在再比一次"是通过的
+（当时的排查因此空转很久）。
+
+**修法第一步不是改逻辑，而是让消息可诊断**：加上 episode 名、字段、两侧长度、首个不同下标。结果一次命中：
+
+```
+prompt_ids: stored_len=1703 rebuilt_len=1703 first_diff_index=None   ← 四个数组全都如此
+```
+
+长度相同、**没有任何一个元素不同**，但整体 `!=`。原因是
+`ProducerArtifact.from_dict` 会把 payload **深度冻结**：存盘读回来是 **tuple**，
+而重建出来是 **list**，Python 里 `tuple == list` 恒为 `False`。直接量到的事实：
+
+```
+raw_type=list  from_dict_type=tuple  raw == typed -> False
+list(raw) == list(typed) -> True
+```
+
+也就是说这道门**在构造上不可能通过**；它此前从没被跑到，所以一直没暴露，并且挡死了每一轮框架训练。
+
+**修法（`training_sequence_matches`）**：按元素比较，而不是按容器比较——这不放松任何要求，
+比的是同一批 token。`describe_sequence_difference` 对"token 相同、只是容器类型不同"会明确
+写成 `same tokens, containers differ (tuple vs list)`，而不是伪装成 drift。
+
+**顺带修好的可观测性**：gate 现在对每个 episode 打一行
+`[pi-manager] certify <episode> calls=… tool_rounds=… seq_len=… verifier=…`。一个会一次拒掉
+16 个样本的门，必须在运维真正会读的那份日志里说清是哪一个、为什么。
+
+**这一轮同时证明了 §8/§9 的改动在真实训练里成立**：16 个 episode 里 6 个跑了多轮（最多 5 轮），
+每个回合都以截断动作被接受，其中 4 个完成了真实工具轮，**2 个真正解出了 Mbpp/118**
+（reward 1.0 vs 0.0）——即组内**确实有奖励方差**；把同一份 evidence 离线重放 batch gate，
+结果是 `BATCH CERTIFIED`。
+
+---
+
+## 11. 结果：verl 自己的 trainer 跑完了一整步（smoke25，2026-09-11）
+
+`verl.trainer.main_ppo` → `RayPPOTrainer.fit()` 完成了一个完整的 GRPO step，证据在
+`docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/`：
+
+| 事项 | 实测 |
+|---|---|
+| 16 条真实 Pi episode（bwrap 隔离、真实工具轮） | `certify-lines.txt`：`calls` 1–5、`tool_rounds` 0–4、`seq_len` 736–5524 |
+| 组内奖励方差（不能凭空造） | `critic/score/mean: 0.0625`（= 1/16 通过），`min 0.0` / `max 1.0` |
+| GRPO advantage 真的算了 | `critic/advantages/mean: 0.1779`，`max 3.75`，`min -0.25`（没有方差这些不可能出现） |
+| 框架执行了参数更新 | `timing_s/update_actor: 117.57`、`actor/grad_norm: 0.1114` |
+| 框架**原地**同步权重 | `timing_s/update_weights: 2.98` |
+| checkpoint 由框架自己的 FSDP2 worker 写出 | `global_step_1/actor/{model,optim,extra_state}_world_size_2_rank_*.pt`、`data.pt` |
+| **真实参数变化（不是空转）** | P1 adapter sha256 `f0ddcac8…` ≠ P0 `6db6a40c…` |
+| 我们的 token 契约在框架内自洽 | `training/rollout_actor_probs_pearson_corr: 0.99951` |
+
+**§5.3 第 2 项（实际训练由 verl 执行）由此升级为满足。**
+
+**§5.3 第 9 项仍为部分满足，而且原因很清楚**：这一轮**所有 rollout 都发生在同步之前**，
+所以"同步后的新权重被 Pi 使用"没有证据。要拿到它需要一个**跑到第二步**的 run——
+smoke26（`total_epochs=2`）本来正是为此，但那一组 16 条**全部 FAILED、组内零方差**，
+被 gate 正确拒绝（`smoke26/` 留档：这本身就是 §5.3 第 6 项的正面证据）。
+
+也就是说：**剩下的约束是数据，不是集成**。在观测到的 ~1/16 解出率下，16 样本一组只有约 60% 的概率
+含有解，而"跑到第二步"每次都要掷这个硬币。要稳定拿到第 9 项证据，要么加大每组样本数，
+要么换一个策略更常解出的任务——**这是实验设计选择，属于用户决定，不是代码问题**。
+
+---
+
 ## 7. 工作约定（用户 2026-09-11 明确要求）
 
 1. **先说明白为什么，再改代码。** 每次修改前先给出：改什么、为什么这么改、哪条实测支持它、被否决的方案是什么。

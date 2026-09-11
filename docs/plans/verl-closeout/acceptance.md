@@ -46,7 +46,7 @@ P0 (SFT epoch1) → 真实 Pi 0.84.2 工具循环 → bridge 原生 token 捕获
 
 ## 明确的限制与未完成
 
-- **编排未走 RayPPOTrainer（§5.3 两项仅部分满足）**：E 的编排是围绕 verl **原生算法代码**（`core_algos` 的 GRPO advantage 与 PPO-clip loss）与修复后 **vLLM rollout 引擎**的驱动，而非 `RayPPOTrainer` 本身；Ray 混合副本路径（`vLLMReplica.launch_servers` / `AgentLoopManager`）已做到可导入且版本门控正确，但未端到端驱动。因此 §5.3 的「实际训练由 verl 执行」与「新权重经框架同步后被 Pi 使用」两项只算**部分满足**（权重是更新后由新起的 vLLM 服务加载给 Pi 用，而非训练框架原地同步）。**故本次不宣布"接入完成"，不写"完整 Agentic RL 闭环"。**
+- **§5.3 第 2 项已满足、第 9 项仍部分满足（2026-09-11 更新）**：E 阶段的编排确实是围绕 verl **原生算法代码**（`core_algos` 的 GRPO advantage 与 PPO-clip loss）与修复后 **vLLM rollout 引擎**的驱动，而非 `RayPPOTrainer` 本身。此后框架路径已经跑通：`verl.trainer.main_ppo` → `RayPPOTrainer.fit()` 完成一整步（smoke25），**故第 2 项升级为满足**。第 9 项仍为部分：框架的原地权重同步（`update_weights`）已执行并计时，但尚无"同步之后发生的 rollout"来证明 Pi 真的用上了新权重——smoke26 本要提供这一点，却因该组零方差被正确拒绝。**故本次仍不宣布"接入完成"，不写"完整 Agentic RL 闭环"。**
 - **样本量小**：E 单任务、每轮 4 条 episode；F 4 题各 1 条。均属链路与冒烟验证，不构成统计意义上的学习结论。`clipfrac` 与 PPO-KL 为 0 是"每批一个更新轮次、old_logprob 在步前立即测得"的构造结果，非退化。
 - **APPS 无学习信号**：5 轮诊断 80/80 轨迹未解出（工具循环真实、verifier 健康）；MBPP 上成功率约 1/4 每批，是当前唯一能产生有效数据的载体。
 - **上下文对齐限制**：turn≥1 的上下文中，助手轮次为 Pi 重渲染文本（非原生 token）。原生生成 token 仍是唯一 mask=1 的 loss 来源；E 的 logprob 对照把该漂移量化为门限内，未做夸大宣称。
@@ -59,20 +59,20 @@ P0 (SFT epoch1) → 真实 Pi 0.84.2 工具循环 → bridge 原生 token 捕获
 | # | 条件 | 结论 | 依据 |
 |---|---|---|---|
 | 1 | 使用冻结的当前 14B Base SFT checkpoint | ✅ | P0 = epoch1，sha256 `6db6a40c…`；A 阶段冻结 |
-| 2 | 实际训练由 verl 执行 | ⚠️ **部分** | 目标函数（GRPO advantage + PPO-clip loss）来自 `verl.trainer.ppo.core_algos`，但训练循环是驱动脚本，非 `RayPPOTrainer` |
+| 2 | 实际训练由 verl 执行 | ✅ | **smoke25**：`verl.trainer.main_ppo` → `RayPPOTrainer.fit()` 跑完一整步——16 条真实 Pi episode → 批认证 → GRPO advantage → `update_actor` 117.6s → checkpoint。证据：`phase-g-native-trainer/smoke25/step-metrics.txt`（verl 自己的 `TaskRunner` 指标行：`training/global_step: 1`、`critic/advantages/mean: 0.1779`）、同目录 `certify-lines.txt`、框架 FSDP2 worker 写出的 `global_step_1/actor/*`。**且更新真实发生**：P1 adapter sha256 `f0ddcac8…` ≠ P0 `6db6a40c…` |
 | 3 | Pi 真正执行工具循环 | ✅ | E/F 每轮真实 Pi 0.84.2，多轮工具事件（如 6 次调用/10 次工具事件） |
 | 4 | 每轮实际推理上下文与训练序列对齐 | ✅ | 规范 token 流直接喂 vLLM；训练侧 vs rollout logprob ≤0.028 nat 均值 |
 | 5 | 工具观察及 padding 不参与策略损失 | ✅ | `response_mask`（观察=0、padding=0），仅原生生成 token mask=1 |
 | 6 | 认证在训练前执行，失败不能旁路 | ✅ | r2 因零组内方差被拒，未进入更新；批认证失败即停 |
 | 7 | group 按独立 episode 构成，策略版本一致 | ✅ | 4 条独立 episode/组，指纹一致（P0 `749d7a9f`、P1 `34c4f4e7`、P2 `44c09cd8`） |
 | 8 | 两次更新有真实参数变化 | ✅ | 两次各 1344 张量变化，drift 0.170049 / 0.177167 |
-| 9 | 新权重经框架同步后被 Pi 使用 | ⚠️ **部分** | P1/P2 均由真实 Pi 使用，但通过更新后新起 vLLM 服务加载，而非训练框架原地同步 |
+| 9 | 新权重经框架同步后被 Pi 使用 | ⚠️ **部分** | 同步已由框架原地执行并计时（smoke25 `timing_s/update_weights: 2.98`，即 `checkpoint_manager.update_weights` → `collect_lora_params` + `rollout.resume(tags=["weights"])`），但**该轮所有 rollout 都发生在同步之前**，所以"被 Pi 使用"尚未证明。要证明它需要第二步：smoke26（`total_epochs=2`）本可给出，但该组 16 条全部 FAILED、组内零方差被正确拒绝（见 `phase-g-native-trainer/smoke26/`）。另：`checkpoint_engine.backend=naive` 从不把 step 告知引擎，引擎侧确认缺失，已逐次记录 |
 | 10 | checkpoint 边界可恢复 | ✅ | P1 重载 672 张量 bitwise 一致，梯度可续（grad_norm 1.0976），不重放批 |
 | 11 | 固定小集评测完成，效果结论独立 | ✅ | F：4 题固定留出，P0 0/4、P2 0/4，结论与接入结论分开 |
 | 12 | 运行没有遗留 GPU 服务 | ✅ | 结束时无 `cxr` 属主 GPU 进程、端口 8931 释放 |
 | 13 | 文档宣称与本次证据一致 | ✅ | 本报告的结论与 `acceptance.json` 一致；按 §5.4 未升格项目宣称 |
 
-第 2、9 项只部分满足 → **不宣布"接入完成"**，不写 §5.4 的"完整 Agentic RL 闭环"表述。
+第 9 项仍只部分满足 → **不宣布"接入完成"**，不写 §5.4 的"完整 Agentic RL 闭环"表述。（第 2 项已于 2026-09-11 由 smoke25 满足：训练确实由 `RayPPOTrainer` 执行并产生了真实参数变化。）
 
 ## 资源与合规
 
