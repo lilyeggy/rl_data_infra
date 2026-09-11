@@ -1,0 +1,77 @@
+{
+  "policy_checksum": "749d7a9f0e47fc5ace0f0bd18d6285df58d38f97f8222c75a4d1adca69638578",
+  "episodes": [
+    {
+      "episode_id": "dstage32-Mbpp-118-a0",
+      "verifier_status": "FAILED",
+      "on_policy_rl_verdict": "ELIGIBLE",
+      "num_model_calls": 1,
+      "num_tool_rounds": 0,
+      "prompt_len": 1602,
+      "response_len": 1024,
+      "trainable_tokens": 1024,
+      "contiguity": "OK"
+    },
+    {
+      "episode_id": "dstage32-Mbpp-118-a1",
+      "verifier_status": "PASSED",
+      "on_policy_rl_verdict": "ELIGIBLE",
+      "num_model_calls": 3,
+      "num_tool_rounds": 2,
+      "prompt_len": 1602,
+      "response_len": 2520,
+      "trainable_tokens": 2216,
+      "contiguity": "OK"
+    },
+    {
+      "episode_id": "dstage32-Mbpp-118-a2",
+      "verifier_status": "FAILED",
+      "on_policy_rl_verdict": "ELIGIBLE",
+      "num_model_calls": 2,
+      "num_tool_rounds": 1,
+      "prompt_len": 1602,
+      "response_len": 2567,
+      "trainable_tokens": 2048,
+      "contiguity": "OK"
+    },
+    {
+      "episode_id": "dstage32-Mbpp-118-a3",
+      "verifier_status": "FAILED",
+      "on_policy_rl_verdict": "ELIGIBLE",
+      "num_model_calls": 2,
+      "num_tool_rounds": 1,
+      "prompt_len": 1602,
+      "response_len": 2257,
+      "trainable_tokens": 2048,
+      "contiguity": "OK"
+    }
+  ],
+  "assembled": 4,
+  "reward_values": [
+    "FAILED",
+    "PASSED"
+  ],
+  "has_variance": true,
+  "manager_certified": true,
+  "certified_batch": {
+    "schema_version": "verl-certified-loop-manager/v1",
+    "batch_id": "mbpp118-batch-1",
+    "policy_generation": "P0",
+    "policy_fingerprint_checksum": "749d7a9f0e47fc5ace0f0bd18d6285df58d38f97f8222c75a4d1adca69638578",
+    "sequence_checksums": [
+      "432023e68d160790a022083bf1f9a3407d63da2fd71109d4bd04fad2716bdba1",
+      "2812fe4a6fbe3495c5a241448a2f1b11038d9f596e2f7d32a6ae897026074ec8",
+      "5e1b53f617924ab1034429063130f8a0b75f1be43457f52a4e398905c27a243f",
+      "9b7e50cfe6108fd751b71a177b81a2c482c0ce96032c70adb227bcf25ad1501a"
+    ],
+    "group_ids": [
+      "mbpp118-group"
+    ],
+    "task_ids": [
+      "Mbpp/118",
+      "Mbpp/118",
+      "Mbpp/118",
+      "Mbpp/118"
+    ]
+  }
+}

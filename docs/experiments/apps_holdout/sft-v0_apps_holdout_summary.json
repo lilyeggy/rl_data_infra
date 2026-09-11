@@ -1,0 +1,461 @@
+{
+  "tag": "sft-v0",
+  "model": "/home/cxr/agentic/models/qwen2.5-coder-14b-instruct",
+  "adapter": "/home/cxr/agentic/checkpoints/sft-runs/qwen14b-apps-clean-v2-260906/epoch2",
+  "total_tasks": 50,
+  "passed_tasks": 25,
+  "pass_rate": 0.5,
+  "pass_rate_percent": 50.0,
+  "tasks": [
+    {
+      "task_id": "apps-train-002382",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 17.8,
+      "tokens": 163
+    },
+    {
+      "task_id": "apps-train-002170",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 35.97,
+      "tokens": 341
+    },
+    {
+      "task_id": "apps-train-002371",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 8.54,
+      "tokens": 77
+    },
+    {
+      "task_id": "apps-train-002396",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 4.66,
+      "tokens": 43
+    },
+    {
+      "task_id": "apps-train-002437",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 14.45,
+      "tokens": 137
+    },
+    {
+      "task_id": "apps-train-002435",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 7.41,
+      "tokens": 70
+    },
+    {
+      "task_id": "apps-train-004561",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 16.37,
+      "tokens": 155
+    },
+    {
+      "task_id": "apps-train-002443",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 16.19,
+      "tokens": 153
+    },
+    {
+      "task_id": "apps-train-002369",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 12.59,
+      "tokens": 119
+    },
+    {
+      "task_id": "apps-train-002424",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 4.25,
+      "tokens": 40
+    },
+    {
+      "task_id": "apps-train-002418",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 10.07,
+      "tokens": 94
+    },
+    {
+      "task_id": "apps-train-002171",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 12.44,
+      "tokens": 117
+    },
+    {
+      "task_id": "apps-train-002432",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 13.95,
+      "tokens": 132
+    },
+    {
+      "task_id": "apps-train-002365",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 13.12,
+      "tokens": 124
+    },
+    {
+      "task_id": "apps-train-002389",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 6.45,
+      "tokens": 60
+    },
+    {
+      "task_id": "apps-train-002189",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 61.44,
+      "tokens": 585
+    },
+    {
+      "task_id": "apps-train-002187",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 25.77,
+      "tokens": 244
+    },
+    {
+      "task_id": "apps-train-002452",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 10.79,
+      "tokens": 103
+    },
+    {
+      "task_id": "apps-train-002394",
+      "difficulty": "introductory",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 12.58,
+      "tokens": 120
+    },
+    {
+      "task_id": "apps-train-002201",
+      "difficulty": "introductory",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 49.06,
+      "tokens": 468
+    },
+    {
+      "task_id": "apps-train-001530",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 13.89,
+      "tokens": 132
+    },
+    {
+      "task_id": "apps-train-000886",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 31.76,
+      "tokens": 316
+    },
+    {
+      "task_id": "apps-train-001322",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 14.28,
+      "tokens": 157
+    },
+    {
+      "task_id": "apps-train-001374",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 29.87,
+      "tokens": 328
+    },
+    {
+      "task_id": "apps-train-000961",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 37.88,
+      "tokens": 503
+    },
+    {
+      "task_id": "apps-train-001560",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 42.03,
+      "tokens": 581
+    },
+    {
+      "task_id": "apps-train-001398",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 8.48,
+      "tokens": 117
+    },
+    {
+      "task_id": "apps-train-001051",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 8.25,
+      "tokens": 114
+    },
+    {
+      "task_id": "apps-train-000803",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 36.17,
+      "tokens": 501
+    },
+    {
+      "task_id": "apps-train-001405",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 18.01,
+      "tokens": 249
+    },
+    {
+      "task_id": "apps-train-000864",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 10.46,
+      "tokens": 145
+    },
+    {
+      "task_id": "apps-train-001311",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 8.59,
+      "tokens": 119
+    },
+    {
+      "task_id": "apps-train-001478",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 22.6,
+      "tokens": 315
+    },
+    {
+      "task_id": "apps-train-001259",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 17.71,
+      "tokens": 250
+    },
+    {
+      "task_id": "apps-train-000652",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 9.22,
+      "tokens": 129
+    },
+    {
+      "task_id": "apps-train-000635",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 13.15,
+      "tokens": 184
+    },
+    {
+      "task_id": "apps-train-001063",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 5.53,
+      "tokens": 77
+    },
+    {
+      "task_id": "apps-train-000894",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 19.26,
+      "tokens": 267
+    },
+    {
+      "task_id": "apps-train-001460",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 11.8,
+      "tokens": 165
+    },
+    {
+      "task_id": "apps-train-001150",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 9.34,
+      "tokens": 130
+    },
+    {
+      "task_id": "apps-train-001582",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 10.79,
+      "tokens": 149
+    },
+    {
+      "task_id": "apps-train-000091",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 46.46,
+      "tokens": 640
+    },
+    {
+      "task_id": "apps-train-000711",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 27.01,
+      "tokens": 371
+    },
+    {
+      "task_id": "apps-train-000060",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 9.25,
+      "tokens": 127
+    },
+    {
+      "task_id": "apps-train-000012",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 46.31,
+      "tokens": 640
+    },
+    {
+      "task_id": "apps-train-001502",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 10.39,
+      "tokens": 133
+    },
+    {
+      "task_id": "apps-train-000114",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 29.55,
+      "tokens": 282
+    },
+    {
+      "task_id": "apps-train-001232",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 66.86,
+      "tokens": 640
+    },
+    {
+      "task_id": "apps-train-000004",
+      "difficulty": "interview",
+      "passed": false,
+      "cases_passed": 0,
+      "total_cases": 1,
+      "gen_time": 41.3,
+      "tokens": 393
+    },
+    {
+      "task_id": "apps-train-000980",
+      "difficulty": "interview",
+      "passed": true,
+      "cases_passed": 1,
+      "total_cases": 1,
+      "gen_time": 16.65,
+      "tokens": 158
+    }
+  ]
+}

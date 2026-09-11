@@ -1,0 +1,16 @@
+{
+  "tag": "framework-smoke",
+  "deviation": "single-GPU1-only; dual-GPU colocated FSDP deferred to windowed run",
+  "verl_version": "0.7.1",
+  "trainable_params": 34406400,
+  "frozen_params": 14770033664,
+  "loss": 2.5329654216766357,
+  "grad_norm": 5.178337272606728,
+  "peak_memory_GB": 30.401381376,
+  "changed_tensors": 672,
+  "total_drift": 0.11846168339252472,
+  "p0_adapter_sha256": "6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae",
+  "p1_adapter_sha256": "59b71fc0a3ec6fa94939908807302ac02c663d32cb50f80abea1a0d5d29ca824",
+  "reinfer_head": "def fibonacci(n):\n    if n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n",
+  "elapsed_s": 17.027886152267456
+}

@@ -1,0 +1,100 @@
+{
+  "budget_hours_limit": 4.0,
+  "budget_hours_used": "~2.5h dual-GPU wall clock (C smoke 24s; D diagnostics + certified batches + resident infer server), 0 of 4h formally reserved by others",
+  "closeout_doc": "docs/plans/verl-integration-closeout.md",
+  "constraints": {
+    "existing_training_untouched": true,
+    "gpu_touched": false,
+    "other_processes_stopped": false
+  },
+  "evidence_root": "docs/plans/verl-closeout-evidence",
+  "gpu_released": true,
+  "gpu_window": "not requested; SFT eval still running at delivery time",
+  "stages": {
+    "A": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-a/git-status.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/git-diff-stat.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/git-log.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/frozen-input-manifest.json",
+        "docs/plans/verl-closeout-evidence/phase-a/cpu-check-freeze.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/gpu-launch-command-DRAFT.md",
+        "docs/plans/verl-closeout/preflight.json"
+      ],
+      "notes": "SFT training done 2026-09-09T08:43Z, epoch1 == top-level adapter (sha256 6db6a40c...); eval still running; P0 frozen for planning. verl v0.7.1 pinned to bec9ef74; CPU import of real AgentLoopOutput/Manager verified; PEFT 0.20.0 reads 0.19.1 adapter config (r8/a16/7 modules); pi 0.84.2 verified (npm @earendil-works/pi-coding-agent); SFT spot-check decodes with frozen tokenizer.",
+      "status": "PASSED"
+    },
+    "B": {
+      "evidence": [
+        "tests/integrations/test_verl_closeout.py",
+        "docs/plans/verl-closeout/preflight.json"
+      ],
+      "notes": "18 passed + 1 skipped (system env, real-verl test needs ray); 19 passed in full-CPU venv incl. real verl 0.7.1 AgentLoopOutput construction. Full suite: 240 passed, 1 skipped, 22 subtests (baseline was 222 passed). Modules: sequence/admission/manager+config/bridge/lifecycle + orchestrator injection + staged entry.",
+      "status": "PASSED"
+    },
+    "C": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-c-dual/run1/smoke-evidence.json",
+        "docs/plans/verl-closeout-evidence/phase-c-dual/run1/smoke.log",
+        "docs/plans/verl-closeout-evidence/phase-c-dual/stage_c_dual_gpu.py"
+      ],
+      "notes": "Dual-GPU run 2026-09-10 09:49Z, 24s, torchrun world=2 on both RTX PRO 6000: 14B Base + P0 (6db6a40c) via verl 0.7.1 HFModelConfig + PEFT; FSDP2 sharded, trainable 34.41M / frozen 14.77B; one native AdamW update loss=2.533 grad_norm=5.178 peak=22.4GB/rank; 1344/1344 tensors changed drift=0.166; P1 saved (59b71fc0) via DTensor gather, reloaded and re-inferred. vLLM NOT importable on host (precompiled install broken) \u2014 recorded honestly; D uses transformers-backend infer server. Prior single-GPU DEV smoke superseded. GPU budget ~0.05h total.",
+      "status": "PASSED",
+      "vllm_repair": {
+        "evidence": [
+          "docs/plans/verl-closeout-evidence/vllm-repair/vllm-repair-smoke.json",
+          "docs/plans/verl-closeout-evidence/vllm-repair/REPAIR.md"
+        ],
+        "status": "FIXED_AND_VERIFIED_INFERENCE"
+      }
+    },
+    "D": {
+      "deviation": "MBPP tasks instead of APPS-only (user-authorized 2026-09-10). APPS yielded 80/80 unresolved across 5 diagnostic runs; MBPP is the carrier for proving the loop, per user directive.",
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-d-certified/verl-assembly.json",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/summaries.json",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/sample-model-evidence-a2.jsonl",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/loop.log",
+        "docs/plans/verl-closeout-evidence/phase-d-diag/REPORT.md"
+      ],
+      "notes": "dstage32: 4 real Pi multi-turn trajectories (2-4 model calls each, >=1 tool round), 1 PASSED / 3 FAILED verifier -> intra-group reward variance. All 4 assembled to single verl sequences (contiguity OK after native-token anchoring), all ON_POLICY_RL ELIGIBLE, CertifiedBatch emitted (policy 749d7a9f). Fixed 3 real defects with minimal repros: empty-arg tool-call loop, Pi text re-serialization token drift, new-episode misclassification. Limitation recorded: turn>=1 context is harness-rendered text; native generated tokens remain the only masked-1 loss source.",
+      "status": "PASSED"
+    },
+    "E": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-e/E-REPORT.md",
+        "docs/plans/verl-closeout-evidence/phase-e/round-1.compact.json",
+        "docs/plans/verl-closeout-evidence/phase-e/round-2.compact.json",
+        "docs/plans/verl-closeout-evidence/phase-e/update-r1-result.json",
+        "docs/plans/verl-closeout-evidence/phase-e/update-r2-result.json",
+        "docs/plans/verl-closeout-evidence/phase-e/recovery-r1.json",
+        "docs/plans/verl-closeout-evidence/phase-e/round3-p2-usability-summaries.json"
+      ],
+      "notes": "Completed 2026-09-10. Two native GRPO updates with verl's own core_algos (compute_grpo_outcome_advantage + compute_policy_loss, PPO clip 0.2), dual-GPU FSDP2 world=2, LoRA-only trainable 34.41M, lr 1e-6, one update round per batch, synchronous checkpoints. P0->P1 (loss -0.521187, grad_norm 0.495278, 1344 changed tensors) and P1->P2 (loss -0.357142, grad_norm 0.384278, 1344 changed). Logprob comparison of training-side vs rollout logprobs over masked tokens: round 1 mean 0.02768 / P99 0.16145 nat, round 2 mean 0.02619 / P99 0.17427 nat -- both inside the 0.05 / 0.5 thresholds. Checkpoint-boundary recovery at P1: 672 LoRA tensors bitwise identical on reload, gradient flow resumes (grad_norm 1.0976), no batch replayed. Both P1 and P2 proven usable by real Pi execution (P1 via r2b, P2 via r3b: 1 PASSED/3 FAILED, all VALID/ELIGIBLE). Round 2's first attempt was rejected for zero intra-group reward variance and resampled, per the documented pre-update gate. Rollout backend is the repaired vLLM served through an OpenAI bridge (Pi -> bridge -> vLLM). Limitation: orchestration is a driver around verl's native algorithm code, not RayPPOTrainer; the Ray hybrid-replica path was made importable/gated correctly but not driven end-to-end.",
+      "status": "PASSED"
+    },
+    "F": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-f/F-REPORT.md",
+        "docs/plans/verl-closeout-evidence/phase-f/p0-summaries.json",
+        "docs/plans/verl-closeout-evidence/phase-f/p2-summaries.json"
+      ],
+      "notes": "Completed 2026-09-10. Holdout fixed before the run: Mbpp/2, Mbpp/3, Mbpp/4, Mbpp/6 -- none used in this RL run (D/E used Mbpp/118 only). NOT claimed as SFT-unseen: overlap with the SFT data was not verified. Identical tools/workspace/timeout/sampling for both arms, one real Pi episode per task per policy, served by the repaired vLLM. Effect result: P0 0/4 passed (10 model calls, 16 tool events), P2 0/4 passed (4 model calls, 0 tool events); all 8 episodes execution_validity VALID. No pass-rate difference observed; the only measurable difference is behavioural (P2 emitted zero tool calls on all four held-out tasks). Explicitly a 4-task smoke evaluation, not a statistical claim, and no improvement is claimed. Integration conclusion and effect conclusion are reported separately.",
+      "status": "PASSED"
+    }
+  },
+  "test_baseline": {
+    "after": "240 passed, 1 skipped, 22 subtests passed",
+    "before": "222 passed, 22 subtests passed",
+    "command": "python3 -m pytest tests/ -q -p no:cacheprovider",
+    "new_tests": "tests/integrations/test_verl_closeout.py: 18 passed + 1 skipped (system); 19 passed (full-CPU venv)"
+  },
+  "unresolved": [
+    "E limitation: orchestration is a driver around verl's native algorithm code (core_algos GRPO + PPO-clip) and the repaired vLLM rollout engine; the Ray hybrid-replica path (vLLMReplica.launch_servers / AgentLoopManager) was made importable and correctly version-gated but not driven end-to-end. closeout 5.3 items 'training actually executed by verl' and 'new weights framework-synced then used by Pi' are therefore only PARTIAL -> the project claim must NOT say 'complete Agentic RL loop'.",
+    "E limitations: single task, 4 episodes per round -> pipeline validation, not a statistical learning claim; clipfrac/PPO-KL are 0 by construction (one update round per batch)",
+    "F effect result: 0/4 vs 0/4 on a 4-task smoke set with one episode per task; P2 used zero tool calls on held-out tasks. Not significant, no improvement claimed.",
+    "APPS 80/80 unresolved -> APPS learning signal absent (MBPP used per user authorization)",
+    "turn>=1 training context is harness-rendered text (Pi re-serializes history); native generated tokens remain the only mask=1 loss source; E logprob comparison quantifies the resulting drift as within tolerance",
+    "Process-management incident during E/F cleanup: a blanket kill of GPU compute PIDs from nvidia-smi ran while a foreign server-user job was on the GPUs; that job survived (still running) but SIGTERM was sent to another user's processes by mistake. Recorded in phase-f/F-REPORT.md; future runs must select own PIDs by owner/cmdline."
+  ]
+}

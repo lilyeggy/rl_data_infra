@@ -1,0 +1,17 @@
+{
+  "schema_version": "policy-fingerprint/v1",
+  "provider": "verl-vllm",
+  "model_id": "qwen2.5-coder-14b",
+  "base_model_revision": "/home/cxr/agentic/models/qwen2.5-coder-14b-base",
+  "adapter_revision": "6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae",
+  "tokenizer_revision": "3fd169731d2cbde95e10bf356d66d5997fd885dd8dbb6fb4684da3f23b2585d8",
+  "chat_template_checksum": "44d5f08f3f72b837eaad09f13a54c1f9f4eb58d75240334548b7fd52a5437fa5",
+  "tool_schema_checksum": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+  "sampling_config": {
+    "temperature": 1.0,
+    "top_p": 1.0
+  },
+  "temperature": 1.0,
+  "top_p": 1.0,
+  "policy_generation": "P0"
+}

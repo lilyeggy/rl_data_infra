@@ -1,0 +1,42 @@
+# Stage C framework-smoke — CONFIG DRAFT ONLY (CPU-authored, NOT executed)
+#
+# Purpose: verify the frozen 14B Base + P0 adapter loads in verl, vLLM uses
+# the adapter, FSDP2 trains LoRA params only, one native optimizer update
+# runs, checkpoint saves with numeric change, and native weight sync + re-infer works.
+#
+# Products must be tagged `framework-smoke`; never treated as project acceptance.
+#
+# Execution requires: MBPP eval finished, P0 frozen, explicit GPU UUIDs below,
+# usage-window deadline, independent run ID under /data. Budget: 60 min max.
+
+actor_rollout_ref:
+  model:
+    path: /home/cxr/agentic/models/qwen2.5-coder-14b-base
+    lora_rank: 8
+    lora_alpha: 16
+    target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+    lora_adapter_path: /home/cxr/agentic/checkpoints/sft-runs/qwen14b-base-apps-clean-v2/epoch1
+    enable_gradient_checkpointing: true
+    use_remove_padding: false
+    trust_remote_code: true
+  actor:
+    optim:
+      lr: 1e-6
+    fsdp_config:
+      model_dtype: bf16
+    use_dynamic_bsz: false
+  rollout:
+    name: vllm
+    gpu_memory_utilization: 0.40
+    tensor_model_parallel_size: 1
+    prompt_length: 512
+    response_length: 512
+
+trainer:
+  project_name: verl-closeout
+  experiment_name: framework-smoke-RUNID
+  total_epochs: 1
+  default_local_dir: /data/verl-closeout/RUNID/smoke-checkpoints
+
+# OOM policy (single controlled retry, then STOP):
+#   shorter sequence budget + gpu_memory_utilization 0.30; log the delta.

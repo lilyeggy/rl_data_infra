@@ -1,0 +1,99 @@
+{
+  "round_index": 1,
+  "policy": {
+    "generation": "P0",
+    "checksum": "749d7a9f0e47fc5ace0f0bd18d6285df58d38f97f8222c75a4d1adca69638578",
+    "adapter_revision": "6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae"
+  },
+  "episodes": [
+    {
+      "episode_id": "estage-r1-Mbpp-118-a0",
+      "verifier_status": "FAILED",
+      "reward": 0.0,
+      "num_model_calls": 1,
+      "num_tool_rounds": 0,
+      "contiguity": "OK",
+      "trainable_tokens": 1024,
+      "prompt_ids_len": 1602,
+      "response_ids_len": 1024,
+      "response_mask_len": 1024,
+      "response_mask_sum": 1024,
+      "rollout_logprobs_len": 1024,
+      "rollout_logprobs_sha256": "2353b1b827d3baa2b9a675c4249775858308956476d0b777a6e8a522db81d010"
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a1",
+      "verifier_status": "FAILED",
+      "reward": 0.0,
+      "num_model_calls": 1,
+      "num_tool_rounds": 0,
+      "contiguity": "OK",
+      "trainable_tokens": 1024,
+      "prompt_ids_len": 1602,
+      "response_ids_len": 1024,
+      "response_mask_len": 1024,
+      "response_mask_sum": 1024,
+      "rollout_logprobs_len": 1024,
+      "rollout_logprobs_sha256": "e2dfb702a9491c66fe83fac9ffa087a2bc4e060f4888f489706db3c3d8d96172"
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a2",
+      "verifier_status": "PASSED",
+      "reward": 1.0,
+      "num_model_calls": 4,
+      "num_tool_rounds": 3,
+      "contiguity": "OK",
+      "trainable_tokens": 3205,
+      "prompt_ids_len": 1602,
+      "response_ids_len": 3871,
+      "response_mask_len": 3871,
+      "response_mask_sum": 3205,
+      "rollout_logprobs_len": 3871,
+      "rollout_logprobs_sha256": "a14ffc4b5766df426f4f75bc075dbe886baff191e620690ba485e94958809d83"
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a3",
+      "verifier_status": "FAILED",
+      "reward": 0.0,
+      "num_model_calls": 1,
+      "num_tool_rounds": 0,
+      "contiguity": "OK",
+      "trainable_tokens": 1024,
+      "prompt_ids_len": 1602,
+      "response_ids_len": 1024,
+      "response_mask_len": 1024,
+      "response_mask_sum": 1024,
+      "rollout_logprobs_len": 1024,
+      "rollout_logprobs_sha256": "cbe1bcea04d4acbdf649f99d9d0469d78b846423916e7bfb2d9bac99a62d270a"
+    }
+  ],
+  "assembled": 4,
+  "reward_values": [
+    "FAILED",
+    "PASSED"
+  ],
+  "has_variance": true,
+  "manager_certified": true,
+  "certified_batch": {
+    "schema_version": "verl-certified-loop-manager/v1",
+    "batch_id": "e-round1-batch",
+    "policy_generation": "P0",
+    "policy_fingerprint_checksum": "749d7a9f0e47fc5ace0f0bd18d6285df58d38f97f8222c75a4d1adca69638578",
+    "sequence_checksums": [
+      "51f9f44141cbb8cea8a94e1ad0a2e3396ee78c83e31a1295bf2871f86e018a5b",
+      "a855e60c8319f9372d99eef4eb82f83609b2cebec271c3c206c19e95c918c6bc",
+      "f5fc57636fbdc5fb68f857d0708eb70df59155d0957c62c9db16c8258ef6b0a2",
+      "003819937ef5687bbd6fcdd6ea9896d0a2b9bdfbb333d80fea77a61230dd704b"
+    ],
+    "group_ids": [
+      "mbpp118-group"
+    ],
+    "task_ids": [
+      "Mbpp/118",
+      "Mbpp/118",
+      "Mbpp/118",
+      "Mbpp/118"
+    ]
+  },
+  "full_arrays_note": "Token arrays are omitted here to keep the bundle small; the full round file sha256 is recorded in E-REPORT.md and the arrays remain at /home/cxr/verl-closeout/stage-e/."
+}

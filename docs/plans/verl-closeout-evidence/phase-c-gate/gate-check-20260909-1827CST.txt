@@ -1,0 +1,24 @@
+===DATE===
+2026年 09月 09日 星期三 18:27:48 CST
+===PS-FULL===
+cxr      1007952  0.0  0.0  13064    60 ?        Ss   17:34   0:00 bash -c export CUDA_VISIBLE_DEVICES=0; export PYTHONPATH=/home/cxr/agentic/code; /home/cxr/miniconda3/envs/vllm/bin/python /home/cxr/agentic/code/scripts/run_official_qwen_evalplus.py --model /home/cxr/agentic/models/qwen2.5-coder-14b-base --adapter /home/cxr/agentic/checkpoints/sft-runs/qwen14b-base-apps-clean-v2/epoch1 --dataset mbpp --model-tag sft-base-epoch1 --output-dir /home/cxr/agentic/rl-runs/official-qwen-base-evalplus --prompt-format base --batch-size 8 --device cuda:0 > /home/cxr/agentic/rl-runs/official-qwen-base-evalplus/eval_sft_epoch1_mbpp.log 2>&1
+cxr      1007953  102  0.6 77620308 1687868 ?    Rl   17:34  55:01 /home/cxr/miniconda3/envs/vllm/bin/python /home/cxr/agentic/code/scripts/run_official_qwen_evalplus.py --model /home/cxr/agentic/models/qwen2.5-coder-14b-base --adapter /home/cxr/agentic/checkpoints/sft-runs/qwen14b-base-apps-clean-v2/epoch1 --dataset mbpp --model-tag sft-base-epoch1 --output-dir /home/cxr/agentic/rl-runs/official-qwen-base-evalplus --prompt-format base --batch-size 8 --device cuda:0
+cxr      1035505  0.1  0.0 9892148 186080 ?      Sl   17:59   0:02 /home/cxr/miniconda3/envs/vllm/bin/python /home/cxr/agentic/code/scripts/run_official_qwen_bigcodebench.py --dataset /home/cxr/agentic/caches/bigcodebench/BigCodeBench-Hard-v0.1.1.jsonl --split complete --subset hard --base-model /home/cxr/agentic/models/qwen2.5-coder-14b-base --model-tag sft-base-epoch1 --output-dir /home/cxr/agentic/rl-runs/official-qwen-base-bigcodebench --workers 8 --eval-only
+cxr      2731141  0.0  0.1 9891972 466516 ?      Sl   9月08   0:05 /home/cxr/miniconda3/envs/vllm/bin/python /home/cxr/agentic/code/scripts/run_official_qwen_bigcodebench.py --dataset /home/cxr/agentic/caches/bigcodebench/BigCodeBench-Hard-v0.1.1.jsonl --split complete --subset hard --model-tag base --output-dir /home/cxr/agentic/rl-runs/official-qwen-bigcodebench --workers 8 --eval-only
+===SMI===
+index, uuid, utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0, GPU-4288d6c9-0384-25dc-1071-9bea701b9374, 93 %, 76443 MiB, 97887 MiB
+1, GPU-52776180-5d8e-460e-a121-86a1a23c05c5, 100 %, 27480 MiB, 97887 MiB
+pid, used_gpu_memory [MiB]
+826215, 27456 MiB
+2275218, 14916 MiB
+1007953, 34038 MiB
+905956, 27456 MiB
+===BCB-TAIL===
+BigCodeBench Evaluation Finished!
+Timestamp: 2026-09-09T09:58:02Z
+========================================================
+===MBPP-TAIL===
+  Generated 280/378 problems (2887.6s, 0.1 tasks/s)...
+  Generated 288/378 problems (3038.2s, 0.1 tasks/s)...
+  Generated 296/378 problems (3187.9s, 0.1 tasks/s)...

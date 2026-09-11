@@ -1,0 +1,48 @@
+{
+  "bridge_modules": [
+    "AdmittedVerlSequence",
+    "AssembledSequence",
+    "BRIDGE_VERSION",
+    "BridgeCallRecord",
+    "CERTIFIED_LOOP_MANAGER_VERSION",
+    "CertifiedAgentLoopManager",
+    "CertifiedBatch",
+    "PiAgentLoopConfig",
+    "RUN_CLEANUP_VERSION",
+    "RunCleanup",
+    "SEQUENCE_ASSEMBLER_VERSION",
+    "VERL_ADMISSION_VERSION",
+    "VerlAdmissionBatch",
+    "admit_on_policy_manifest",
+    "assemble_episode_sequence",
+    "build_per_call_segments",
+    "popen_process_group",
+    "to_agent_loop_output_dict"
+  ],
+  "frozen_input_keys": [
+    "adapter",
+    "adapter_config_sha256",
+    "adapter_epoch0_note",
+    "adapter_epoch0_present",
+    "adapter_path",
+    "adapter_top_level_matches_epoch1",
+    "base_model",
+    "chat_template_sha256",
+    "chat_template_source",
+    "note",
+    "pi",
+    "sft_package",
+    "status",
+    "tokenizer_path",
+    "tokenizer_sha256",
+    "train_record",
+    "verl_pin"
+  ],
+  "frozen_input_manifest": "docs/plans/verl-closeout-evidence/phase-a/frozen-input-manifest.json",
+  "policy_fingerprint_version": "policy-fingerprint/v1",
+  "stage": "preflight",
+  "verl_pin": {
+    "commit": "bec9ef74768dd201881cd4e54cd0385e87caae27",
+    "tag": "v0.7.1"
+  }
+}

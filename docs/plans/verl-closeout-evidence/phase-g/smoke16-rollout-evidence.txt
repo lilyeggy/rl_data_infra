@@ -1,0 +1,10 @@
+=== dispatch trace ===
+{"pid": 4036376, "episode_id": "verlpi-smoke16-Mbpp-118-a0s2", "output_dir": "/home/cxr/verl-closeout/verl-pi/verlpi-smoke16/episodes/verlpi-smoke16-20260910T175429286377-4030240/gen-000/attempt-0/verlpi-smoke16-Mbpp-118-a0s2", "output_dir_existed": false, "attempt": 0, "sample_token": "a0s2", "batch_position": 2, "index": 0}
+{"pid": 4036378, "episode_id": "verlpi-smoke16-Mbpp-118-a0s0", "output_dir": "/home/cxr/verl-closeout/verl-pi/verlpi-smoke16/episodes/verlpi-smoke16-20260910T175429286377-4030240/gen-000/attempt-0/verlpi-smoke16-Mbpp-118-a0s0", "output_dir_existed": false, "attempt": 0, "sample_token": "a0s0", "batch_position": 0, "index": 0}
+{"pid": 4036381, "episode_id": "verlpi-smoke16-Mbpp-118-a0s1", "output_dir": "/home/cxr/verl-closeout/verl-pi/verlpi-smoke16/episodes/verlpi-smoke16-20260910T175429286377-4030240/gen-000/attempt-0/verlpi-smoke16-Mbpp-118-a0s1", "output_dir_existed": false, "attempt": 0, "sample_token": "a0s1", "batch_position": 1, "index": 0}
+{"pid": 4036379, "episode_id": "verlpi-smoke16-Mbpp-118-a0s3", "output_dir": "/home/cxr/verl-closeout/verl-pi/verlpi-smoke16/episodes/verlpi-smoke16-20260910T175429286377-4030240/gen-000/attempt-0/verlpi-smoke16-Mbpp-118-a0s3", "output_dir_existed": false, "attempt": 0, "sample_token": "a0s3", "batch_position": 3, "index": 0}
+=== per-episode ===
+attempt-0/verlpi-smoke16-Mbpp-118-a0s0/ calls=3 VALID FAILED ELIGIBLE
+attempt-0/verlpi-smoke16-Mbpp-118-a0s1/ calls=1 VALID FAILED ELIGIBLE
+attempt-0/verlpi-smoke16-Mbpp-118-a0s2/ calls=3 VALID FAILED ELIGIBLE
+attempt-0/verlpi-smoke16-Mbpp-118-a0s3/ calls=3 VALID PASSED ELIGIBLE

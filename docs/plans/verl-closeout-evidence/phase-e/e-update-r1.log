@@ -1,0 +1,31 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[rank0 +    0.0s] batch: 4 episodes rewards=[0.0, 0.0, 0.0, 1.0]
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/579 [00:00<?, ?it/s]Loading weights:   0%|          | 0/579 [00:00<?, ?it/s]Loading weights: 100%|██████████| 579/579 [00:00<00:00, 9529.33it/s]
+Loading weights: 100%|██████████| 579/579 [00:00<00:00, 8771.62it/s]
+[rank0 +    7.9s] fsdp2 world=2 trainable=34.41M frozen=14.77B
+[rank0 +   11.6s] pre-update training-side logprobs computed for the whole batch
+[rank0 +   11.6s] logprob-comparison mean_abs=0.02768 p99=0.16145 within_threshold=True
+[rank0 +   11.6s] grpo advantages ok masked_mean=0.5212 masked_std=0.9999
+/home/cxr/verl-closeout/smoke/stage_e_grpo_update.py:198: FutureWarning: Warning: Function 'verl.trainer.ppo.core_algos.compute_policy_loss' is deprecated. Please use 'verl.trainer.ppo.core_algos.compute_policy_loss_vanilla' instead.
+  pg_loss, clipfrac, ppo_kl, _lower = compute_policy_loss(
+/home/cxr/verl-closeout/smoke/stage_e_grpo_update.py:198: FutureWarning: Warning: Function 'verl.trainer.ppo.core_algos.compute_policy_loss' is deprecated. Please use 'verl.trainer.ppo.core_algos.compute_policy_loss_vanilla' instead.
+  pg_loss, clipfrac, ppo_kl, _lower = compute_policy_loss(
+/home/cxr/verl-closeout/smoke/stage_e_grpo_update.py:206: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  ppo_kl_acc.append(float(ppo_kl))
+/home/cxr/verl-closeout/smoke/stage_e_grpo_update.py:206: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  ppo_kl_acc.append(float(ppo_kl))
+[rank0 +   19.9s] pre-step loss=-0.521187 grad_norm=0.495278
+[rank0 +   21.5s] native-update ok changed=1344 drift=0.170049 peak_GB=28.1
+Loading weights:   0%|          | 0/579 [00:00<?, ?it/s]Loading weights: 100%|██████████| 579/579 [00:00<00:00, 8709.18it/s]
+[transformers] Setting `pad_token_id` to `eos_token_id`:151643 for open-end generation.
+[rank0 +   28.7s] saved P1 sha=e22a1742149b9007 reload-reinfer ok
+/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+STAGE-E-UPDATE-PASS

@@ -1,0 +1,86 @@
+{
+  "tag": "stage-e-grpo-update",
+  "round_index": 1,
+  "policy_generation_from": "P0",
+  "policy_generation_to": "P1",
+  "policy_checksum_from": "749d7a9f0e47fc5ace0f0bd18d6285df58d38f97f8222c75a4d1adca69638578",
+  "learning_rate": 1e-06,
+  "clip_ratio": 0.2,
+  "loss_agg_mode": "token-mean",
+  "episodes": [
+    "estage-r1-Mbpp-118-a0",
+    "estage-r1-Mbpp-118-a1",
+    "estage-r1-Mbpp-118-a2",
+    "estage-r1-Mbpp-118-a3"
+  ],
+  "rewards": {
+    "estage-r1-Mbpp-118-a0": 0.0,
+    "estage-r1-Mbpp-118-a1": 0.0,
+    "estage-r1-Mbpp-118-a2": 1.0,
+    "estage-r1-Mbpp-118-a3": 0.0
+  },
+  "advantage_stats": {
+    "masked_mean": 0.5211872458457947,
+    "masked_std": 0.9998531341552734,
+    "shape": [
+      4,
+      3871
+    ]
+  },
+  "logprob_comparison": {
+    "masked_tokens": 6277,
+    "mean_abs_nat": 0.027675751596689224,
+    "p99_abs_nat": 0.1614461988210678,
+    "quantiles_abs_nat": {
+      "0.5": 0.009309366345405579,
+      "0.9": 0.08588545024394989,
+      "0.95": 0.10898403078317642,
+      "0.99": 0.1614461988210678
+    },
+    "threshold_mean_nat": 0.05,
+    "threshold_p99_nat": 0.5,
+    "within_threshold": true,
+    "per_episode": [
+      {
+        "episode_id": "estage-r1-Mbpp-118-a0",
+        "masked_tokens": 1024,
+        "mean_abs_nat": 0.028439225628972054,
+        "max_abs_nat": 0.19516432285308838
+      },
+      {
+        "episode_id": "estage-r1-Mbpp-118-a1",
+        "masked_tokens": 1024,
+        "mean_abs_nat": 0.026871468871831894,
+        "max_abs_nat": 0.26259493827819824
+      },
+      {
+        "episode_id": "estage-r1-Mbpp-118-a2",
+        "masked_tokens": 3205,
+        "mean_abs_nat": 0.027441564947366714,
+        "max_abs_nat": 0.2875247001647949
+      },
+      {
+        "episode_id": "estage-r1-Mbpp-118-a3",
+        "masked_tokens": 1024,
+        "mean_abs_nat": 0.028449535369873047,
+        "max_abs_nat": 0.34975481033325195
+      }
+    ]
+  },
+  "world_size": 2,
+  "device": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "trainable_params": 34406400,
+  "frozen_params": 14770033664,
+  "loss": -0.5211873791752223,
+  "grad_norm_local": 0.4952777922153473,
+  "changed_tensors_all_ranks": 1344,
+  "drift_sum_all_ranks": 0.17004871368408203,
+  "peak_memory_GB_rank0": 28.093196288,
+  "clipfrac_mean": 0.0,
+  "ppo_kl_mean": 0.0,
+  "previous_adapter_sha256": "6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae",
+  "next_adapter_sha256": "e22a1742149b9007ed94875c857048c034a5feb38ea0fbb0cd53874505061e2a",
+  "next_adapter_dir": "/home/cxr/verl-closeout/stage-e/update-r1/adapter-p1",
+  "reload_reinfer_head": "def add(a, b):\n    return a + b\n\ndef subtract(a, b):\n    return a",
+  "elapsed_s": 28.746214151382446
+}
