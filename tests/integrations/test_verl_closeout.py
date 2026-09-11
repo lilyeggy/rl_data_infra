@@ -52,7 +52,11 @@ from src.integrations.verl import (  # noqa: E402
     build_per_call_segments,
     to_agent_loop_output_dict,
 )
-from src.integrations.verl.sequence import SEQUENCE_ASSEMBLER_VERSION  # noqa: E402
+from src.integrations.verl.sequence import (  # noqa: E402
+    SEQUENCE_ASSEMBLER_VERSION,
+    describe_sequence_difference,
+    training_sequence_matches,
+)
 from src.learning import CertifiedArtifact, compile_dataset  # noqa: E402
 from src.producers.base import (  # noqa: E402
     ProducerArtifact,
@@ -257,6 +261,58 @@ class SequenceContractTest(unittest.TestCase):
         rebuilt = AdmittedVerlSequence.from_dict(json.loads(json.dumps(admitted.to_dict())))
         self.assertEqual(rebuilt.num_tool_rounds, 0)
         self.assertEqual(rebuilt.reward, 0.0)
+
+    def test_sequence_comparison_ignores_container_type(self) -> None:
+        """The gate must compare tokens, not the container the artifact froze them into.
+
+        `ProducerArtifact.from_dict` deep-freezes its payload, so stored arrays
+        arrive as tuples while the rebuilt ones are lists. `tuple == list` is
+        False in Python even when every element agrees, which made the gate
+        unsatisfiable: on smoke24 it refused a batch whose four arrays matched
+        element for element.
+        """
+        rebuilt = {"prompt_ids": [1, 2], "loss_mask": [1, 0]}
+        frozen = {key: tuple(value) for key, value in rebuilt.items()}
+        self.assertNotEqual(frozen, rebuilt)
+        self.assertTrue(training_sequence_matches(frozen, rebuilt))
+        self.assertTrue(training_sequence_matches(rebuilt, rebuilt))
+        self.assertIn(
+            "prompt_ids: same tokens, containers differ (tuple vs list)",
+            describe_sequence_difference(frozen, rebuilt),
+        )
+        # Real drift is still drift.
+        self.assertFalse(
+            training_sequence_matches({"prompt_ids": (1, 3), "loss_mask": (1, 0)}, rebuilt)
+        )
+        self.assertFalse(training_sequence_matches({"prompt_ids": (1, 2)}, rebuilt))
+        self.assertFalse(
+            training_sequence_matches({"prompt_ids": (1, 2), "loss_mask": (1, 0), "x": 1}, rebuilt)
+        )
+        self.assertFalse(training_sequence_matches(None, rebuilt))
+
+    def test_sequence_difference_names_the_field_and_first_index(self) -> None:
+        """A gate that rejects a batch must say what disagreed.
+
+        It compares a stored training sequence against one rebuilt from the same
+        evidence file, and both are durable -- so an unreproducible mismatch
+        leaves nothing to inspect unless the message carries the detail.
+        """
+        rebuilt = {"prompt_ids": [1, 2], "loss_mask": [1, 1, 0], "extra": [7, 8]}
+        self.assertEqual(
+            describe_sequence_difference(rebuilt, rebuilt), "identical"
+        )
+        drift = {"prompt_ids": [1, 9], "loss_mask": [1, 1, 0, 0]}
+        report = describe_sequence_difference(drift, rebuilt)
+        self.assertIn("prompt_ids: stored_len=2 rebuilt_len=2 first_diff_index=1", report)
+        self.assertIn("loss_mask: stored_len=4 rebuilt_len=3 first_diff_index=None", report)
+        self.assertIn("extra: stored=None rebuilt=[7, 8]", report)
+        self.assertEqual(
+            describe_sequence_difference(None, rebuilt), "stored sequence is NoneType"
+        )
+        self.assertEqual(
+            describe_sequence_difference({"prompt_ids": [1, 2], "spurious": 1}, {"prompt_ids": [1, 2]}),
+            "unexpected keys=['spurious']",
+        )
 
     def test_decode_drift_does_not_rewrite_native_tokens(self) -> None:
         # A decoder might re-encode [10, 11] as [10, 11, 99]; the assembler

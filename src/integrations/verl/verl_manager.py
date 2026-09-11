@@ -45,6 +45,10 @@ from verl.utils.ray_utils import auto_await
 from src.contracts._json import sha256_json
 from src.errors import ContractValidationError
 from src.integrations.verl.admission import AdmittedVerlSequence
+from src.integrations.verl.sequence import (
+    describe_sequence_difference,
+    training_sequence_matches,
+)
 from src.integrations.verl.manager import CertifiedAgentLoopManager, CertifiedBatch
 from src.training.policy_fingerprint import PolicyFingerprint
 from src.certification import ConsumerProfile, certify_for
@@ -268,8 +272,21 @@ class CertifiedVerlAgentLoopManager(AgentLoopManager):
             rebuilt = _assemble(episode_dir, sequence.episode_id)
             training = {"prompt_ids": list(rebuilt.prompt_ids), "response_ids": list(rebuilt.response_ids),
                         "loss_mask": list(rebuilt.response_mask), "response_logprobs": list(rebuilt.response_logprobs)}
-            if artifact.payload.get("training_sequence") != training:
-                raise ContractValidationError("policy artifact does not bind actual inference context")
+            # print, not logger: the worker/driver loggers are filtered here, and
+            # a gate that rejects 16 episodes must say which one and why in the
+            # run log the operator actually reads.
+            print(
+                f"[pi-manager] certify {episode_dir.name} calls={sequence.num_model_calls} "
+                f"tool_rounds={sequence.num_tool_rounds} seq_len={len(sequence.response_ids)} "
+                f"verifier={summary.get('verifier_status')}",
+                flush=True,
+            )
+            if not training_sequence_matches(artifact.payload.get("training_sequence"), training):
+                raise ContractValidationError(
+                    f"policy artifact does not bind actual inference context "
+                    f"({episode_dir.name}): "
+                    f"{describe_sequence_difference(artifact.payload.get('training_sequence'), training)}"
+                )
             if (sequence.prompt_ids != tuple(rebuilt.prompt_ids) or sequence.response_ids != tuple(rebuilt.response_ids)
                     or sequence.response_mask != tuple(rebuilt.response_mask)
                     or sequence.response_logprobs != tuple(rebuilt.response_logprobs)

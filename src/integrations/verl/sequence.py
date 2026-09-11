@@ -88,6 +88,82 @@ def _checked_mask(value: Any, field_name: str) -> tuple[int, ...]:
     return mask
 
 
+def _as_token_list(value: Any) -> list[Any] | None:
+    """The value as a plain list of tokens, or ``None`` if it is not an array."""
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return list(value)
+    return None
+
+
+def training_sequence_matches(stored: Any, expected: Mapping[str, Any]) -> bool:
+    """Do a stored training sequence and a rebuilt one carry the same tokens?
+
+    Container types must not decide this. ``ProducerArtifact.from_dict``
+    deep-freezes its payload, so the stored arrays arrive as tuples while the
+    rebuilt ones are freshly built lists -- and ``tuple == list`` is ``False`` in
+    Python even when every element agrees. Comparing the containers directly
+    therefore made the batch gate unsatisfiable: on smoke24 it refused a batch
+    whose four arrays matched element for element (same length, no differing
+    index, ``list(stored) == list(rebuilt)``), and the failure is invisible from
+    the episode directory afterwards because both sides are durable. Compare the
+    elements.
+    """
+    if not isinstance(stored, Mapping) or set(stored) != set(expected):
+        return False
+    for key, value in expected.items():
+        stored_tokens = _as_token_list(stored[key])
+        expected_tokens = _as_token_list(value)
+        if stored_tokens is None or stored_tokens != expected_tokens:
+            return False
+    return True
+
+
+def describe_sequence_difference(stored: Any, rebuilt: Mapping[str, Any]) -> str:
+    """Say how a stored training sequence differs from a rebuilt one.
+
+    The message this exists for ("policy artifact does not bind actual inference
+    context") named neither the episode nor the field, and every input it
+    compares is durable -- so a mismatch that cannot be reproduced from the
+    episode directory afterwards leaves nothing to inspect, which cost a full GPU
+    round of guessing. Reporting the lengths and the first differing index per
+    field is what identifies the responsible call; a field whose tokens agree
+    while its container types differ is reported as exactly that, because it is a
+    comparison bug rather than a data problem.
+    """
+    if not isinstance(stored, Mapping):
+        return f"stored sequence is {type(stored).__name__}"
+    parts: list[str] = []
+    for key, fresh in rebuilt.items():
+        value = stored.get(key)
+        stored_tokens = _as_token_list(value)
+        rebuilt_tokens = _as_token_list(fresh)
+        if stored_tokens is not None and rebuilt_tokens is not None:
+            if stored_tokens == rebuilt_tokens:
+                if value != fresh:
+                    parts.append(
+                        f"{key}: same tokens, containers differ "
+                        f"({type(value).__name__} vs {type(fresh).__name__})"
+                    )
+                continue
+            first = next(
+                (i for i, (a, b) in enumerate(zip(stored_tokens, rebuilt_tokens)) if a != b),
+                None,
+            )
+            parts.append(
+                f"{key}: stored_len={len(stored_tokens)} "
+                f"rebuilt_len={len(rebuilt_tokens)} first_diff_index={first}"
+            )
+        else:
+            parts.append(f"{key}: stored={value!r} rebuilt={fresh!r}")
+    extra = sorted(set(stored) - set(rebuilt))
+    if extra:
+        parts.append(f"unexpected keys={extra}")
+    missing = sorted(set(rebuilt) - set(stored))
+    if missing:
+        parts.append(f"missing keys={missing}")
+    return "; ".join(parts) if parts else "identical"
+
+
 def assemble_episode_sequence(
     *,
     episode_id: str,
