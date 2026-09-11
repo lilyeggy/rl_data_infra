@@ -65,7 +65,8 @@ class TestRLCycle(unittest.TestCase):
                 mock=True,
             )
             result = orchestrator.run_full_cycle()
-            self.assertEqual(result["status"], "COMPLETED")
+            self.assertEqual(result["status"], "MOCK_COMPLETED")
+            self.assertEqual(result["gate"]["mode"], "mock-simulated")
             self.assertEqual(result["gate"]["verdict"], "PROMOTED")
 
             # Check files created
