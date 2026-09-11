@@ -16,10 +16,13 @@ size, non-zero intra-group reward variance, per-episode task binding) while
 generation and before the trainer can consume the batch, and it fails closed.
 
 A batch with no reward variance carries no GRPO signal, so instead of feeding a
-degenerate batch to the optimizer we resample: generation is re-run (fresh
+degenerate batch to the optimizer we redraw it: generation is re-run (fresh
 episodes, nothing was consumed) up to ``max_attempts`` times. The attempt number
 is stamped into the prompt batch, which is how the per-sample loop learns to
-write new episode directories.
+write new episode directories, and each refused attempt is written next to the
+certificate so a redraw is visible after the fact. Only a degenerate batch is
+redrawn -- see :mod:`src.integrations.verl.resampling` for why every other
+violation fails on its first occurrence.
 """
 
 from __future__ import annotations
@@ -50,6 +53,7 @@ from src.integrations.verl.sequence import (
     training_sequence_matches,
 )
 from src.integrations.verl.manager import CertifiedAgentLoopManager, CertifiedBatch
+from src.integrations.verl.resampling import certify_with_resampling
 from src.training.policy_fingerprint import PolicyFingerprint
 from src.certification import ConsumerProfile, certify_for
 from src.contracts.agent_episode import AgentEpisode
@@ -185,30 +189,53 @@ class CertifiedVerlAgentLoopManager(AgentLoopManager):
             f"prompt_rows={len(prompts)} root={call_root}",
             flush=True,
         )
-        last_error: Exception | None = None
-        for attempt in range(self.max_attempts):
-            self._stamp_attempt(prompts, attempt, call_root)
-            batch = await super().generate_sequences(prompts)
-            try:
-                certified = self._certify_from_evidence(call_root, attempt)
-                self._verify_returned_batch(batch, prompts, call_root, attempt)
-            except ContractValidationError as exc:
-                raise ContractValidationError(
-                    f"{self.run_id}: batch rejected without resampling: {exc}"
-                ) from exc
-            self.last_certified_batch = certified
-            self._record_certificate(certified, attempt, call_root)
-            logger.info(
-                "%s: attempt %d certified batch %s over %d sequences",
-                self.run_id,
-                attempt,
-                certified.batch_id,
-                len(certified.sequence_checksums),
-            )
-            return batch
-        raise ContractValidationError(
-            f"{self.run_id}: no attempt produced a certifiable batch after "
-            f"{self.max_attempts} attempts; last error: {last_error}"
+        result = await certify_with_resampling(
+            max_attempts=self.max_attempts,
+            run_id=self.run_id,
+            generate=lambda attempt: self._generate_attempt(prompts, call_root, attempt),
+            certify=lambda batch, attempt: self._gate_attempt(batch, prompts, call_root, attempt),
+            on_retry=lambda attempt, exc: self._record_rejection(call_root, attempt, exc),
+        )
+        self.last_certified_batch = result.certificate
+        self._record_certificate(result.certificate, result.attempt, call_root)
+        logger.info(
+            "%s: attempt %d certified batch %s over %d sequences",
+            self.run_id,
+            result.attempt,
+            result.certificate.batch_id,
+            len(result.certificate.sequence_checksums),
+        )
+        return result.batch
+
+    async def _generate_attempt(self, prompts: Any, call_root: Path, attempt: int) -> Any:
+        """Stamp the attempt, then let the framework roll the batch out."""
+        self._stamp_attempt(prompts, attempt, call_root)
+        return await super().generate_sequences(prompts)
+
+    def _gate_attempt(
+        self, batch: Any, prompts: Any, call_root: Path, attempt: int
+    ) -> CertifiedBatch:
+        """Certify one attempt from persisted evidence, then check the batch."""
+        certified = self._certify_from_evidence(call_root, attempt)
+        self._verify_returned_batch(batch, prompts, call_root, attempt)
+        return certified
+
+    def _record_rejection(self, call_root: Path, attempt: int, exc: Exception) -> None:
+        """Leave the redraw on disk, so a resample cannot look like a first try."""
+        payload = {
+            "run_id": self.run_id,
+            "attempt": attempt,
+            "reason": type(exc).__name__,
+            "message": str(exc),
+            "manager_version": VERL_PI_MANAGER_VERSION,
+        }
+        (call_root / f"rejected-attempt{attempt}.json").write_text(
+            json.dumps(payload, indent=2) + "\n"
+        )
+        print(
+            f"[pi-manager] {self.run_id} attempt {attempt} carries no learning "
+            f"signal, redrawing: {exc}",
+            flush=True,
         )
 
     @staticmethod

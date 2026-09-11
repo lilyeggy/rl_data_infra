@@ -40,7 +40,7 @@ from src.assembly.episode_assembler import EpisodeAssembler  # noqa: E402
 from src.certification import ConsumerProfile, certify_for  # noqa: E402
 from src.contracts.dataset import DatasetPurpose, DatasetRole, DatasetSplit  # noqa: E402
 from src.contracts.execution_identity import ExecutionIdentity  # noqa: E402
-from src.errors import ContractValidationError  # noqa: E402
+from src.errors import ContractValidationError, DegenerateBatchError  # noqa: E402
 from src.integrations.verl import (  # noqa: E402
     AdmittedVerlSequence,
     BridgeCallRecord,
@@ -512,7 +512,10 @@ class AdmissionContractTest(unittest.TestCase):
         policy = _policy()
         entries = [_member(1, reward=0.0, policy=policy), _member(2, reward=0.0, policy=policy)]
         manifest = _manifest(entries)
-        with self.assertRaises(ContractValidationError):
+        # The retryable type matters: a flat group is a property of the draw, so
+        # the framework-side manager redraws it, while every other violation
+        # fails on its first occurrence.
+        with self.assertRaises(DegenerateBatchError):
             admit_on_policy_manifest(
                 manifest,
                 decisions_by_checksum={d.checksum: d for _, _, _, d in entries},
@@ -555,7 +558,7 @@ class ManagerContractTest(unittest.TestCase):
         first = admitted.sequences[0]
         sequences = tuple(replace(first, episode_id=f"e{i}", group_id=f"g{i // 2}",
                                   reward=float(i // 2)) for i in range(4))
-        with self.assertRaisesRegex(ContractValidationError, "intra-group"):
+        with self.assertRaisesRegex(DegenerateBatchError, "intra-group"):
             CertifiedAgentLoopManager(policy=policy, minimum_group_size=2).certify_batch(
                 sequences, batch_id="b", task_ids_by_episode={s.episode_id: "t" for s in sequences})
 

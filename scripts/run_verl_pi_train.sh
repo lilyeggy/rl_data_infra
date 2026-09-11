@@ -168,6 +168,20 @@ cd "$REPO"
 #   is what makes fsdp_workers.py:786 re-collect the full base on every resume.
 #   Measured before this: each rank climbed 19.7 -> 132.5 GiB and the node hit
 #   Ray's kill threshold again, with no rollout ever having run.
+# * rollout.n is sized from the measured solve rate, not from taste. GRPO needs
+#   an intra-group reward spread, so a group has to contain at least one solved
+#   episode. The frozen P0 solves Mbpp/118 about once in 16 draws (measured:
+#   2/16 in smoke24, 1/16 in smoke25, 0/16 in smoke26, i.e. 3/48 overall), so
+#   n=4 certifies ~22% of the time and n=16 ~60%. n=32 puts one attempt at
+#   ~87%, and max_attempts=3 puts the step-1 gate past 99%. Total epochs is 2
+#   because the closeout cycle is two updates from one starting adapter: step 1
+#   trains P1, step 2 must then roll out against the weights step 1 synced,
+#   which is the only thing that can satisfy acceptance item 9.
+# * max_attempts is >1 so a variance-free draw is redrawn instead of ending the
+#   run. Until this was fixed the retry loop re-raised inside its own except, so
+#   max_attempts could not take effect and one unlucky batch (smoke26, 0/16)
+#   cost the whole run. Only a degenerate batch is redrawn; a deterministic
+#   violation still fails on its first occurrence.
 #
 # Never interleave comments inside the backslash-continued command below: a
 # comment after a trailing backslash is swallowed into the same logical line
@@ -180,7 +194,7 @@ exec "$VERL_PYTHON" -m verl.trainer.main_ppo \
   trainer.logger=[console] \
   trainer.project_name=agentic-rl \
   trainer.experiment_name="$ROUND" \
-  trainer.total_epochs=1 \
+  trainer.total_epochs=2 \
   trainer.save_freq=1 \
   trainer.test_freq=-1 \
   trainer.val_before_train=false \
@@ -205,7 +219,7 @@ exec "$VERL_PYTHON" -m verl.trainer.main_ppo \
   +actor_rollout_ref.actor.fsdp_config.wrap_policy.transformer_layer_cls_to_wrap=[Qwen2DecoderLayer] \
   actor_rollout_ref.rollout.name=vllm \
   actor_rollout_ref.rollout.mode=async \
-  actor_rollout_ref.rollout.n=4 \
+  actor_rollout_ref.rollout.n=32 \
   actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
   actor_rollout_ref.rollout.data_parallel_size=1 \
   actor_rollout_ref.rollout.n_gpus_per_node=2 \
@@ -226,7 +240,7 @@ exec "$VERL_PYTHON" -m verl.trainer.main_ppo \
   +pi_certification.run_id="$ROUND" \
   +pi_certification.episode_root="$RUN_DIR/episodes" \
   +pi_certification.minimum_group_size=4 \
-  +pi_certification.max_attempts=1 \
+  +pi_certification.max_attempts=3 \
   +pi_certification.policy_fingerprint_json="$ROUND_POLICY" \
   algorithm.adv_estimator=grpo \
   critic.model.path="$BASE_MODEL" \

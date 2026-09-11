@@ -11,7 +11,7 @@ from src.certification import ConsumerProfile, ConsumerVerdict, EligibilityDecis
 from src.contracts._json import sha256_json
 from src.contracts.dataset import DatasetManifest, DatasetPurpose, DatasetRole
 from src.contracts.execution_bundle import ExecutionBundle
-from src.errors import ContractValidationError
+from src.errors import ContractValidationError, DegenerateBatchError
 from src.integrations.verl.sequence import SEQUENCE_ASSEMBLER_VERSION, AssembledSequence
 from src.producers.base import (
     ProducerArtifact,
@@ -322,7 +322,7 @@ def _float_array(value: Any, field_name: str) -> tuple[float, ...]:
 def _require_reward_variance(sequences: Sequence[AdmittedVerlSequence]) -> None:
     rewards = {item.reward for item in sequences}
     if len(rewards) < 2:
-        raise ContractValidationError(
+        raise DegenerateBatchError(
             "admission batch has no intra-group reward variance; "
             "refusing to fabricate a learning signal"
         )

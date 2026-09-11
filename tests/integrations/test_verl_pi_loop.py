@@ -493,7 +493,17 @@ class LauncherOverrideTest(unittest.TestCase):
         for key in (
             "actor_rollout_ref.rollout.name=vllm",
             "actor_rollout_ref.rollout.mode=async",
-            "actor_rollout_ref.rollout.n=4",
+            # GRPO needs an intra-group reward spread, so the group has to
+            # contain a solved episode. The frozen P0 solves Mbpp/118 about once
+            # in 16 draws (3/48 across smoke24-26), which makes n=4 a ~22% bet.
+            "actor_rollout_ref.rollout.n=32",
+            # Two updates from one starting adapter: step 1 trains P1 and step 2
+            # rolls out against the weights step 1 synced, which is the only
+            # evidence that can satisfy acceptance item 9.
+            "trainer.total_epochs=2",
+            # Resampling has to stay on. With max_attempts=1 a single
+            # variance-free draw ends the run (smoke26, 0/16 solved).
+            "+pi_certification.max_attempts=3",
             "actor_rollout_ref.actor.ppo_mini_batch_size=1",
             "actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1",
             "actor_rollout_ref.actor.fsdp_config.optimizer_offload=true",

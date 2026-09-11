@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.contracts._json import sha256_json
-from src.errors import ContractValidationError
+from src.errors import ContractValidationError, DegenerateBatchError
 from src.integrations.verl.admission import VERL_ADMISSION_VERSION, AdmittedVerlSequence
 from src.training.policy_fingerprint import PolicyFingerprint
 
@@ -119,7 +119,9 @@ class CertifiedAgentLoopManager:
             if len({task_ids_by_episode[e] for e in members}) != 1:
                 raise ContractValidationError(f"group {group_id!r} mixes tasks")
             if len({item.reward for item in items if item.group_id == group_id}) < 2:
-                raise ContractValidationError(f"group {group_id!r} has no intra-group reward variance")
+                raise DegenerateBatchError(
+                    f"group {group_id!r} has no intra-group reward variance"
+                )
         return CertifiedBatch(
             batch_id=batch_id,
             policy_generation=str(self.policy.policy_generation),

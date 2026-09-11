@@ -25,6 +25,20 @@ class ContractValidationError(PipelineError, ValueError):
     """A canonical contract violates an internal invariant."""
 
 
+class DegenerateBatchError(ContractValidationError):
+    """A batch sampled no learning signal, as opposed to contradicting evidence.
+
+    GRPO cannot learn from a group whose samples all earned the same reward, so
+    the advantage collapses to zero. That is a property of the draw rather than
+    a defect in the evidence, which makes it the only contract violation a
+    caller may usefully retry: a fresh rollout can change it. Every other
+    violation is a deterministic function of what was recorded -- a tampered
+    sequence, an artifact that does not bind the tokens, a group that mixes
+    tasks -- and reproduces identically, so retrying one only spends GPU on the
+    same failure and buries it under attempts.
+    """
+
+
 class CapabilityMissingError(PipelineError):
     """A consumer requested capabilities that the input does not provide."""
 
