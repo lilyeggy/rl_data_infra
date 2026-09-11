@@ -42,6 +42,7 @@ from src.contracts.dataset import DatasetPurpose, DatasetRole, DatasetSplit  # n
 from src.contracts.execution_identity import ExecutionIdentity  # noqa: E402
 from src.errors import ContractValidationError  # noqa: E402
 from src.integrations.verl import (  # noqa: E402
+    AdmittedVerlSequence,
     BridgeCallRecord,
     CertifiedAgentLoopManager,
     PiAgentLoopConfig,
@@ -204,6 +205,58 @@ class SequenceContractTest(unittest.TestCase):
         # Observation slots carry an explicit non-probability placeholder.
         self.assertEqual(sequence.response_logprobs[3], 0.0)
         self.assertEqual(sequence.num_tool_rounds, 1)
+
+    def test_single_turn_without_a_tool_round_is_still_a_sample(self) -> None:
+        """A turn with no tool call is a sample with reward 0, not a fault.
+
+        Measured on smoke23: six of eight first turns carried no tool call at
+        all (the extractor refused only prose placeholders such as `{}` and
+        `{...}`, and rejected no valid call). The ON_POLICY_RL profile certified
+        such an episode ELIGIBLE with score 0.0, while our own stricter gate
+        aborted the entire batch gather -- which also discarded the two episodes
+        of the same batch that were already issuing their second model request.
+        The action is the policy's own generation and the reward is the observed
+        outcome, which is all PPO-style training needs; a batch made only of such
+        episodes has no variance and is still rejected by the batch gate.
+
+        `admit_on_policy_manifest` (the CPU certifier path, which the live loop
+        does not use) keeps requiring one tool round: that is a deliberate
+        definition of a qualifying trajectory, and the two paths may differ.
+        """
+        sequence = assemble_episode_sequence(
+            episode_id="episode-single",
+            prompt_ids=[1, 2],
+            per_call_segments=[
+                {
+                    "native_response_ids": [10, 11, 12],
+                    "native_response_logprobs": [-0.1, -0.2, -0.3],
+                    "context_suffix_ids": [],
+                    "history_rewritten": False,
+                }
+            ],
+        )
+        self.assertEqual(sequence.num_model_calls, 1)
+        self.assertEqual(sequence.num_tool_rounds, 0)
+        self.assertEqual(sequence.response_ids, (10, 11, 12))
+        self.assertEqual(sequence.response_mask, (1, 1, 1))
+        admitted = AdmittedVerlSequence(
+            episode_id="episode-single",
+            group_id="run",
+            policy_fingerprint="f" * 64,
+            prompt_ids=sequence.prompt_ids,
+            response_ids=sequence.response_ids,
+            response_mask=sequence.response_mask,
+            response_logprobs=sequence.response_logprobs,
+            reward=0.0,
+            num_model_calls=1,
+            num_tool_rounds=0,
+            member_id="episode-single",
+            execution_bundle_checksum="a" * 64,
+            policy_artifact_checksum="b" * 64,
+        )
+        rebuilt = AdmittedVerlSequence.from_dict(json.loads(json.dumps(admitted.to_dict())))
+        self.assertEqual(rebuilt.num_tool_rounds, 0)
+        self.assertEqual(rebuilt.reward, 0.0)
 
     def test_decode_drift_does_not_rewrite_native_tokens(self) -> None:
         # A decoder might re-encode [10, 11] as [10, 11, 99]; the assembler

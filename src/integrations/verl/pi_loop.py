@@ -275,8 +275,19 @@ class PiAgentLoop(AgentLoopBase):
         )
         if transport.error:
             raise ContractValidationError(transport.error)
-        if sequence.num_tool_rounds < 1:
-            raise ContractValidationError("real tool observation and subsequent model call required")
+        # A turn that carried no tool call is a sample, not a fault: the episode
+        # still has an action (the policy's own tokens), a task outcome and a
+        # reward, which is all PPO-style training needs. This used to raise
+        # ("real tool observation and subsequent model call required"), and the
+        # measured cost was severe -- on smoke23 the ON_POLICY_RL profile
+        # certified the no-action episode ELIGIBLE with score 0.0, while the
+        # raise aborted the whole generate_sequences gather and threw away the
+        # two episodes of the same batch that were already issuing their second
+        # model request. The gate was stricter than the certification contract
+        # and amplified one weak sample into total loss. A batch of such episodes
+        # has no reward variance and is still rejected by the batch gate, which
+        # is where "no learning signal" belongs. `num_tool_rounds` keeps the fact
+        # visible in the evidence.
         elapsed = time.monotonic() - started
 
         verifier_status = summary["verifier_status"]
