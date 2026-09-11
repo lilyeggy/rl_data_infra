@@ -71,7 +71,7 @@ class ContextTest(unittest.TestCase):
 
     def test_truncated_generation_rejected(self):
         self.ctx.prepare(self.next, [])
-        with self.assertRaisesRegex(ContractValidationError, "EOS"):
+        with self.assertRaisesRegex(ContractValidationError, "terminator"):
             self.ctx.accept([1, 2, 3], {"role": "assistant", "content": "done"})
 
     def test_no_continuation_after_terminal(self):

@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import tempfile
 import unittest
 from pathlib import Path
+
+import numpy
 
 from src.errors import ContractValidationError
 from src.integrations.verl.native_transport import NativeTokenTransport, _tool_calls
@@ -102,20 +105,41 @@ class Call:
 
 
 class TokenOutput:
-    def __init__(self, token_ids, global_steps=0):
+    def __init__(self, token_ids, global_steps=0, stop_reason="completed"):
         self.token_ids = list(token_ids)
         self.log_probs = [-0.5] * len(self.token_ids)
+        self.stop_reason = stop_reason
         self.extra_fields = {"global_steps": global_steps}
 
 
 class ServerManagerDouble:
-    def __init__(self, token_ids):
+    """Serves a generation the way the real engine does.
+
+    Two behaviours are copied from the deployment rather than invented:
+      * the step is `None` unless told otherwise, because
+        `checkpoint_engine.backend=naive` never propagates `global_steps`;
+      * a special stop token is stripped from the returned ids, which is vLLM's
+        documented contract for `stop_token_ids` and the reason a cleanly
+        finished turn arrives without `<|im_end|>`.
+    """
+
+    def __init__(self, token_ids, global_steps=0, strip_special_stop=True,
+                 stop_reason="completed"):
         self.token_ids = list(token_ids)
+        self.global_steps = global_steps
+        self.strip_special_stop = strip_special_stop
+        self.stop_reason = stop_reason
         self.prompts: list[list[int]] = []
+        self.budgets: list[int] = []
 
     async def generate(self, *, request_id, prompt_ids, sampling_params):
         self.prompts.append(list(prompt_ids))
-        return TokenOutput(self.token_ids)
+        self.budgets.append(int(sampling_params.get("max_tokens", 0)))
+        ids = list(self.token_ids)
+        if self.strip_special_stop and ids and ids[-1] == END:
+            ids = ids[:-1]
+        return TokenOutput(ids, global_steps=self.global_steps,
+                           stop_reason=self.stop_reason)
 
 
 class ToolCallExtractionTest(unittest.TestCase):
@@ -169,7 +193,13 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tokenizer = ReversibleTokenizer()
         self.generation = self.tokenizer.encode(GENERATION_TEXT) + [END]
+        # What the engine actually returns: the special stop token is dropped.
+        self.stripped = self.generation[:-1]
         self.server = ServerManagerDouble(self.generation)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.note_path = Path(self.tmp.name) / "engine-notes" / "episode.step.jsonl"
+        self.turn_path = Path(self.tmp.name) / "engine-notes" / "episode.turns.jsonl"
         # The upstream parser sees the same untagged text it saw on the run.
         self.parser = ParserDouble(calls=(), content=GENERATION_TEXT)
         self.transport = NativeTokenTransport(
@@ -182,10 +212,12 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
             sampling_params={},
             max_prompt=8000,
             max_response=40000,
-            max_tokens=3584,
+            max_tokens=8192,
             max_requests=4,
             timeout=5.0,
             expected_engine_step=0,
+            step_note_path=self.note_path,
+            turn_note_path=self.turn_path,
         )
         self.first_request = {
             "model": "m",
@@ -229,9 +261,7 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         context = self.transport.context
         ledger = list(context.tokens)
         start = context.initial_length
-        self.assertEqual(
-            ledger[start : start + len(self.generation)], self.generation
-        )
+        self.assertEqual(ledger[start : start + len(self.stripped)], self.stripped)
 
     def test_real_pi_echo_is_accepted_and_becomes_the_second_turn(self) -> None:
         """The decisive multi-turn case: Pi echoes content: null and we accept."""
@@ -244,9 +274,7 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         # The first generation is still there, verbatim, followed by the new
         # observation -- prompt_{i+1} = prompt_i + generation_i + observation.
         start = context.initial_length
-        self.assertEqual(
-            ledger[start : start + len(self.generation)], self.generation
-        )
+        self.assertEqual(ledger[start : start + len(self.stripped)], self.stripped)
         self.assertGreater(len(ledger), start + len(self.generation))
         # Turn two was prompted with exactly the ledger as it stood then, so the
         # strict contiguity the assembler requires holds by construction: the
@@ -281,11 +309,163 @@ class TransportAgainstRealArtifactsTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractValidationError, "assistant response"):
             asyncio.run(self.transport.generate(request))
 
-    def test_truncated_generation_is_rejected(self) -> None:
-        """No EOS means the turn was cut off, and that is never a valid turn."""
-        self.server.token_ids = self.tokenizer.encode(GENERATION_TEXT)
-        with self.assertRaisesRegex(ContractValidationError, "EOS"):
+    def test_generation_consuming_the_whole_budget_is_rejected(self) -> None:
+        """Truncation is now detected by the budget, not by a missing token.
+
+        The engine strips its special stop token, so absence of `<|im_end|>` is
+        normal. What separates a finished turn from a cut-off one is whether the
+        engine stopped early.
+        """
+        budget = self._first_budget()
+        self.server.token_ids = [_BASE + ord("x")] * budget
+        with self.assertRaisesRegex(ContractValidationError, "terminator"):
             asyncio.run(self.transport.generate(self.first_request))
+        self.assertEqual(self.transport.truncated_turns, 1)
+        record = json.loads(self.turn_path.read_text().splitlines()[0])
+        self.assertEqual(record["tokens"], budget)
+        self.assertEqual(record["budget"], budget)
+        self.assertFalse(record["terminated"])
+
+    def test_a_finished_turn_is_recorded_as_terminated(self) -> None:
+        asyncio.run(self.transport.generate(self.first_request))
+        record = json.loads(self.turn_path.read_text().splitlines()[0])
+        self.assertEqual(record["tokens"], len(self.stripped))
+        self.assertTrue(record["terminated"])
+        self.assertEqual(self.transport.truncated_turns, 0)
+
+    def test_stripped_terminator_is_restored_as_context_only(self) -> None:
+        asyncio.run(self.transport.generate(self.first_request))
+        context = self.transport.context
+        self.assertTrue(context.terminator_stripped)
+        # The generation arrives without its terminator, and it is not in the
+        # loss: only the returned ids were recorded as generated tokens.
+        ledger = list(context.tokens)
+        stripped = self.generation[:-1]
+        start = context.initial_length
+        self.assertEqual(ledger[start:start + len(stripped)], stripped)
+
+    def test_returned_terminator_needs_no_restoration(self) -> None:
+        self.server.strip_special_stop = False
+        asyncio.run(self.transport.generate(self.first_request))
+        self.assertFalse(self.transport.context.terminator_stripped)
+
+    def _first_budget(self) -> int:
+        # Nothing has been generated yet, so the whole response budget is free.
+        context = self.transport.context
+        return min(self.transport.max_tokens, context.max_response)
+
+
+class EngineStepEvidenceTest(unittest.TestCase):
+    """The engine cannot always state its step; that must be recorded, not hidden.
+
+    `checkpoint_engine.backend=naive` (the shipped default) routes the weight
+    sync through `fsdp_workers.py:1735`, which discards `global_steps`, so the
+    serving engine is never told which step it holds. The guard therefore cannot
+    demand the engine's confirmation -- but it must not pretend to have it either.
+    """
+
+    def setUp(self) -> None:
+        self.tokenizer = ReversibleTokenizer()
+        generation = self.tokenizer.encode(GENERATION_TEXT) + [END]
+        self.server = ServerManagerDouble(generation, global_steps=None)
+        self.parser = ParserDouble(calls=(), content=GENERATION_TEXT)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.note_path = Path(self.tmp.name) / "engine-notes" / "episode.step.jsonl"
+        self.turn_path = Path(self.tmp.name) / "engine-notes" / "episode.turns.jsonl"
+
+    def _transport(self, expected_engine_step=0):
+        return NativeTokenTransport(
+            loop=None,
+            server_manager=self.server,
+            tokenizer=self.tokenizer,
+            parser=self.parser,
+            episode_id="episode",
+            policy_revision="f" * 64,
+            sampling_params={},
+            max_prompt=8000,
+            max_response=40000,
+            max_tokens=8192,
+            max_requests=4,
+            timeout=5.0,
+            expected_engine_step=expected_engine_step,
+            step_note_path=self.note_path,
+            turn_note_path=self.turn_path,
+        )
+
+    def _request(self):
+        return {
+            "model": "m",
+            "messages": [
+                {"role": "system", "content": "you are pi"},
+                {"role": "user", "content": "implement Mbpp/118"},
+            ],
+            "tools": DECLARED_TOOLS,
+        }
+
+    def test_absent_engine_step_is_allowed_but_recorded(self) -> None:
+        transport = self._transport()
+        response = asyncio.run(transport.generate(self._request()))
+        evidence = response["agent_data_plane_evidence"]
+        self.assertIsNone(evidence["engine_global_steps"])
+        self.assertFalse(evidence["engine_step_confirmed"])
+        self.assertEqual(transport.unconfirmed_steps, 1)
+        notes = self.note_path.read_text().splitlines()
+        self.assertEqual(len(notes), 1)
+        record = json.loads(notes[0])
+        self.assertIsNone(record["engine_reported_step"])
+        self.assertIn("naive", record["reason"])
+
+    def test_numpy_step_stamp_is_recordable(self) -> None:
+        """The manager stamps engine_step from a numpy array, so it is np.int64.
+
+        json.dumps refuses numpy scalars; letting that TypeError escape turned
+        the note into a 502 that killed every episode on its first call.
+        """
+        transport = self._transport(expected_engine_step=numpy.int64(0))
+        asyncio.run(transport.generate(self._request()))
+        record = json.loads(self.note_path.read_text().splitlines()[0])
+        self.assertEqual(record["expected_engine_step"], 0)
+        self.assertIsInstance(record["expected_engine_step"], int)
+
+    def test_reported_step_is_confirmed_and_leaves_no_note(self) -> None:
+        self.server.global_steps = 0
+        transport = self._transport()
+        response = asyncio.run(transport.generate(self._request()))
+        evidence = response["agent_data_plane_evidence"]
+        self.assertEqual(evidence["engine_global_steps"], 0)
+        self.assertTrue(evidence["engine_step_confirmed"])
+        self.assertEqual(transport.unconfirmed_steps, 0)
+        self.assertFalse(self.note_path.exists())
+
+    def test_wrong_reported_step_is_still_rejected(self) -> None:
+        self.server.global_steps = 1
+        with self.assertRaisesRegex(ContractValidationError, "has not synchronized"):
+            asyncio.run(self._transport().generate(self._request()))
+
+    def _follow_up(self, issued_id: str) -> dict:
+        echo = dict(
+            PI_ECHO,
+            tool_calls=[dict(PI_ECHO["tool_calls"][0], id=issued_id)],
+        )
+        return {
+            "model": "m",
+            "messages": [
+                *self._request()["messages"],
+                echo,
+                {"role": "tool", "tool_call_id": issued_id, "content": '"""stub"""\n'},
+            ],
+            "tools": DECLARED_TOOLS,
+        }
+
+    def test_step_changing_mid_episode_is_still_rejected(self) -> None:
+        self.server.global_steps = 0
+        transport = self._transport()
+        first = asyncio.run(transport.generate(self._request()))
+        issued = first["choices"][0]["message"]["tool_calls"][0]["id"]
+        self.server.global_steps = 1
+        with self.assertRaisesRegex(ContractValidationError, "changed within the episode"):
+            asyncio.run(transport.generate(self._follow_up(issued)))
 
 
 if __name__ == "__main__":

@@ -246,6 +246,19 @@ class PiAgentLoop(AgentLoopBase):
             timeout=self.episode_timeout_seconds,
             expected_engine_step=kwargs.get("pi_expected_engine_step"),
             expected_tool_schema=self.tool_schema_checksum,
+            # Siblings of the attempt directory, never inside it: the batch gate
+            # enumerates episode directories, and an unexpected file there has
+            # broken a run before.
+            step_note_path=(
+                Path(str(call_root)) / "engine-notes" / f"{episode_id}.step.jsonl"
+                if call_root
+                else None
+            ),
+            turn_note_path=(
+                Path(str(call_root)) / "engine-notes" / f"{episode_id}.turns.jsonl"
+                if call_root
+                else None
+            ),
         )
         started = time.monotonic()
         _record_dispatch(output_dir, episode_id, kwargs)

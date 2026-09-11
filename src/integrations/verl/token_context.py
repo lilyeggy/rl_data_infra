@@ -64,6 +64,7 @@ class AppendOnlyTokenContext:
         self.messages: list[dict[str, Any]] = []
         self.tools: Any = None
         self.pending: dict[str, Any] | None = None
+        self.terminator_stripped = False
         self.turn_end_id = tokenizer.convert_tokens_to_ids("<|im_end|>")
         if (not isinstance(self.turn_end_id, int) or
                 tokenizer.decode([self.turn_end_id]) != "<|im_end|>"):
@@ -117,7 +118,15 @@ class AppendOnlyTokenContext:
             if not before.endswith("<|im_end|>\n") or not after.startswith(before):
                 raise ContractValidationError("BLOCKED_TOKEN_CONTEXT: template boundary changed")
             suffix = "\n" + after[len(before):]
-            self.tokens.extend(self.tokenizer.encode(suffix, add_special_tokens=False))
+            suffix_ids = self.tokenizer.encode(suffix, add_special_tokens=False)
+            if self.terminator_stripped:
+                # The engine consumed a turn terminator that its API omits from
+                # the returned ids, so the ledger is missing the template boundary
+                # the next turn was actually prompted after. Restoring it keeps
+                # the prompt on-template. It is context only -- no logprob was
+                # returned for it, so it must never enter the loss.
+                suffix_ids = [self.turn_end_id, *suffix_ids]
+            self.tokens.extend(suffix_ids)
         self.messages = deepcopy(current)
         self.pending = None
         if self.remaining <= 0:
@@ -128,11 +137,36 @@ class AppendOnlyTokenContext:
     def remaining(self) -> int:
         return self.max_response - (len(self.tokens) - self.initial_length)
 
-    def accept(self, token_ids: list[int], message: dict[str, Any]) -> None:
-        if not token_ids or token_ids[-1] != self.turn_end_id:
-            # v0.7.1 collapses length/stop to 'completed'. Require an actual
-            # generated EOS; never synthesize one or accept a truncated turn.
-            raise ContractValidationError("generation lacks native EOS; truncated or aborted")
+    def accept(
+        self,
+        token_ids: list[int],
+        message: dict[str, Any],
+        *,
+        engine_finished: bool = False,
+        budget: int | None = None,
+    ) -> None:
+        """Record one generation as the episode's next turn.
+
+        A turn ends on ``<|im_end|>``. That token is special to the tokenizer, and
+        vLLM's own contract for ``stop_token_ids`` is that special stop tokens are
+        *not* returned, so a cleanly finished turn arrives without it. Demanding
+        it in the ids can therefore never succeed, which is what made every
+        episode fail its first turn.
+
+        ``engine_finished`` is the caller's proof that the turn ended on its own
+        rather than being cut off: the transport sets it only when the engine
+        stopped short of the token budget and did not abort. Truncation still
+        fails, because then the generation consumes the whole budget.
+        """
+        if token_ids and token_ids[-1] == self.turn_end_id:
+            self.terminator_stripped = False
+        elif engine_finished:
+            self.terminator_stripped = True
+        else:
+            raise ContractValidationError(
+                "generation lacks a turn terminator; truncated or aborted "
+                f"(tokens={len(token_ids)}, budget={budget})"
+            )
         if len(token_ids) > self.remaining:
             raise ContractValidationError("generated response exceeds episode budget")
         self.tokens.extend(token_ids)
