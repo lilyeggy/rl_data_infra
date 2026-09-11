@@ -50,7 +50,10 @@ compare / gate           SFT / pref / RL
 - Slime admission envelope：重新核验 manifest/decision/bundle/artifact 后才输出 token-faithful traces；
 - 单 GPU 原子状态存储、checksum CAS、断点恢复和不执行命令的 dry-run plan。
 - A6000 上的真实 Pi → Model Proxy → 14B LoRA → Verifier → ExecutionBundle live 闭环；
-- base 与 SFT candidate 的固定 unseen DEV 对照，以及读取报告结论的 fail-closed supervisor Gate。
+- base 与 SFT candidate 的固定 unseen DEV 对照，以及读取报告结论的 fail-closed supervisor Gate；
+- APPS clean-v2 训练包（含数据质量复盘后的 fail-closed 清洗）与 14B LoRA SFT；
+- 单卡 on-policy GRPO LoRA trainer（`grpo-lora-trainer/v1`）与 apps-rl-cycle-001/002/003 三轮 policy 更新；
+- 官方 EvalPlus/BigCodeBench 三基准对比报告与固定 APPS holdout 50 题评测。
 
 正在建设：
 
@@ -62,7 +65,7 @@ compare / gate           SFT / pref / RL
 当前没有完成、不得宣称完成：
 
 - Slime 端到端模型更新；
-- 通过固定 unseen DEV Gate 的 policy-v1；当前 canonical-v2 SFT candidate 为 `REJECT / NO_IMPROVEMENT`；
+- 通过固定 unseen DEV Gate 的 policy-v1；当前 canonical-v2 SFT candidate 为 `REJECT / NO_IMPROVEMENT`，apps-rl-cycle-001/002/003 candidate 在固定 APPS holdout 上未超过 SFT-v0（50% vs 50%），HumanEval 与 base 持平；
 - 大规模 Agentic RL；
 - benchmark 泛化提升。
 
@@ -115,4 +118,4 @@ python3 -m src.cli execute-local \
 - Polar：可选地运行批量 Harness rollout、重建 token-faithful trajectory；
 - 本项目：不可变证据、验证、认证、数据集、Harness/模型双闭环；
 - Slime：正式 GRPO/PPO 训练、Megatron、SGLang 和权重同步；
-- 自定义旧 GRPO/SFT：已归档，不是生产训练路径。
+- 旧自定义 GRPO/SFT：已归档；当前单卡 RL 更新使用独立极简 GRPO LoRA trainer（`scripts/train_grpo_lora.py`），正式 trainer 仍以 Slime 接入为目标。

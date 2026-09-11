@@ -64,9 +64,10 @@
 - [x] 封存完整 MBPP 与 HumanEval，仅用于最终评测；
 - [x] 使用公开 APPS train split 作为正式训练任务源；MBPP、HumanEval、BigCodeBench、LiveCodeBench 等 Qwen2.5-Coder 报告 benchmark 全部封存为评测集；
 - [x] 让强 Teacher 经 Harness 重新生产、验证并认证 Agent 轨迹；
-- [x] 抽样和自动验证 `assistant action → tool observation → next action`，并检查 benchmark contamination；
+- [x] 抽样和自动验证 `assistant action → tool observation → next action`；
 - [x] 用新训练包重新进行 LoRA SFT；
 - [x] 在冻结 Harness/Serving 下完成 base、错误 ablation、正确 SFT 的完整 MBPP/HumanEval 对照。
+- [ ] 实现针对评测基准的 n-gram/相似度 decontamination 检查（当前泄漏防护依赖评测集封存与 train/holdout 不相交约束，未做语料级去污染）；
 
 ### P3-B：完成 Agentic RL 闭环
 
@@ -75,7 +76,9 @@
 - [x] 建立跨 MODEL_REQUEST/RESPONSE、tool call/result、reward 的状态转移闭合认证；
 - [x] 实现 trainer-neutral RL training view 与 verl/Slime adapter，不在 Data Plane 内复制 Actor/Critic/优化器；
 - [x] 用 3 个非评测任务完成 policy-v0 rollout → trainer update → policy-v1 rollout 的真实微型闭环；
-- [x] 微型闭环通过后再扩大任务量和 rollout group（已完成 20 题 80 条轨迹 apps-rl-cycle-002 与 HumanEval 50 题对比评测）。
+- [x] 微型闭环通过后再扩大任务量和 rollout group（已完成 20 题 80 条轨迹 apps-rl-cycle-002 与 HumanEval 50 题自建快速评测，非官方 EvalPlus 口径）；
+- [x] 完成对齐 Qwen2.5-Coder 官方技术报告的三大基准全量评测（HumanEval 164 题、MBPP 378 题、BigCodeBench-Hard 148 题）并输出完整横向对比报告；
+- [x] 完成 Policy-v3 规模化强化学习实验（apps-rl-cycle-003：难度路由、软用例奖励、双轨 APPS Holdout 50 题与 HumanEval 164 题验证；HumanEval 回升至 87.20%，与 base 持平（plus 81.10% 低于 base 84.15%），APPS Holdout 50.00% 与 SFT-v0 持平，未取得超过 base/SFT 的稳定提升）。
 
 ### P3-A / P3-B 并行与单卡约束
 
