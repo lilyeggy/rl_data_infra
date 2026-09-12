@@ -74,3 +74,11 @@ caches/
 
 # Shell backups
 *.bak
+
+# Local study / explainer material (kept on disk, not part of the repository)
+agentic-rl-framework.html
+deep-dive-site/
+interview-review-site/
+manifold-site/
+docs/interview-mastery-workbook.md
+docs/learning/

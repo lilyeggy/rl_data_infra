@@ -6,7 +6,6 @@
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-323%20passing-brightgreen">
   <img alt="Runtime" src="https://img.shields.io/badge/runtime-Local%20Docker-2496ED?logo=docker&logoColor=white">
   <img alt="RL" src="https://img.shields.io/badge/ON__POLICY__RL-verl%20RayPPOTrainer-6f42c1">
   <img alt="Status" src="https://img.shields.io/badge/status-pipeline%20verified-orange">
@@ -137,7 +136,6 @@ flowchart LR
 
 | 范围 | 结果 | 证据位置 |
 |---|---|---|
-| 核心测试套件 | **323 tests passed**（9 项因未安装 pinned verl/ray 跳过），无需 GPU | `python3 -m unittest discover -s tests -p 'test_*.py' -v` |
 | 无 GPU 本地全链路 | Local Docker Launcher + Model Proxy + Harness + Verifier + Finalizer 真实容器链路 | `scripts/local_execution_smoke.py`；运行产物默认写入 `artifacts/local-execution-smoke-*` |
 | Pi / A6000 live 闭环 | 真实 Pi → Model Proxy → 14B LoRA → Verifier → ExecutionBundle | `docs/plans/verl-closeout/acceptance.md` |
 | verl 原生 trainer | 双卡 RTX PRO 6000，两轮 framework-owned GRPO LoRA 更新；step 2 rollout 的 `adapter_revision` 等于框架写出的 `global_step_1/actor` 摘要；Pearson 0.99957 / 0.99959 | `docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/` |
@@ -146,14 +144,6 @@ flowchart LR
 > 上述证据说明“数据生产 → 认证 → 训练 → 评测 → Gate”链路可运行、可审计；**不说明模型能力提升**。
 
 ## 快速开始
-
-### 运行测试
-
-核心代码只依赖 Python 3.10+ 标准库：
-
-```bash
-python3 -m unittest discover -s tests -p 'test_*.py' -v
-```
 
 ### 检查一条已认证执行
 
@@ -209,7 +199,6 @@ src/
   training/        # training eligibility, policy fingerprint
   integrations/    # verl native trainer bridge, Slime admission envelope
   framework/       # thin pluggable interfaces
-tests/             # 323 tests, no GPU needed for core contracts
 docs/              # architecture, contracts, ADRs, experiment evidence, reading guides
 ```
 
@@ -223,7 +212,6 @@ docs/              # architecture, contracts, ADRs, experiment evidence, reading
 - [SFT / RL 数据流](docs/sft-rl-data-flow.md)
 - [verl 接入设计](docs/plans/verl-integration-design.md)
 - [verl 验收报告](docs/plans/verl-closeout/acceptance.md)
-- [面试级吃透手册](docs/interview-mastery-workbook.md)
 
 ## 当前边界与不宣称
 
@@ -244,9 +232,6 @@ docs/              # architecture, contracts, ADRs, experiment evidence, reading
 - 多 Agent 训练语义与 reward ownership；
 - 将框架接口层接入默认入口，统一旧脚本与新 DataPlane API。
 
----
-
-如果这个项目对你有帮助，欢迎从 `docs/interview-mastery-workbook.md` 开始按关卡学习：它关注的不是“背目录”，而是能否独立解释证据链、失败语义、设计取舍和当前真实边界。
 
 ---
 
