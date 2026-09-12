@@ -5,405 +5,434 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>面试复习 · RL 接入 verl 完整链路 — 数据生成与数据清洗</title>
 <style>
+/* ============ RL × verl 面试复习 · 纸质编辑风（Field Guide 语言） ============ */
 :root {
-  --bg: #07090f;
-  --bg-grad-1: rgba(99, 102, 241, .13);
-  --bg-grad-2: rgba(34, 211, 238, .08);
-  --panel: rgba(255,255,255,.03);
-  --panel-solid: #0e1320;
-  --border: rgba(148,163,184,.14);
-  --border-strong: rgba(148,163,184,.28);
-  --text: #e8edf5;
-  --muted: #94a3b8;
-  --dim: #64748b;
-  --violet: #a78bfa;
-  --indigo: #818cf8;
-  --cyan: #22d3ee;
-  --green: #34d399;
-  --yellow: #fbbf24;
-  --red: #fb7185;
-  --radius: 16px;
+  --ink: #10223f;
+  --ink-2: #172d4d;
+  --muted: #667284;
+  --paper: #f2efe6;
+  --white: #fffdf8;
+  --mint: #b9f4d4;
+  --mint-deep: #1b7a55;
+  --orange: #ff6b35;
+  --yellow: #f7d768;
+  --red: #d9483b;
+  --line: rgba(16, 34, 63, 0.16);
+  --soft-line: rgba(16, 34, 63, 0.09);
+  --shadow: 0 24px 80px rgba(16, 34, 63, 0.1);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; scroll-padding-top: 24px; }
-body {
-  font-family: "Inter", -apple-system, "PingFang SC", "Segoe UI", sans-serif;
-  background:
-    radial-gradient(1200px 600px at 80% -10%, var(--bg-grad-1), transparent),
-    radial-gradient(900px 500px at -10% 40%, var(--bg-grad-2), transparent),
-    var(--bg);
-  color: var(--text); line-height: 1.75; font-size: 15px;
-  -webkit-font-smoothing: antialiased;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+body { background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.7; font-size: 15px; }
+a { color: inherit; text-decoration: none; }
+code, pre { font-family: var(--mono); }
+code { font-size: .88em; }
 
-/* ---- 侧栏 ---- */
-.sidebar {
-  position: fixed; inset: 0 auto 0 0; width: 280px;
-  background: rgba(10,14,24,.72); backdrop-filter: blur(20px);
-  border-right: 1px solid var(--border);
-  padding: 26px 16px; overflow-y: auto; z-index: 10;
+/* ---- 顶栏 ---- */
+.topbar {
+  min-height: 70px; padding: 0 4.2vw; display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; gap: 24px; border-bottom: 1px solid var(--line);
+  background: rgba(242, 239, 230, .92); position: sticky; top: 0; z-index: 30; backdrop-filter: blur(16px);
 }
-.brand { display: flex; gap: 12px; align-items: center; margin-bottom: 26px; padding: 0 6px; }
-.brand-logo {
-  width: 42px; height: 42px; display: grid; place-items: center; flex: none;
-  background: linear-gradient(135deg, #6366f1, #22d3ee);
-  border-radius: 12px; font-size: 20px; color: #fff;
-  box-shadow: 0 0 24px rgba(99,102,241,.45);
-}
-.brand-name { font-weight: 800; font-size: 15.5px; letter-spacing: .3px; }
-.brand-sub { font-size: 11px; color: var(--dim); }
-.nav { list-style: none; }
-.nav .nav-group { margin: 14px 0 4px; padding: 0 12px; font-size: 10.5px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
-.nav a {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; margin: 2px 0; border-radius: 10px;
-  color: var(--muted); text-decoration: none; font-size: 13.5px;
-  transition: all .18s ease; border: 1px solid transparent;
-}
-.nav a:hover { color: var(--text); background: rgba(255,255,255,.04); }
-.nav a.active {
-  color: #c7d2fe; background: linear-gradient(90deg, rgba(99,102,241,.18), transparent);
-  border-color: rgba(99,102,241,.25); font-weight: 600;
-}
-.sidebar-foot { margin-top: 22px; padding: 12px; font-size: 11px; color: var(--dim); border-top: 1px solid var(--border); }
-.sidebar-foot code { color: var(--muted); font-size: 10.5px; }
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 850; letter-spacing: -.025em; }
+.brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font: 800 11px var(--mono); flex: none; }
+.brand small { display: block; font-weight: 600; font-size: 11px; color: var(--muted); letter-spacing: .02em; }
+.topnav { display: flex; align-items: center; gap: 25px; font-size: 13px; color: var(--muted); }
+.topnav a { padding: 25px 0 23px; border-bottom: 2px solid transparent; transition: .18s ease; white-space: nowrap; }
+.topnav a:hover { color: var(--ink); border-color: var(--orange); }
+.topnav a.nav-active { color: var(--ink); border-color: var(--orange); }
+.nav-progress { justify-self: end; display: flex; align-items: center; gap: 10px; font: 700 11px var(--mono); color: var(--muted); }
+.nav-progress i { width: 72px; height: 5px; border-radius: 20px; background: rgba(16,34,63,.13); overflow: hidden; }
+.nav-progress b { display: block; height: 100%; width: 0; background: var(--orange); transition: width .3s ease; }
 
-/* ---- 主区 ---- */
-.main { margin-left: 280px; padding: 40px 48px 90px; max-width: 1180px; }
-.hero { margin-bottom: 34px; }
-.hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1.3; }
-.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--violet), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.hero p { color: var(--muted); margin-top: 10px; max-width: 860px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.chip {
-  font-size: 12px; padding: 4px 12px; border-radius: 999px;
-  border: 1px solid var(--border-strong); color: var(--muted); background: var(--panel);
-}
-.chip b { color: var(--text); font-weight: 600; }
+/* ---- Hero ---- */
+.hero { padding: 7vw 7vw 5.5vw; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .62fr); gap: 6vw; align-items: center; position: relative; overflow: hidden; }
+.hero::before { content: ""; position: absolute; width: 500px; height: 500px; right: -230px; top: -260px; border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 0 0 85px rgba(16,34,63,.025), 0 0 0 170px rgba(16,34,63,.018); }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; color: var(--mint-deep); }
+.hero h1 { margin: 22px 0; font-size: clamp(42px, 5.6vw, 78px); line-height: 1.0; letter-spacing: -.055em; font-weight: 860; }
+.hero h1 em { font-style: normal; color: var(--orange); }
+.lede { max-width: 700px; color: var(--muted); font-size: 17.5px; line-height: 1.8; }
+.lede b { color: var(--ink); }
+.hero-actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 49px; padding: 0 24px; border-radius: 999px; font-size: 14px; font-weight: 800; transition: transform .2s ease, box-shadow .2s ease; }
+.button:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(16,34,63,.13); }
+.primary { background: var(--ink); color: #fff; }
+.secondary { border: 1px solid var(--line); background: rgba(255,255,255,.38); color: var(--ink); }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.hero-chips span { padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); font: 700 11.5px var(--mono); color: var(--ink-2); }
+.hero-chips span i { color: var(--orange); font-style: normal; }
 
-section { margin: 54px 0 0; }
-.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
-.sec-no {
-  font-size: 13px; font-weight: 700; color: var(--cyan);
-  border: 1px solid rgba(34,211,238,.35); border-radius: 8px; padding: 2px 10px; flex: none;
-}
-.sec-head h2 { font-size: 22px; font-weight: 750; letter-spacing: -.01em; }
-.sec-lead { color: var(--muted); max-width: 900px; margin: 8px 0 22px; }
-h3.sub {
-  font-size: 17px; font-weight: 700; margin: 34px 0 6px;
-  padding-left: 12px; border-left: 3px solid var(--indigo);
-}
-h3.sub .fref { font-size: 12px; font-weight: 500; color: var(--dim); margin-left: 8px; }
-p.desc { color: var(--muted); margin: 8px 0 14px; max-width: 920px; }
-p.desc b, li b { color: var(--text); font-weight: 600; }
-.note { color: var(--dim); font-size: 13px; margin-top: 8px; }
+/* 状态卡（hero 右侧，微旋转） */
+.status-card { padding: 29px; border: 1px solid var(--line); border-radius: 26px; background: var(--white); box-shadow: var(--shadow); transform: rotate(1.2deg); position: relative; z-index: 2; }
+.status-topline { display: flex; justify-content: space-between; color: var(--mint-deep); font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; font-family: var(--mono); }
+.status-orbit { width: 112px; height: 112px; margin: 32px auto 24px; border-radius: 50%; border: 1px solid var(--line); position: relative; display: grid; place-items: center; }
+.status-orbit::before { content: ""; position: absolute; inset: 17px; border-radius: 50%; background: var(--mint); }
+.status-orbit strong { z-index: 1; font: 900 13px var(--mono); }
+.status-orbit span { position: absolute; left: -14px; top: 10px; padding: 4px 8px; border-radius: 12px; background: var(--orange); color: #fff; font: 800 9px var(--mono); }
+.status-orbit i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--orange); bottom: 4px; right: 19px; }
+.status-label { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
+.status-card h2 { font-size: 30px; line-height: 1.08; letter-spacing: -.045em; margin-bottom: 10px; }
+.status-meter { height: 8px; margin: 26px 0; border-radius: 999px; background: #e6e3dc; overflow: hidden; }
+.status-meter span { display: block; height: 100%; width: 33%; background: var(--orange); }
+.status-card dl { display: grid; gap: 0; }
+.status-card dl div { display: flex; justify-content: space-between; gap: 18px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 13px; }
+.status-card dt { color: var(--muted); }
+.status-card dd { font-weight: 800; text-align: right; }
 
-.card {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px 22px; margin: 14px 0;
-}
-.card.accent-violet { border-left: 3px solid var(--violet); }
-.card.accent-cyan { border-left: 3px solid var(--cyan); }
-.card.accent-yellow { border-left: 3px solid var(--yellow); }
-.card.accent-red { border-left: 3px solid var(--red); }
-.card.accent-green { border-left: 3px solid var(--green); }
-.card h4 { font-size: 14.5px; font-weight: 700; margin-bottom: 8px; }
+/* ---- 区块骨架 ---- */
+section { padding: 100px 7vw; }
+.dark-section { background: var(--ink); color: #fff; }
+.white-section { background: var(--white); }
+.section-kicker { font-size: 11px; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; color: var(--orange); }
+.dark-section .section-kicker.alt, .white-section .k-alt { color: var(--mint-deep); }
+.dark-section h2, .white-section h2.big { font-size: clamp(36px, 4.8vw, 64px); letter-spacing: -.055em; line-height: 1.05; margin-top: 20px; }
+.section-heading { display: grid; grid-template-columns: 1.35fr .65fr; align-items: end; gap: 6vw; margin-bottom: 14px; }
+.section-heading > p { color: var(--muted); font-size: 16.5px; line-height: 1.75; margin-bottom: 6px; }
+.dark-section .section-heading > p { color: #bdc8d7; }
+.big-quote { margin: 38px 0 0; padding-left: 22px; border-left: 4px solid var(--orange); color: var(--mint); font-size: 20px; line-height: 1.7; max-width: 900px; }
+.sub-kicker { margin: 72px 0 14px; font: 900 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mint-deep); display: flex; align-items: center; gap: 10px; }
+.white-section .sub-kicker { color: var(--orange); }
+.sub-kicker::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.dark-section .sub-kicker::after { background: rgba(255,255,255,.14); }
+.sub-kicker code { text-transform: none; letter-spacing: 0; color: inherit; }
+p.body-dim { color: var(--muted); max-width: 940px; }
+.dark-section p.body-dim { color: #bdc8d7; }
+p.body-dim b, .dark-section p.body-dim b { color: inherit; }
 
-/* ---- 流程图 ---- */
-.flow-row { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; margin: 18px 0; }
-.fbox {
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  padding: 10px 14px; margin: 6px 0; background: var(--panel-solid);
-  min-width: 130px; max-width: 240px;
-}
-.fbox .t { font-size: 13px; font-weight: 700; }
-.fbox .d { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
-.fbox.verl { border-color: rgba(34,211,238,.5); box-shadow: inset 0 0 0 1px rgba(34,211,238,.12); }
-.fbox.verl .t { color: var(--cyan); }
-.fbox.ours { border-color: rgba(167,139,250,.5); box-shadow: inset 0 0 0 1px rgba(167,139,250,.12); }
-.fbox.ours .t { color: var(--violet); }
-.fbox.warn { border-color: rgba(251,191,36,.5); }
-.fbox.warn .t { color: var(--yellow); }
-.farr {
-  display: grid; place-items: center; color: var(--dim);
-  padding: 0 8px; font-size: 16px; flex: none;
-}
-.vflow { display: flex; flex-direction: column; align-items: stretch; margin: 18px 0; max-width: 760px; }
-.vbox {
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  background: var(--panel-solid); padding: 12px 16px;
-}
-.vbox .t { font-weight: 700; font-size: 14px; }
-.vbox .d { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
-.varr { text-align: center; color: var(--dim); font-size: 15px; padding: 2px 0; line-height: 1.2; }
-.varr small { font-size: 11px; display: block; color: var(--dim); }
-.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 10px 0 0; }
-.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+/* ---- 归属 boundary 卡 ---- */
+.boundary-grid { margin-top: 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.boundary-card { padding: 30px; border: 1px solid rgba(255,255,255,.14); border-radius: 20px; }
+.boundary-card.yes { background: var(--mint); color: var(--ink); }
+.boundary-card.no { background: rgba(255,255,255,.035); }
+.boundary-card > span { color: var(--orange); font-size: 11px; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+.boundary-card.yes > span { color: var(--mint-deep); }
+.boundary-card h3 { font-size: 28px; letter-spacing: -.04em; margin: 20px 0 14px; }
+.boundary-card ul { padding-left: 19px; line-height: 1.95; color: #c6d0dd; font-size: 14.5px; }
+.boundary-card.yes ul { color: var(--ink-2); }
+.boundary-card li b { font-weight: 800; }
 
-/* 步骤编号流 */
-.steps { counter-reset: st; margin: 14px 0; max-width: 880px; }
-.step {
-  position: relative; padding: 12px 16px 12px 52px; margin: 8px 0;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-}
-.step::before {
-  counter-increment: st; content: counter(st);
-  position: absolute; left: 14px; top: 12px;
-  width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
-  background: linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,211,238,.7));
-  color: #fff; font-size: 13px; font-weight: 700;
-}
-.step .t { font-weight: 700; font-size: 14px; }
-.step .d { color: var(--muted); font-size: 13px; margin-top: 3px; }
-.step .d code, p code, li code, td code, .card code {
-  background: rgba(148,163,184,.12); border: 1px solid rgba(148,163,184,.16);
-  border-radius: 5px; padding: 0 5px; font-size: 12px; color: #cdd6e4;
-  font-family: "SF Mono", ui-monospace, Menlo, monospace;
-}
+/* ---- 暗区流程 chips ---- */
+.pipe-flow { margin-top: 46px; display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.pipe-chip { flex: 1 1 150px; max-width: 250px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; background: rgba(255,255,255,.045); }
+.pipe-chip > b { display: block; font: 800 10px var(--mono); letter-spacing: .13em; text-transform: uppercase; color: var(--mint); margin-bottom: 8px; }
+.pipe-chip h4 { font-size: 14.5px; letter-spacing: -.01em; }
+.pipe-chip p { margin-top: 5px; color: #bdc8d7; font-size: 12px; line-height: 1.55; }
+.pipe-chip.ours > b { color: var(--orange); }
+.pipe-chip.gate { border-color: rgba(255,107,53,.55); background: rgba(255,107,53,.08); }
+.pipe-arr { align-self: center; color: var(--orange); font: 900 15px var(--mono); flex: none; }
 
-/* mask token 条 */
-.mask-strip { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end; margin: 16px 0 6px; }
-.tok {
-  border-radius: 6px; padding: 7px 9px; font-size: 11px; text-align: center;
-  border: 1px solid var(--border-strong); line-height: 1.35; min-width: 64px;
-}
-.tok small { display: block; font-size: 10px; opacity: .85; }
-.tok.prompt { background: rgba(34,211,238,.10); border-color: rgba(34,211,238,.45); color: #a5f3fc; }
-.tok.gen { background: rgba(52,211,153,.10); border-color: rgba(52,211,153,.5); color: #6ee7b7; }
-.tok.obs { background: rgba(251,191,36,.08); border-color: rgba(251,191,36,.45); color: #fde68a; }
-.mask-legend { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+/* ---- 代码块（藏青底 + 橙色错位投影） ---- */
+.codecard { margin: 22px 0; }
+.codecard > .code-path { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 -6px 4px; padding: 6px 13px; border-radius: 999px 999px 0 0; background: var(--ink); color: var(--mint); font: 700 11px var(--mono); position: relative; z-index: 1; }
+.codecard > .code-path i { color: var(--orange); font-style: normal; }
+pre { padding: 22px 24px; border-radius: 15px; background: var(--ink); color: #c9f2dd; white-space: pre; overflow-x: auto; font-size: 12.5px; line-height: 1.72; box-shadow: 12px 12px 0 rgba(255,107,53,.22); }
+.dark-section pre { box-shadow: 12px 12px 0 rgba(185,244,212,.14); border: 1px solid rgba(255,255,255,.1); }
+pre .k { color: #ffa477; }      /* keyword */
+pre .s { color: #b9f4d4; }      /* string */
+pre .c { color: #7d8fa5; font-style: italic; } /* comment */
+pre .n { color: #f7d768; }      /* number */
+pre .f { color: #ffd28a; }      /* decorator */
+pre .b { color: #8be9c8; }      /* builtin */
 
-/* ---- 代码块 ---- */
-.codecard { margin: 14px 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #0a0e18; }
-.codehead {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  padding: 8px 14px; border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,.025); font-size: 12px; color: var(--muted);
-}
-.codehead .path { font-family: "SF Mono", ui-monospace, Menlo, monospace; color: var(--cyan); }
-pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
-pre code { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px; line-height: 1.65; color: #d7dde8; }
-.k { color: var(--violet); }   /* keyword */
-.s { color: #a5d6a7; }         /* string */
-.c { color: #5b6b84; font-style: italic; }  /* comment */
-.n { color: #fbbf24; }         /* number */
-.f { color: #7dd3fc; }         /* decorator */
-.b { color: #f0abfc; }         /* builtin/None/True */
+/* ---- 白区步骤 pipeline ---- */
+.pipeline { margin-top: 46px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; background: var(--white); box-shadow: var(--shadow); }
+.pipeline-step { min-height: 200px; padding: 24px; position: relative; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pipeline-step:nth-child(3n) { border-right: 0; }
+.pipeline-step:nth-last-child(-n+3) { border-bottom: 0; }
+.pipeline-step span { color: var(--mint-deep); font: 800 12px var(--mono); }
+.pipeline-step > b { position: absolute; right: 20px; top: 20px; color: var(--orange); font-size: 22px; font-weight: 800; }
+.pipeline-step h3 { margin: 40px 0 10px; font-size: 21px; letter-spacing: -.035em; }
+.pipeline-step p { color: var(--muted); font-size: 13.5px; line-height: 1.62; }
+.pipeline-step p b { color: var(--ink-2); font-weight: 800; }
+.pipeline-step p code { color: var(--mint-deep); font-weight: 700; }
 
-/* ---- 表格 ---- */
-table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
-th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
-th { background: rgba(255,255,255,.035); font-weight: 700; font-size: 12.5px; color: #c7d2fe; }
-td { color: var(--muted); }
-td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
-tr:nth-child(even) td { background: rgba(255,255,255,.012); }
+/* ---- 数字卡（hard-evidence 风格） ---- */
+.tri-cards { margin-top: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tri-cards article { padding: 24px; border: 1px solid var(--line); border-radius: 17px; background: var(--white); }
+.tri-cards article > span { font: 900 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+.tri-cards h4 { margin: 30px 0 10px; font-size: 18px; letter-spacing: -.025em; }
+.tri-cards p { color: var(--muted); font-size: 13.5px; line-height: 1.62; }
 
-/* ---- 折叠问答 ---- */
-.qa { margin: 12px 0; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); overflow: hidden; }
-.qa summary {
-  list-style: none; cursor: pointer; padding: 15px 18px;
-  display: flex; gap: 12px; align-items: flex-start; user-select: none;
-}
-.qa summary::-webkit-details-marker { display: none; }
-.qa summary:hover { background: rgba(255,255,255,.03); }
-.qa .qtag {
-  flex: none; font-size: 11px; font-weight: 700; border-radius: 7px; padding: 3px 9px; margin-top: 2px;
-  letter-spacing: .04em;
-}
-.qtag.motive { background: rgba(99,102,241,.16); color: #a5b4fc; border: 1px solid rgba(99,102,241,.35); }
-.qtag.choice { background: rgba(34,211,238,.12); color: #67e8f9; border: 1px solid rgba(34,211,238,.32); }
-.qtag.pitfall { background: rgba(251,113,133,.12); color: #fda4af; border: 1px solid rgba(251,113,133,.32); }
-.qtag.edge { background: rgba(251,191,36,.1); color: #fcd34d; border: 1px solid rgba(251,191,36,.32); }
-.qa .qtext { font-weight: 650; font-size: 14.5px; line-height: 1.55; }
-.qa .qsub { display: block; font-size: 12px; color: var(--dim); font-weight: 400; margin-top: 2px; }
-.qa[open] summary { border-bottom: 1px solid var(--border); background: rgba(99,102,241,.05); }
-.qa .answer { padding: 16px 20px 18px; font-size: 13.8px; color: var(--muted); }
-.qa .answer .oneline {
-  background: rgba(52,211,153,.07); border: 1px solid rgba(52,211,153,.25);
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; color: #d1fae5; font-size: 13.5px;
-}
-.qa .answer .oneline b { color: #6ee7b7; }
-.qa .answer ul { margin: 8px 0 8px 18px; }
-.qa .answer li { margin: 6px 0; }
-.qa .answer .evi {
-  margin-top: 10px; padding: 9px 13px; border-left: 3px solid var(--cyan);
-  background: rgba(34,211,238,.05); border-radius: 0 8px 8px 0; font-size: 12.5px; color: var(--muted);
-}
-.qa .answer .evi b { color: #a5f3fc; font-weight: 600; }
-.qa .answer .followup { margin-top: 10px; font-size: 12.5px; color: var(--dim); }
-.qa .answer .followup b { color: var(--yellow); font-weight: 600; }
+/* ---- mask token 条（浅色版） ---- */
+.mask-strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; margin: 24px 0 10px; }
+.tok { border-radius: 12px; padding: 10px 13px; font-size: 12px; text-align: center; line-height: 1.35; min-width: 76px; border: 1px solid var(--line); }
+.tok small { display: block; font-size: 10px; opacity: .75; margin-top: 2px; font-family: var(--mono); }
+.tok.prompt { background: var(--paper); color: var(--ink-2); }
+.tok.gen { background: var(--mint); color: var(--ink); border-color: rgba(27,122,85,.4); }
+.tok.obs { background: var(--yellow); color: var(--ink-2); border-color: rgba(16,34,63,.2); }
+.mask-legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+.mask-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
 
-/* ---- 红线 ---- */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 1000px) { .two-col { grid-template-columns: 1fr; } .main { padding: 28px 20px 70px; } }
+/* ---- 暗区表格（漏斗 / 重采样处置） ---- */
+.result-table { margin-top: 40px; border: 1px solid rgba(255,255,255,.15); border-radius: 20px; overflow: hidden; }
+.result-head, .result-row { display: grid; grid-template-columns: 90px minmax(0,1fr) 230px; gap: 16px; padding: 19px 24px; align-items: center; }
+.result-head { background: rgba(255,255,255,.055); color: var(--mint); font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; font-family: var(--mono); }
+.result-row { border-top: 1px solid rgba(255,255,255,.13); }
+.result-row .lv { font: 900 15px var(--mono); color: var(--orange); }
+.result-row .lv small { display: block; color: #8fa1b5; font: 600 10px var(--mono); letter-spacing: .1em; }
+.result-row h4 { font-size: 16px; letter-spacing: -.01em; }
+.result-row p { color: #bdc8d7; font-size: 13px; line-height: 1.6; margin-top: 4px; }
+.result-row p code { color: var(--mint); font-size: 11px; }
+.tone-badge { justify-self: end; padding: 7px 11px; border-radius: 999px; font: 800 11px var(--mono); white-space: nowrap; }
+.tone-good { color: var(--mint); background: rgba(185,244,212,.12); }
+.tone-bad { color: #ffd2c8; background: rgba(217,72,59,.2); }
+.tone-neutral { color: var(--yellow); background: rgba(247,215,104,.12); }
 
-/* 漏斗 */
-.funnel { display: flex; flex-direction: column; gap: 0; max-width: 860px; margin: 16px 0; }
-.fstage {
-  display: flex; align-items: center; gap: 16px;
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  background: var(--panel-solid); padding: 12px 18px;
+/* ---- 暗区 explain 卡（为什么） ---- */
+.decision-explain { margin-top: 20px; padding: 30px 34px; border: 1px solid rgba(255,255,255,.14); border-radius: 22px; background: rgba(255,255,255,.045); }
+.decision-explain h3 { font-size: clamp(22px, 2.6vw, 32px); letter-spacing: -.045em; margin-bottom: 16px; }
+.decision-explain p { color: #c8d2df; font-size: 15px; line-height: 1.75; margin-bottom: 12px; }
+.decision-explain b { color: var(--mint); }
+.decision-explain .big-quote { font-size: 17px; margin-top: 18px; }
+
+/* ---- attack 行（两个坑 / 攻击点） ---- */
+.attack-list { margin-top: 42px; display: grid; gap: 12px; }
+.attack-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; padding: 24px 28px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; background: rgba(255,255,255,.04); }
+.attack-q { font-size: 16.5px; font-weight: 800; line-height: 1.6; color: #ffd2c8; }
+.attack-q small { display: block; margin-top: 8px; color: #8fa1b5; font: 600 11.5px var(--mono); }
+.attack-a { color: #c8d2df; font-size: 14px; line-height: 1.72; }
+.attack-a b { color: var(--mint); }
+.attack-a .evi { display: block; margin-top: 10px; padding: 8px 12px; border-left: 3px solid var(--orange); background: rgba(255,107,53,.08); border-radius: 0 8px 8px 0; font-size: 12px; color: #bdc8d7; }
+.attack-a .evi code { color: var(--mint); }
+
+/* ---- gate-grid（三层绑定） ---- */
+.gate-grid { margin-top: 20px; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.gate-grid article { min-height: 170px; padding: 21px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; background: rgba(255,255,255,.04); }
+.gate-grid article > span { font: 900 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mint); }
+.gate-grid h3 { margin: 22px 0 12px; font-size: 18px; letter-spacing: -.02em; }
+.gate-grid p { color: #bdc8d7; font-size: 13px; line-height: 1.62; }
+.gate-grid p code { color: var(--mint); font-size: 11px; }
+
+/* ---- Q&A glossary ---- */
+.qa-group { margin: 58px 0 16px; font: 900 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mint-deep); }
+.qa-group:first-of-type { margin-top: 46px; }
+.qa-group i { color: var(--orange); font-style: normal; margin-right: 8px; }
+.glossary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.glossary-grid details { padding: 22px 24px; border: 1px solid var(--line); border-radius: 15px; background: #fff; transition: box-shadow .18s ease; }
+.glossary-grid details[open] { box-shadow: var(--shadow); }
+.glossary-grid summary { cursor: pointer; list-style: none; font-size: 16px; font-weight: 800; line-height: 1.55; display: flex; gap: 10px; }
+.glossary-grid summary::-webkit-details-marker { display: none; }
+.glossary-grid summary::before { content: "Q"; flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 8px; background: var(--orange); color: #fff; font: 800 11px var(--mono); margin-top: 1px; }
+.glossary-grid summary small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.glossary-grid .answer { margin-top: 16px; border-top: 1px dashed var(--line); padding-top: 16px; color: var(--muted); font-size: 14px; line-height: 1.72; }
+.glossary-grid .oneline { padding: 12px 15px; border-radius: 12px; background: var(--mint); color: var(--ink-2); font-size: 13.5px; line-height: 1.65; margin-bottom: 12px; }
+.glossary-grid .oneline b { color: var(--mint-deep); }
+.glossary-grid .answer ul { margin: 10px 0 10px 18px; }
+.glossary-grid .answer li { margin: 7px 0; }
+.glossary-grid .answer li b { color: var(--ink-2); }
+.glossary-grid .answer code { color: var(--mint-deep); font-weight: 700; }
+.glossary-grid .evi { margin-top: 12px; padding: 9px 13px; border-left: 3px solid var(--orange); background: rgba(255,107,53,.06); border-radius: 0 8px 8px 0; font-size: 12.5px; color: var(--muted); }
+.glossary-grid .evi b { color: var(--ink-2); }
+.glossary-grid .followup { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.glossary-grid .followup b { color: var(--orange); }
+
+/* ---- 红线 done-grid + never-list ---- */
+.done-grid { margin-top: 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.done-grid article { min-height: 230px; padding: 24px; border-radius: 17px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.12); }
+.done-grid article > span { color: var(--mint); font: 900 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.done-grid h3 { margin: 62px 0 12px; font-size: 19px; letter-spacing: -.02em; }
+.done-grid p { color: #bdc8d7; font-size: 13.5px; line-height: 1.65; }
+.done-grid p code { color: var(--mint); font-size: 11px; }
+.never-list { margin-top: 40px; display: grid; gap: 10px; }
+.never-row { display: grid; grid-template-columns: 60px 1fr; gap: 20px; align-items: center; padding: 20px 24px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.never-row strong { color: var(--red); font: 900 15px var(--mono); }
+.never-row p { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
+.never-row p small { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; }
+.claim-card { margin-top: 24px; padding: 35px; border-radius: 18px; background: var(--mint); color: var(--ink); }
+.claim-card > span { color: var(--mint-deep); font-size: 11px; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+.claim-card blockquote { margin: 20px 0 0; font-size: clamp(20px, 2.6vw, 32px); line-height: 1.45; letter-spacing: -.035em; font-weight: 750; }
+.claim-card small { display: block; margin-top: 16px; color: var(--ink-2); opacity: .75; font-size: 13px; }
+
+/* ---- footer ---- */
+.site-footer { padding: 42px 7vw; display: flex; justify-content: space-between; align-items: center; gap: 20px; background: var(--orange); color: #27170f; flex-wrap: wrap; }
+.site-footer p { font-weight: 800; }
+.site-footer small { opacity: .68; font-weight: 600; }
+
+/* ---- 响应式 ---- */
+@media (max-width: 1100px) {
+  .topbar { grid-template-columns: 1fr auto; } .topnav { display: none; }
+  .hero { grid-template-columns: 1fr .62fr; padding-left: 5vw; padding-right: 5vw; }
+  .done-grid { grid-template-columns: 1fr 1fr; }
+  .gate-grid, .tri-cards { grid-template-columns: 1fr 1fr; }
 }
-.fstage .fno {
-  flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
-  font-weight: 800; font-size: 15px; color: #0b1020; background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+@media (max-width: 820px) {
+  .hero, .section-heading, .boundary-grid { grid-template-columns: 1fr; }
+  section { padding: 76px 5vw; }
+  .pipeline { grid-template-columns: 1fr 1fr; }
+  .pipeline-step:nth-child(3n) { border-right: 1px solid var(--line); }
+  .pipeline-step:nth-child(2n) { border-right: 0; }
+  .pipeline-step:nth-last-child(-n+3) { border-bottom: 1px solid var(--line); }
+  .pipeline-step:nth-last-child(-n+2) { border-bottom: 0; }
+  .glossary-grid { grid-template-columns: 1fr; }
+  .attack-row { grid-template-columns: 1fr; }
+  .result-head { display: none; }
+  .result-row { grid-template-columns: 60px 1fr; }
+  .result-row .tone-badge { grid-column: 1 / -1; justify-self: start; }
+  .status-card { transform: none; }
 }
-.fstage .ft { font-weight: 700; font-size: 14px; }
-.fstage .fd { font-size: 12.5px; color: var(--muted); }
-.fstage .fdrop { margin-left: auto; flex: none; text-align: right; font-size: 12px; color: var(--red); }
-.fun-sep { text-align: center; color: var(--dim); font-size: 14px; padding: 3px 0; line-height: 1.1; }
-.fun-sep small { display: block; font-size: 11px; }
+@media (max-width: 560px) {
+  .hero { padding: 60px 21px; } .hero h1 { font-size: 44px; }
+  .pipeline, .done-grid, .gate-grid, .tri-cards { grid-template-columns: 1fr; }
+  .pipeline-step { border-right: 0 !important; border-bottom: 1px solid var(--line) !important; }
+  .pipeline-step:last-child { border-bottom: 0 !important; }
+  .never-row { grid-template-columns: 40px 1fr; }
+  section { padding: 64px 21px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
 </style>
 </head>
 <body>
 
-<nav class="sidebar">
+<!-- ============ 顶栏 ============ -->
+<header class="topbar">
   <div class="brand">
-    <div class="brand-logo">◈</div>
-    <div>
-      <div class="brand-name">RL × verl 复习站</div>
-      <div class="brand-sub">面试复盘 · 第一期</div>
-    </div>
+    <div class="brand-mark">RL</div>
+    <div>RL × verl 复习站<small>面试复盘 · 第一期 · 数据生成与数据清洗</small></div>
   </div>
-  <ul class="nav">
-    <div class="nav-group">总览</div>
-    <li><a href="#overview">0 · 完整链路一张图</a></li>
-    <div class="nav-group">模块一 · 数据生成</div>
-    <li><a href="#gen-dataset">1.1 任务侧：数据集构建</a></li>
-    <li><a href="#gen-loop">1.2 采样侧：PiAgentLoop</a></li>
-    <li><a href="#gen-bridge">1.3 原生 token 桥</a></li>
-    <li><a href="#gen-assemble">1.4 多轮 → 单序列组装</a></li>
-    <div class="nav-group">模块二 · 数据清洗</div>
-    <li><a href="#clean-arch">2.1 门禁为什么在 manager</a></li>
-    <li><a href="#clean-funnel">2.2 三级清洗漏斗</a></li>
-    <li><a href="#clean-gate">2.3 批级门禁五规则</a></li>
-    <li><a href="#clean-resample">2.4 重采样策略</a></li>
-    <li><a href="#clean-identity">2.5 权重身份绑定</a></li>
-    <li><a href="#clean-bugs">2.6 两个著名的坑</a></li>
-    <div class="nav-group">自测</div>
-    <li><a href="#qa">3 · 面试深挖题 ×16</a></li>
-    <li><a href="#claims">4 · 说法红线</a></li>
-  </ul>
-  <div class="sidebar-foot">
-    代码基线 <code>a267ccf</code>（分支 <code>verl-native-trainer</code>）<br>
-    行号引用均可在仓库中直接核对<br>
-    运行证据：smoke16–27 / formal-r2 / r3 筛题记录
-  </div>
-</nav>
-
-<main class="main">
+  <nav class="topnav">
+    <a href="#pipeline" data-nav>00 全链路</a>
+    <a href="#generation" data-nav>01 数据生成</a>
+    <a href="#cleaning" data-nav>02 数据清洗</a>
+    <a href="#qa" data-nav>03 深挖题</a>
+    <a href="#redline" data-nav>04 红线</a>
+  </nav>
+  <div class="nav-progress">复习进度<i><b id="progressBar"></b></i></div>
+</header>
 
 <!-- ============ HERO ============ -->
-<div class="hero">
-  <h1>RL 接入 verl 后的完整链路<br><em>数据生成</em> 与 <em>数据清洗</em> 深挖复盘</h1>
-  <p>
-    这一页只覆盖一个故事：我们如何用 verl 官方的四个扩展点，把「真实 agent 轨迹 → 原生 token 证据 → 认证清洗 → 框架 GRPO 更新」这条链跑通，
-    以及支撑它的两个核心模块——<b style="color:var(--violet)">RL 数据生成</b>（造出可信样本）与<b style="color:var(--cyan)">数据清洗</b>（不合格的样本一步也进不了训练器）。
-    所有图和代码都来自仓库真实文件，行号可核对；答案里嵌的都是实测数字。
-  </p>
-  <div class="chips">
-    <span class="chip">链路：<b>RayPPOTrainer 拥有训练循环</b>，我们拥有证据/认证平面</span>
-    <span class="chip">扩展点：<b>4 个官方 recipe hook，零 patch</b></span>
-    <span class="chip">实测：<b>smoke27 两个框架 step，22m34s</b></span>
-    <span class="chip">清洗语义：<b>fail-closed，重采样只认两类错误</b></span>
+<div class="hero" id="top">
+  <div>
+    <div class="eyebrow">Interview Review · Phase 1 · The verl-native Trainer</div>
+    <h1>RL 接入 verl 后的<br>完整链路：<em>数据生成</em>与<em>数据清洗</em></h1>
+    <p class="lede">
+      这一页只讲一个故事：如何用 verl 的<b>四个官方扩展点</b>，把「真实 agent 轨迹 → 原生 token 证据 → 认证清洗 → 框架 GRPO 更新」跑通。
+      面试卖的不是「做了一个大系统」，而是<b>每个结论都能下钻到 file:line 与 run 证据，每个边界都被诚实声明</b>。
+    </p>
+    <div class="hero-actions">
+      <a class="button primary" href="#pipeline">从全链路开始 ↓</a>
+      <a class="button secondary" href="#qa">直达深挖题 ×16</a>
+    </div>
+    <div class="hero-chips">
+      <span>扩展点 <i>4 个官方 hook，零 patch</i></span>
+      <span>smoke27 <i>两个框架 step，22m34s</i></span>
+      <span>清洗语义 <i>fail-closed + 白名单重采样</i></span>
+    </div>
   </div>
+  <aside class="status-card">
+    <div class="status-topline"><span>Status · 2026-09-12</span><span>a267ccf</span></div>
+    <div class="status-orbit"><span>GRPO</span><strong>2 STEPS</strong><i></i></div>
+    <p class="status-label">smoke27 实测：RayPPOTrainer 连续跑完两个框架拥有的 step，step 2 用 step 1 同步后的权重采样</p>
+    <h2>机制闭环，<br>口径谨慎</h2>
+    <div class="status-meter"><span></span></div>
+    <dl>
+      <div><dt>holdout 通过率（P24）</dt><dd>33.33% ←不显著</dd></div>
+      <div><dt>Fisher p 值</dt><dd>0.826 / 1.000</dd></div>
+      <div><dt>载体题解出率</dt><dd>≈ 1/16</dd></div>
+      <div><dt>训练 / rollout logprob</dt><dd>Pearson 0.9996</dd></div>
+    </dl>
+  </aside>
 </div>
 
-<!-- ============ 0 全链路 ============ -->
-<section id="overview">
-  <div class="sec-head"><span class="sec-no">0</span><h2>完整链路一张图：谁拥有什么</h2></div>
-  <p class="sec-lead">
-    先记住归属，再谈模块。verl 拥有训练平面（Ray、FSDP2、优化器、权重同步、vLLM 引擎与调度）；
-    我们拥有证据/认证平面（token 账本、verifier、逐 episode 认证、批级门禁）。接入点全是官方扩展点。
-  </p>
+<!-- ============ 00 全链路 ============ -->
+<section class="dark-section" id="pipeline">
+  <div class="section-kicker">00 · The Pipeline — Who Owns What</div>
+  <h2>先记住归属，再谈模块。</h2>
+  <p class="big-quote">verl 拥有训练平面（Ray、FSDP2、优化器、权重同步、vLLM 引擎与调度）；我们拥有证据/认证平面（token 账本、verifier、逐 episode 认证、批级门禁）。接入点全是官方扩展点。</p>
 
-  <div class="card accent-cyan">
-    <h4>一次 GRPO step 的完整数据流（smoke27 实测形态）</h4>
-    <div class="flow-row">
-      <div class="fbox verl"><div class="t">RayPPOTrainer.fit</div><div class="d">t=0 先 update_weights(0)，之后每 step 循环</div></div>
-      <div class="farr">→</div>
-      <div class="fbox ours"><div class="t">CertifiedVerlAgentLoopManager</div><div class="d">盖章 attempt / sample / root / 策略指纹，包住整批</div></div>
-      <div class="farr">→</div>
-      <div class="fbox verl"><div class="t">AgentLoopWorker × N</div><div class="d">框架把批切给多个 worker 并发跑</div></div>
-      <div class="farr">→</div>
-      <div class="fbox ours"><div class="t">PiAgentLoop.run（每样本）</div><div class="d">起真实 Pi 0.84.2（bwrap 隔离），拿 AgentLoopOutput</div></div>
+  <div class="boundary-grid">
+    <div class="boundary-card yes">
+      <span>verl 拥有 · training plane</span>
+      <h3>框架一行不替代</h3>
+      <ul>
+        <li><b>训练循环</b>：RayPPOTrainer.fit() 驱动每一步</li>
+        <li><b>数学</b>：GRPO advantage + PPO-clip + FSDP2 + 优化器</li>
+        <li><b>引擎</b>：vLLM colocated TP=2，显存与请求调度</li>
+        <li><b>同步</b>：update_weights 原地同步 + checkpoint（smoke27 实测 2.90/2.83s）</li>
+      </ul>
     </div>
-    <div class="flow-row">
-      <div class="fbox ours"><div class="t">NativeTokenTransport</div><div class="d">token 级 RPC + append-only 账本 + 工具解析</div></div>
-      <div class="farr">⇄</div>
-      <div class="fbox verl"><div class="t">vLLM 引擎（colocated TP=2）</div><div class="d">AsyncLLMServerManager.generate(prompt_ids=…)</div></div>
-      <div class="farr">⇄</div>
-      <div class="fbox ours"><div class="t">证据落盘</div><div class="d">model-evidence.jsonl / engine-notes / dispatch-trace</div></div>
+    <div class="boundary-card no">
+      <span>我们拥有 · evidence plane</span>
+      <h3>框架给不了的证据</h3>
+      <ul>
+        <li><b>token 账本</b>：逐轮原生 ids + logprobs，prompt 即账本</li>
+        <li><b>verifier</b>：episode 内真实执行判分，PASSED/FAILED → 1/0</li>
+        <li><b>认证</b>：逐 episode + 批级门禁，fail-closed</li>
+        <li><b>loop 本体</b>：PiAgentLoop 起真实 Pi 0.84.2（bwrap 隔离）</li>
+      </ul>
     </div>
-    <div class="flow-row">
-      <div class="fbox ours"><div class="t">verifier + 组装</div><div class="d">PASSED/FAILED → reward 1/0；per-call 证据 → 单序列</div></div>
-      <div class="farr">→</div>
-      <div class="fbox ours warn"><div class="t">清洗：三级认证 + 批门禁</div><div class="d">不合格 → raise / redraw；通过 → CertifiedBatch</div></div>
-      <div class="farr">→</div>
-      <div class="fbox verl"><div class="t">GRPO advantage + 更新</div><div class="d">advantage / PPO-clip / FSDP2 / 优化器全归框架</div></div>
-      <div class="farr">→</div>
-      <div class="fbox verl"><div class="t">update_weights 原地同步</div><div class="d">smoke27 实测 2.90 / 2.83s，之后下一 step 用新权重采样</div></div>
-    </div>
-    <div class="legend">
-      <span><i style="background:rgba(34,211,238,.4)"></i>青色 = verl 拥有</span>
-      <span><i style="background:rgba(167,139,250,.4)"></i>紫色 = 我们拥有</span>
-      <span><i style="background:rgba(251,191,36,.4)"></i>黄色描边 = 清洗裁决点</span>
-    </div>
+  </div>
+
+  <div class="sub-kicker">一次 step 的数据流 · smoke27 实测形态</div>
+  <div class="pipe-flow">
+    <div class="pipe-chip"><b>verl</b><h4>RayPPOTrainer.fit</h4><p>t=0 先 update_weights(0)，之后每 step 循环</p></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-chip ours"><b>ours · manager</b><h4>CertifiedVerlAgentLoopManager</h4><p>盖章 attempt / sample / root / 策略指纹，包住整批</p></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-chip"><b>verl · workers</b><h4>AgentLoopWorker × N</h4><p>框架把批切给多个 worker 并发跑</p></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-chip ours"><b>ours · per-sample</b><h4>PiAgentLoop.run</h4><p>真实 Pi episode：工具循环 + verifier + 证据落盘</p></div>
+  </div>
+  <div class="pipe-flow">
+    <div class="pipe-chip ours"><b>ours · bridge</b><h4>NativeTokenTransport</h4><p>token 级 RPC + append-only 账本 + 工具解析</p></div>
+    <div class="pipe-arr">⇄</div>
+    <div class="pipe-chip"><b>verl · engine</b><h4>vLLM 引擎</h4><p>AsyncLLMServerManager.generate(prompt_ids=…)</p></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-chip ours gate"><b>ours · gate</b><h4>三级认证 + 批门禁</h4><p>不合格 → raise / redraw；通过 → CertifiedBatch</p></div>
+    <div class="pipe-arr">→</div>
+    <div class="pipe-chip"><b>verl · update</b><h4>GRPO 更新 + 同步</h4><p>下一步 rollout 用新权重（框架 checkpoint 摘要作证）</p></div>
   </div>
 
   <div class="codecard">
-    <div class="codehead"><span class="path">调用链（带 verl 源码行号）</span><span>ray_trainer.py / agent_loop.py 为 verl 侧</span></div>
-<pre><code>python -m verl.trainer.main_ppo
+    <span class="code-path"><i>▸</i> 调用链 · ray_trainer.py / agent_loop.py 为 verl 侧</span>
+<pre>python -m verl.trainer.main_ppo
 └─ RayPPOTrainer.fit()
    ├─ checkpoint_manager.update_weights(0)            ray_trainer.py:1252   # P0 权重进引擎
    └─ for step: global_steps += 1                     ray_trainer.py:1274
-      ├─ meta_info["global_steps"]                    ray_trainer.py:1310
       ├─ async_rollout_manager.generate_sequences     ray_trainer.py:1321
       │  └─ AgentLoopManager.generate_sequences       agent_loop.py:1030    # 切块给 N 个 worker
-      │     └─ PiAgentLoopWorker → _run_agent_loop    agent_loop.py:552-566 # 按 _target_ 实例化我们注册的 loop
+      │     └─ PiAgentLoopWorker → _run_agent_loop    agent_loop.py:552-566 # 按 _target_ 实例化注册的 loop
       │        └─ PiAgentLoop.run → AgentLoopOutput
       ├─ _agent_loop_postprocess                      agent_loop.py:569
       │  # ★ 整个设计压在这一点上：它从不重新 tokenize，
       │  #   原样右填充 response_ids，信任 response_mask 与 response_logprobs
       ├─ GRPO advantage → actor update（框架拥有）
-      └─ update_weights（原地同步）→ 下一步 rollout 用新权重</code></pre>
+      └─ update_weights（原地同步）→ 下一步 rollout 用新权重</pre>
   </div>
 
-  <div class="card accent-violet">
-    <h4>四个官方扩展点（零 patch，面试必背）</h4>
-    <table>
-      <tr><th style="width:38%">扩展点</th><th>我们挂了什么</th></tr>
-      <tr><td><code>rollout.agent.agent_loop_manager_class</code></td><td><code>CertifiedVerlAgentLoopManager</code> — 在生成与训练之间装上门禁（verl 在 <code>ray_trainer.py:824</code> 读取、<code>:838</code> 替换）</td></tr>
-      <tr><td><code>AgentLoopManager.agent_loop_workers_class</code></td><td><code>PiAgentLoopWorker</code> — 让 server manager 暴露引擎 HTTP 地址</td></tr>
-      <tr><td>agent-loop YAML 的 <code>_target_</code>（<code>agent_loop_config_path</code>）</td><td><code>PiAgentLoop</code> — 注册为每样本执行的 agent loop（<code>agent_loop.py:434-438</code> 注册）</td></tr>
-      <tr><td><code>AgentLoopWorker.__init__</code> 的 <code>hasattr(self,"server_manager")</code> 钩子</td><td>先赋 <code>PiServerManager</code>，基类就不自建——基类注释原文 <code># for recipe to change</code>，是官方许可的改法</td></tr>
-    </table>
-    <p class="note">面试口径：「我们换掉的是 loop 的<b>策略</b>，不是 loop 的<b>机器</b>」——用的是框架给 <code>tool_agent_loop.py</code> 准备的同一套机制，只是挂进去的 loop 自带数据平面。</p>
+  <div class="sub-kicker">四个官方扩展点 · 面试必背</div>
+  <div class="result-table">
+    <div class="result-head"><span>Hook</span><span>扩展点</span><span>我们挂了什么</span></div>
+    <div class="result-row"><div class="lv">H1<small>manager</small></div><div><h4><code>rollout.agent.agent_loop_manager_class</code></h4><p>verl 在 ray_trainer.py:824 读取、:838 替换——门禁落在生成与训练之间</p></div><span class="tone-badge tone-neutral">CertifiedVerlAgentLoopManager</span></div>
+    <div class="result-row"><div class="lv">H2<small>workers</small></div><div><h4><code>AgentLoopManager.agent_loop_workers_class</code></h4><p>让 server manager 暴露引擎 HTTP 地址（基类保持私有）</p></div><span class="tone-badge tone-neutral">PiAgentLoopWorker</span></div>
+    <div class="result-row"><div class="lv">H3<small>yaml _target_</small></div><div><h4><code>agent_loop_config_path</code></h4><p>按全限定名加载我们的 loop（agent_loop.py:434-438 注册）</p></div><span class="tone-badge tone-neutral">PiAgentLoop</span></div>
+    <div class="result-row"><div class="lv">H4<small>recipe hook</small></div><div><h4><code>AgentLoopWorker.__init__</code> 的 server_manager 钩子</h4><p>先赋 PiServerManager 基类就不自建——基类注释原文 “for recipe to change”</p></div><span class="tone-badge tone-good">官方许可</span></div>
   </div>
+  <p class="body-dim" style="margin-top:18px">面试口径：「我们换掉的是 loop 的<b>策略</b>，不是 loop 的<b>机器</b>」——用的是框架给 tool_agent_loop.py 准备的同一套机制，只是挂进去的 loop 自带数据平面。</p>
 </section>
 
-<!-- ============ 1 数据生成 ============ -->
-<section id="gen">
-  <div class="sec-head"><span class="sec-no">1</span><h2>模块一 · RL 数据生成：从任务行到可信 token 序列</h2></div>
-  <p class="sec-lead">
-    数据生成分三层：<b>任务侧</b>（一行数据 = 一个 GRPO 组）、<b>采样侧</b>（每样本跑一次真实 Pi episode）、
-    <b>token 层</b>（账本 + 原生桥 + 序列组装）。三层共同保证一件事：进入清洗环节的每条样本，都是「策略在某一确定权重下真实生成」的完整证据。
-  </p>
+<!-- ============ 01 数据生成 ============ -->
+<section class="white-section" id="generation">
+  <div class="section-heading">
+    <div>
+      <div class="section-kicker">01 · Data Generation</div>
+      <h2>从任务行到可信<br>token 序列。</h2>
+    </div>
+    <p>数据生成分三层：<b style="color:var(--ink)">任务侧</b>（一行 = 一个 GRPO 组）、<b style="color:var(--ink)">采样侧</b>（每样本一次真实 Pi episode）、<b style="color:var(--ink)">token 层</b>（账本 + 原生桥 + 组装）。三层共同保证：进入清洗环节的每条样本，都是「策略在某一确定权重下真实生成」的完整证据。</p>
+  </div>
 
   <!-- 1.1 -->
-  <h3 class="sub" id="gen-dataset">1.1 任务侧：一行数据就是一个 GRPO 组 <span class="fref">scripts/build_verl_pi_dataset.py</span></h3>
-  <p class="desc">
-    构建器从 evalplus 的 <code>get_mbpp_plus()</code>（378 题）取任务，一行一题。框架的 dataloader 会把每行按 <code>rollout.n</code>
-    复制成 n 份共享同一 <code>uid</code> 的样本——所以<b>行就是组</b>：同一道题的 n 次独立 episode，正是 GRPO 组相对 advantage 需要的分组。
-  </p>
+  <div class="sub-kicker">1.1 任务侧 · scripts/build_verl_pi_dataset.py</div>
+  <p class="body-dim">构建器从 evalplus 的 <code>get_mbpp_plus()</code>（378 题）取任务，一行一题。框架 dataloader 把每行按 <code>rollout.n</code> 复制成 n 份共享同一 uid 的样本——<b>行就是组</b>：同一道题的 n 次独立 episode，正是 GRPO 组相对 advantage 需要的分组。</p>
   <div class="codecard">
-    <div class="codehead"><span class="path">scripts/build_verl_pi_dataset.py:44-71</span><span>行 schema：框架需要的列 + 我们 loop 依赖的 extra_info</span></div>
-<pre><code>rows.append({
+    <span class="code-path"><i>▸</i> scripts/build_verl_pi_dataset.py:44-71 · 行 schema</span>
+<pre>rows.append({
     "prompt": [                       # 框架要求该列存在；loop 实际从 extra_info 构建 Pi 指令
         {"role": "system", "content": "You are a coding agent working in a workspace."},
         {"role": "user",   "content": task_prompt},
     ],
-    "data_source": "mbpp",            # 框架 reward 路由键（reward 由 loop 直接给，reward 路径被绕过）
+    "data_source": "mbpp",            # 框架 reward 路由键（reward 由 loop 直接给，路径被绕过）
     "reward_model": {"ground_truth": {"task_id": task_id, "entry_point": entry_point}},
     "extra_info": {                   # 我们 loop 的真实输入
         "index": index,               # 数据集默认全 0 会撞车，这里显式赋值
@@ -413,75 +442,34 @@ tr:nth-child(even) td { background: rgba(255,255,255,.012); }
     "agent_name": "pi_agent",         # 选择我们注册的 agent loop
 })
 # uid 刻意不写：RayPPOTrainer.fit 在按 n 展开前为每行生成新 uid，
-# n 个 episode 天然共享一个组。</code></pre>
+# n 个 episode 天然共享一个组。</pre>
   </div>
-  <div class="card accent-yellow">
-    <h4>r3 筛题规则：为什么只选 base=pass 的题（这是「数据生成」里最重要的一个实验设计决策）</h4>
-    <p class="desc" style="margin:6px 0">
-      GRPO 方差门禁会把「全对/全错」的平批重采样重画；一个真正 p≈0 或 p≈1 的任务会耗尽 <code>max_attempts</code>，
-      该 step 永远过不去（resume 还会重放同一任务）——这叫<b>平批死锁</b>。所以任务先按 P0 SFT 模型在 evalplus 上的贪心状态分带：
-      pass/pass <b>247</b> 题、pass/fail <b>54</b>、fail/fail <b>76</b>、fail/pass <b>1</b>；<b>只从 base=pass 的带子里等距取题</b>
-      （r2 实测该带在自家 agent loop 下成功率 15–65%，正落在「有时对有时错」的理想区间）。378 题全带 assert，verifier 对任意 <code>Mbpp/N</code> 都能打分。
-    </p>
+  <div class="tri-cards">
+    <article><span>Why base=pass only</span><h4>平批死锁规则</h4><p>方差门禁会把全对/全错批重采样重画；p≈0 或 p≈1 的任务会耗尽 max_attempts，该 step 永远过不去（resume 还重放同一任务）。</p></article>
+    <article><span>Band 分带 · P0 贪心</span><h4>247 / 54 / 76 / 1</h4><p>evalplus 状态分带：pass/pass 247、pass/fail 54、fail/fail 76、fail/pass 1。只从 base=pass 带等距取题。</p></article>
+    <article><span>Measured</span><h4>15–65% 成功率带</h4><p>r2 实测该带在自家 agent loop 下的解出率落在中段——正是 GRPO「有时对有时错」的理想区间。r3：60 题 × 5 epochs = 300 步。</p></article>
   </div>
 
   <!-- 1.2 -->
-  <h3 class="sub" id="gen-loop">1.2 采样侧：每个样本一次真实 Pi episode <span class="fref">src/integrations/verl/pi_loop.py</span></h3>
-  <p class="desc">
-    <code>PiAgentLoop(AgentLoopBase).run</code> 是框架逐样本调用的入口。它不自己生成 token——它起一个真实的 Pi agent 子进程，
-    让 Pi 通过我们的代理去打 verl 的 vLLM 引擎，全程留下证据。
-  </p>
-  <div class="steps">
-    <div class="step"><div class="t">解析身份并命名 episode</div>
-      <div class="d">从批次里读 manager 盖的章：<code>pi_attempt</code>（重采样轮次）、<code>pi_sample_token</code>（<code>a{s}p{i}</code>，因为 <code>rollout.n</code> 复制出的行除 uid 外无法区分）、<code>pi_episode_root</code>（本次 generate_sequences 专属目录）。episode 目录 = <code>call_root / attempt-N / {run_id}-{task_slug}-{sample_token}</code>（pi_loop.py:220-231）。</div></div>
-    <div class="step"><div class="t">建工作区（在 attempt 目录之外）</div>
-      <div class="d"><code>episode_workspace()</code> 把工作区放在 <code>workspaces/{attempt}--{episode}</code> 兄弟树上。两个约束都踩过坑：orchestrator 对 episode 根目录 fail-closed（<code>mkdir(exist_ok=False)</code>），预先创建会让每个 episode 死在 mkdir；批门禁把 attempt 目录下每个子目录当 episode，工作区混进去会被当成「缺证据的 episode」（pi_loop.py:87-106）。</div></div>
-    <div class="step"><div class="t">起 Pi 子进程（bwrap 隔离）跑多轮工具循环</div>
-      <div class="d">Pi ↔ 我们的模型代理 ↔ verl vLLM。Pi 永远不直接碰 vLLM——只有代理会把每轮的<b>原生 token ids + logprobs</b> 记成身份绑定的证据。工具集冻结为 <code>read/bash/write/edit/ls</code>，且校验实际请求的工具 schema 哈希 == 冻结值（native_transport.py:192）。</div></div>
-    <div class="step"><div class="t">episode 内跑 verifier</div>
-      <div class="d">Pi 结束后立刻在 episode 里跑 <code>verify_mbpp_src.py</code>（从题面抽 assert、跑 solution.py），产出 <code>verifier_status ∈ {PASSED, FAILED}</code>（pi_loop.py:442-448）。这是逐 episode 的第一道清洗，也是 reward 的唯一来源。</div></div>
-    <div class="step"><div class="t">reward 映射与硬边界</div>
-      <div class="d">PASSED→1.0，FAILED→0.0；<b>其余一律 raise</b>——基础设施失败不是合法的 0 奖励，绝不许把「没跑成」伪装成「做错了」喂给训练器（pi_loop.py:293-304）。</div></div>
-    <div class="step"><div class="t">落盘 admitted-sequence.json，返回 AgentLoopOutput</div>
-      <div class="d">prompt/response ids、mask、logprobs、reward、组号、双 checksum 全部落盘；批门禁稍后<b>从落盘证据重新认证</b>，不信任内存对象（pi_loop.py:324-326）。extra_fields 还带 <code>truncated_turns</code>、<code>unconfirmed_engine_steps</code>、<code>engine_closeout</code> 等自证字段。</div></div>
-  </div>
-  <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/pi_loop.py:293-304</span><span>奖励映射：只认终止性 verifier 判定</span></div>
-<pre><code>verifier_status = summary["verifier_status"]
-if verifier_status == "PASSED":
-    reward = 1.0
-elif verifier_status == "FAILED":
-    reward = 0.0
-else:
-    # Infrastructure failures are not a valid zero reward; they must
-    # never reach the trainer as a training signal.
-    raise ContractValidationError(
-        f"episode {episode_id} has no valid verifier verdict "
-        f"({verifier_status}); refusing to invent a reward"
-    )</code></pre>
+  <div class="sub-kicker">1.2 采样侧 · src/integrations/verl/pi_loop.py — 每个样本一次真实 episode</div>
+  <p class="body-dim"><code>PiAgentLoop(AgentLoopBase).run</code> 是框架逐样本调用的入口。它不自己生成 token——它起一个真实的 Pi agent 子进程，让 Pi 通过我们的代理去打 verl 的 vLLM 引擎，全程留下证据。</p>
+  <div class="pipeline">
+    <div class="pipeline-step"><span>STEP 01</span><b>01</b><h3>解析身份并命名 episode</h3><p>读 manager 盖的章：<code>pi_attempt</code>（重采样轮次）、<code>pi_sample_token</code>（n 份复制除 uid 外无法区分）、<code>pi_episode_root</code>。目录 = call_root/attempt-N/{run_id}-{slug}-{token}（pi_loop.py:220-231）。</p></div>
+    <div class="pipeline-step"><span>STEP 02</span><b>02</b><h3>建工作区（attempt 目录之外）</h3><p>两个约束都踩过坑：orchestrator 对 episode 根 <code>mkdir(exist_ok=False)</code>，预建会团灭；批门禁把 attempt 下每个子目录当 episode，工作区混入会被读成「缺证据」（pi_loop.py:87-106）。</p></div>
+    <div class="pipeline-step"><span>STEP 03</span><b>03</b><h3>起 Pi 子进程（bwrap 隔离）</h3><p>Pi ⇄ 我们的代理 ⇄ vLLM。Pi 永不直接碰引擎——只有代理把每轮<b>原生 ids+logprobs</b> 记成身份绑定证据。工具集冻结 read/bash/write/edit/ls，schema 哈希逐请求校验（native_transport.py:192）。</p></div>
+    <div class="pipeline-step"><span>STEP 04</span><b>04</b><h3>episode 内跑 verifier</h3><p>Pi 结束后立刻跑 verify_mbpp_src.py（抽 assert、跑 solution.py），产出 <code>verifier_status ∈ {PASSED, FAILED}</code>（pi_loop.py:442-448）。这是逐 episode 第一道清洗，也是 reward 唯一来源。</p></div>
+    <div class="pipeline-step"><span>STEP 05</span><b>05</b><h3>reward 映射与硬边界</h3><p>PASSED→1.0，FAILED→0.0；<b>其余一律 raise</b>——基础设施失败不是合法的 0 奖励，绝不许把「没跑成」伪装成「做错了」（pi_loop.py:293-304）。</p></div>
+    <div class="pipeline-step"><span>STEP 06</span><b>06</b><h3>落盘 admitted-sequence.json</h3><p>prompt/response ids、mask、logprobs、reward、组号、双 checksum 全落盘；批门禁稍后<b>从落盘证据重新认证</b>，不信任内存对象（pi_loop.py:324-326）。</p></div>
   </div>
 
   <!-- 1.3 -->
-  <h3 class="sub" id="gen-bridge">1.3 token 层：append-only 账本 + 原生 token 桥 <span class="fref">token_context.py / native_transport.py</span></h3>
-  <p class="desc">
-    多轮 agent 对话要变成一条训练序列，最大的坑是<b>上下文漂移</b>：如果每轮都从 messages 重新渲染 prompt，之前模型生成的 token 就会被重新 tokenize 改写。
-    解法是一个不变式——<b>prompt 就是账本</b>：
-  </p>
-  <div class="card accent-green">
-    <h4>账本不变式（由构造成立，不需要任何松弛）</h4>
-    <p style="font-family:'SF Mono',ui-monospace,Menlo,monospace; font-size:13.5px; color:#6ee7b7; margin:6px 0 10px;">
-      prompt<sub>i+1</sub> = prompt<sub>i</sub> + generation<sub>i</sub>（原生 token，逐字）+ observation<sub>i</sub>（新编码的上下文后缀）
-    </p>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li>首轮 prompt 冻结自 <code>apply_chat_template</code>；之后只有<b>新的</b>观察块被编码（token_context.py:112-157）。</li>
-      <li>每轮校验 Pi 没改历史：既有消息全文比对，新生成的 assistant 回合只比<b>承重字段</b>（tool_calls 必须一致；content 允许为空——实测 Pi 会把 content 置 null 只留 tool_calls，token_context.py:35-54）。</li>
-      <li>模板边界校验：渲染前后必须满足 <code>after.startswith(before)</code>，防止模板改写历史（token_context.py:138-146）。</li>
-      <li>回合终止符 <code>&lt;|im_end|&gt;</code> 被 vLLM 当特殊 token 吞掉不返还——账本记 <code>terminator_stripped</code>，下一轮把终止符<b>作为纯上下文补回</b>（mask=0，无 logprob，永不进 loss，token_context.py:149-157）。</li>
-    </ul>
-  </div>
+  <div class="sub-kicker">1.3 token 层 · token_context.py + native_transport.py — prompt 即账本</div>
+  <p class="body-dim">多轮对话变训练序列，最大的坑是<b>上下文漂移</b>：每轮从 messages 重新渲染，历史里模型生成的 token 就会被重新 tokenize 改写。解法是一个不变式：</p>
   <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/native_transport.py:196-208（节选）</span><span>token 级 RPC：不走 /v1/chat/completions 文本，走 prompt_ids</span></div>
-<pre><code>prompt = self.context.prepare(payload["messages"], payload.get("tools", []))
+    <span class="code-path"><i>▸</i> 账本不变式（由构造成立，无需松弛） + 原生 RPC（native_transport.py:196-208 节选）</span>
+<pre>prompt[i+1] = prompt[i] + generation[i]（原生 token，逐字） + observation[i]（新编码的上下文后缀）
+
+prompt = self.context.prepare(payload["messages"], payload.get("tools", []))
 budget = min(self.max_tokens, self.context.remaining)
 params = dict(self.sampling_params)
 params.update(max_tokens=budget, logprobs=True)
@@ -494,50 +482,36 @@ output = await self.server_manager.generate(
 ids = list(output.token_ids)
 probs = output.log_probs
 if probs is None or len(probs) != len(ids) or not all(math.isfinite(p) for p in probs):
-    raise ContractValidationError("missing or invalid native logprobs")</code></pre>
+    raise ContractValidationError("missing or invalid native logprobs")</pre>
   </div>
-  <div class="card accent-violet">
-    <h4>工具调用解析：提取，不修复（native_transport.py:16-50）</h4>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li>实测（smoke16 十条真实生成）：vLLM 的 hermes parser <b>10/10 解析出 0 个工具调用</b>——该策略输出裸 JSON 不带 <code>&lt;tool_call&gt;</code> 标签，只信上游 parser 等于没有工具循环。</li>
-      <li>策略：parser 有结果时校验标签数与解析数一致（混合状态直接 raise）；无结果时回落到仓库唯一的严格提取器 <code>src.capture.tool_calls</code>——全仓库只有一种提取策略。</li>
-      <li><b>不修复原则</b>：未声明工具名 / 坏 JSON / 空 arguments 一律产出空，绝无「猜」。标签块被 parser 拒绝视为 malformed 而不是再解析一次。最新补丁（未提交 diff）：parser 自身抛异常（如 <code>TypeError: unhashable type: 'dict'</code>）时也回落严格提取器，坏抽样交给批门禁按真实 reward 裁决，而不是报废整批。</li>
-    </ul>
-  </div>
-  <div class="card accent-cyan">
-    <h4>预算三态：预检、截断、中止（native_transport.py:152-177, 240-256）</h4>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li><b>can_serve 预检</b>：进引擎<b>之前</b>问「下一轮还买得起吗」——买不起就以 <code>context_budget</code> 收束 episode，而不是让一次模型调用失败。实测 smoke16 有生成吃满整个 1024 预算，耗尽上下文是常态不是错误。</li>
-      <li><b>截断（truncated）</b>：吃满预算没吐终止符 = 一次合法的截断动作，照常入账（verl 自己的 loop 也这么训），<code>truncated_turns</code> 计数留痕。</li>
-      <li><b>中止（aborted）</b>：引擎因请求取消而停——这不是一个回合，直接 raise。</li>
-      <li><b>引擎步数自证</b>：引擎回报 <code>global_steps</code> 时校验其与期望一致且 episode 内不变；<code>backend=naive</code> 下引擎报 None，则逐 episode 写 step-note 记录这个<b>已知缺口</b>而不是掩盖（曾因 numpy 标量混进 json.dumps 变成 502 团灭全批）。</li>
-    </ul>
+  <div class="tri-cards">
+    <article><span>Ledger guards</span><h4>账本的防线</h4><p>既有消息全文比对；新 assistant 回合只比承重字段（tool_calls 必须一致，content 空不判改写——实测 Pi 回 content: null）；模板边界 after.startswith(before)；终止符被 vLLM 吞掉时下一轮以 mask=0 纯上下文补回。</p></article>
+    <article><span>Tool parsing</span><h4>提取，不修复</h4><p>smoke16 实测：hermes parser 10/10 解析出 0 个调用（模型输出裸 JSON）。策略：上游结果与标签数交叉校验（混合即 raise）；无标签回落仓库唯一严格提取器；坏 JSON/未声明工具名一律产出空，绝不「猜」。</p></article>
+    <article><span>Budget 三态</span><h4>预检 / 截断 / 中止</h4><p>can_serve 进引擎前问「下一轮买得起吗」（smoke16 有生成吃满 1024，耗尽是常态）；吃满预算没吐终止符 = 合法截断动作照常训练；请求被取消的 aborted 才不是回合，直接 raise。</p></article>
   </div>
 
   <!-- 1.4 -->
-  <h3 class="sub" id="gen-assemble">1.4 多轮 → 单序列组装：mask 是唯一的语义边界 <span class="fref">src/integrations/verl/sequence.py</span></h3>
-  <p class="desc">
-    episode 结束后，<code>_assemble</code> 从 <code>model-evidence.jsonl</code> 里的<b>逐调用 token 证据</b>重建出一条 verl 训练序列。这个模块<b>从不 tokenize 文本</b>——它只拼接桥在真实运行中捕获的 token。
-  </p>
-  <div class="card">
-    <div class="mask-legend">一条两轮工具调用的 episode 组装后的 token 条：</div>
+  <div class="sub-kicker">1.4 组装 · src/integrations/verl/sequence.py — mask 是唯一的语义边界</div>
+  <p class="body-dim">episode 结束后，<code>_assemble</code> 从 model-evidence.jsonl 的<b>逐调用 token 证据</b>重建训练序列。这个模块<b>从不 tokenize 文本</b>——只拼接桥在真实运行中捕获的 token。</p>
+  <div style="padding: 28px 30px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); margin-top: 24px;">
+    <div style="font: 800 11px var(--mono); letter-spacing:.14em; color: var(--mint-deep); text-transform: uppercase;">一条两轮工具调用 episode 的 token 条</div>
     <div class="mask-strip">
-      <div class="tok prompt">prompt<small>首轮冻结</small></div>
-      <div class="tok gen">gen₁ mask=1<small>原生 ids+logprobs</small></div>
-      <div class="tok obs">obs₁ mask=0<small>工具观察+模板</small></div>
-      <div class="tok gen">gen₂ mask=1<small>原生 ids+logprobs</small></div>
-      <div class="tok obs">obs₂ mask=0<small>观察后缀</small></div>
+      <div class="tok prompt">prompt<small>frozen</small></div>
+      <div class="tok gen">gen₁ mask=1<small>native ids+lp</small></div>
+      <div class="tok obs">obs₁ mask=0<small>obs+template</small></div>
+      <div class="tok gen">gen₂ mask=1<small>native ids+lp</small></div>
+      <div class="tok obs">obs₂ mask=0<small>suffix</small></div>
       <div class="tok gen">… mask=1</div>
     </div>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li>mask=1 的<b>只有</b>模型生成的原生 token（带真实 logprobs）；观察与模板分隔符是纯上下文，mask=0。</li>
-      <li>观察位 logprob 用 <b>0.0 显式占位</b>——是「非概率」，所有统计必须经 mask 排除（sequence.py:30）。</li>
-      <li>任何历史改写（压缩/截断/分支/回滚）→ <code>history_rewritten=True</code> → <b>拒绝整个 episode</b>，绝不重 tokenize 收尾消息来圆（sequence.py:210-213）。</li>
-    </ul>
+    <div class="mask-legend">
+      <span><i style="background:var(--mint)"></i>mask=1：模型生成的原生 token（带真实 logprobs），可训练</span>
+      <span><i style="background:var(--yellow)"></i>mask=0：观察与模板后缀，纯上下文（logprob 位用 0.0 显式占位）</span>
+      <span><i style="background:var(--paper); border:1px solid var(--line)"></i>prompt：首轮冻结，永不重编码</span>
+    </div>
   </div>
   <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/sequence.py:202-244（节选）</span><span>组装核心循环</span></div>
-<pre><code>for index, segment in enumerate(per_call_segments):
+    <span class="code-path"><i>▸</i> src/integrations/verl/sequence.py:202-244（节选）· 组装核心循环</span>
+<pre>for index, segment in enumerate(per_call_segments):
     if segment.get("history_rewritten", False):
         raise ContractValidationError(
             f"{field} rewrote generation history; episode is not trainable"
@@ -555,66 +529,55 @@ if probs is None or len(probs) != len(ids) or not all(math.isfinite(p) for p in 
         response_ids.extend(context_suffix)
         response_mask.extend([0] * len(context_suffix))  # 观察/模板 → 纯上下文
         response_logprobs.extend([_OBSERVATION_LOGPROB_PLACEHOLDER] * len(context_suffix))
-        tool_rounds += 1</code></pre>
+        tool_rounds += 1</pre>
   </div>
-  <div class="card accent-green">
-    <h4>为什么这条路能「无损」接上 verl</h4>
-    <p class="desc" style="margin:6px 0">
-      verl 的 <code>_agent_loop_postprocess</code> 对返回的 <code>AgentLoopOutput</code> <b>从不重新 tokenize</b>：response_ids 原样右填充，完全信任
-      <code>response_mask</code>（1=LLM 生成，0=观察）和 <code>response_logprobs</code>。这与我们 <code>AssembledSequence</code> 的语义逐字段同构——
-      所以经过认证的序列映射成 verl 的类型时零损失。这就是整个接入设计的支点。
-    </p>
+  <div class="tri-cards">
+    <article style="background: var(--mint); border-color: rgba(27,122,85,.35);"><span style="color:var(--mint-deep)">Why lossless</span><h4>为什么能「无损」接上 verl</h4><p style="color:var(--ink-2)">verl 的 _agent_loop_postprocess 对返回的 AgentLoopOutput <b>从不重新 tokenize</b>：response_ids 原样右填充，完全信任 response_mask（1=LLM 生成，0=观察）与 response_logprobs。这与 AssembledSequence 的语义逐字段同构——这就是整个接入设计的支点。</p></article>
+    <article><span>History rewrite</span><h4>改写即拒绝</h4><p>任何历史改写（压缩/截断/分支/回滚）→ history_rewritten=True → 拒绝整个 episode，绝不重 tokenize 收尾消息来圆（sequence.py:210-213）。</p></article>
+    <article><span>Placeholder</span><h4>0.0 是「非概率」</h4><p>观察位 logprob 用 0.0 显式占位——不是概率值；所有统计必须经 mask 排除（sequence.py:30）。占位让数组天然对齐，mask 让损失天然正确。</p></article>
   </div>
 </section>
 
-<!-- ============ 2 数据清洗 ============ -->
-<section id="clean">
-  <div class="sec-head"><span class="sec-no">2</span><h2>模块二 · 数据清洗：认证不过，一步也不进训练器</h2></div>
-  <p class="sec-lead">
-    清洗在本项目里不是一个后处理脚本，而是<b>嵌在 generate_sequences 与训练器之间的门禁</b>。它的契约是批级的
-    （单一行为策略、episode 唯一、组规模、任务绑定、组内奖励方差），而框架的 <code>AgentLoopBase.run</code> 是逐样本的——
-    所以认证必须放在比 loop 高一层、比 trainer 低一层的 manager 上，且<b>失败必须 fail-closed</b>。
-  </p>
+<!-- ============ 02 数据清洗 ============ -->
+<section class="dark-section" id="cleaning">
+  <div class="section-heading light-heading">
+    <div>
+      <div class="section-kicker">02 · Data Cleaning</div>
+      <h2>认证不过，一步也不进训练器。</h2>
+    </div>
+    <p>清洗不是后处理脚本，而是<b style="color:#fff">嵌在 generate_sequences 与训练器之间的门禁</b>。契约是批级的（单一行为策略、episode 唯一、组规模、任务绑定、组内方差），而框架的 AgentLoopBase.run 是逐样本的——所以认证放在比 loop 高一层、比 trainer 低一层的 manager 上，且失败必须 fail-closed。</p>
+  </div>
+  <p class="big-quote">manager 从不算 advantage、不碰权重、不训练；它只做三件事：把当前轮策略注入批次、更新前验证整批、留下可审计的 lineage 记录。</p>
 
-  <!-- 2.1 -->
-  <h3 class="sub" id="clean-arch">2.1 为什么门禁长在 manager 上 <span class="fref">verl_manager.py:1-26 模块注释即答案</span></h3>
-  <div class="card accent-cyan">
-    <ul style="color:var(--muted); font-size:13.5px; margin-left:18px;">
-      <li><b>粒度错配</b>：GRPO 的组语义（同题 n 样本、组内方差）只有在凑齐整批后才能判定；逐样本的 loop 判不了。</li>
-      <li><b>时机</b>：<code>CertifiedVerlAgentLoopManager.generate_sequences</code> 在框架的生成调用返回前执行认证——认证在训练前、失败不能旁路，这是把门禁放这里的全部意义。</li>
-      <li><b>归属</b>：manager 从不算 advantage、不碰权重、不训练；它只做三件事——把当前轮策略注入批次、更新前验证整批、留下可审计的 lineage 记录（<code>certified-batch-attempt{N}.json</code>）。</li>
-    </ul>
+  <div class="sub-kicker">三级清洗漏斗 + 一次最终校验</div>
+  <div class="result-table">
+    <div class="result-head"><span>Stage</span><span>检查内容</span><span>失败处置</span></div>
+    <div class="result-row">
+      <div class="lv">L1<small>per-episode</small></div>
+      <div><h4>逐 episode 认证（生成时 + 复检各一次）</h4><p>episode 内 verifier 终止性判定；<code>on_policy_rl_verdict == ELIGIBLE</code>；管理器再从<b>原始落盘 episode</b> 跑一遍 <code>certify_for(…, ON_POLICY_RL)</code> 全新认证</p></div>
+      <span class="tone-badge tone-bad">缺证据 → raise</span>
+    </div>
+    <div class="result-row">
+      <div class="lv">L2<small>evidence</small></div>
+      <div><h4>证据绑定校验</h4><p>artifact/bundle checksum 与 admitted-sequence 引用一致；从 model-evidence.jsonl 重新组装，四个数组逐元素比对；reward 与 verifier 判定一致</p></div>
+      <span class="tone-badge tone-bad">不一致 → raise</span>
+    </div>
+    <div class="result-row">
+      <div class="lv">L3<small>batch gate</small></div>
+      <div><h4>批级门禁 certify_batch（五规则）</h4><p>单一行为策略且 == 本轮策略 / episode 全局唯一 / 每组 ≥ minimum_group_size / 组内不混任务 / <b>组内奖励方差 ≠ 0</b></p></div>
+      <span class="tone-badge tone-neutral">平批 → redraw ≤ max_attempts</span>
+    </div>
+    <div class="result-row">
+      <div class="lv">L4<small>returned</small></div>
+      <div><h4>_verify_returned_batch：默认框架也会出错</h4><p>逐样本核对返回 tensor：数量、episode id、uid 组、token、mask、padding 不被训练、native logprobs、reward；证据目录数 == 批大小</p></div>
+      <span class="tone-badge tone-bad">任一不符 → raise</span>
+    </div>
   </div>
 
-  <!-- 2.2 -->
-  <h3 class="sub" id="clean-funnel">2.2 三级清洗漏斗 + 一次最终校验</h3>
-  <div class="funnel">
-    <div class="fstage"><div class="fno">L1</div><div>
-      <div class="ft">逐 episode 认证（生成时 + 复检各一次）</div>
-      <div class="fd">episode 内 verifier 给出终止性判定；<code>on_policy_rl_verdict == ELIGIBLE</code>；管理器再从<b>原始落盘 episode</b> 跑一遍 <code>certify_for(…, ON_POLICY_RL)</code> 全新认证</div></div>
-      <div class="fdrop">缺证据 / 无判定 → raise</div></div>
-    <div class="fun-sep">↓ <small>每一 episode</small></div>
-    <div class="fstage"><div class="fno">L2</div><div>
-      <div class="ft">证据绑定校验</div>
-      <div class="fd">artifact/bundle checksum 与 admitted-sequence 记录的引用一致；从 model-evidence.jsonl 重新组装序列，四个数组逐元素比对；reward 与 verifier 判定一致</div></div>
-      <div class="fdrop">不一致 → raise（fail-closed）</div></div>
-    <div class="fun-sep">↓ <small>整批凑齐后</small></div>
-    <div class="fstage"><div class="fno">L3</div><div>
-      <div class="ft">批级门禁 certify_batch</div>
-      <div class="fd">单一行为策略且 == 本轮策略 / episode 全局唯一 / 每组 ≥ minimum_group_size / 组内不混任务 / <b>组内奖励方差 ≠ 0</b>（否则 DegenerateBatchError → 重采样）</div></div>
-      <div class="fdrop">平批 → redraw ≤ max_attempts</div></div>
-    <div class="fun-sep">↓ <small>框架返回批次后</small></div>
-    <div class="fstage"><div class="fno">L4</div><div>
-      <div class="ft">_verify_returned_batch：默认框架也会出错</div>
-      <div class="fd">逐样本核对框架返回的 tensor：数量不变、episode id 合法且唯一、uid 组未被改、prompt/response token 与认证序列逐 token 一致、mask 未被篡改、padding 不被训练、native logprobs 未被动过、reward 与序列一致；attempt 目录证据数 == 批大小</div></div>
-      <div class="fdrop">任一不符 → raise</div></div>
-  </div>
-
-  <!-- 2.3 -->
-  <h3 class="sub" id="clean-gate">2.3 批级门禁五规则 <span class="fref">src/integrations/verl/manager.py:77-132</span></h3>
+  <div class="sub-kicker">批级门禁五规则 · src/integrations/verl/manager.py:77-132</div>
   <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/manager.py（certify_batch 核心）</span><span>通过后产出的 CertifiedBatch 就是「本批允许恰好一次更新」的凭据</span></div>
-<pre><code>if not items:
+    <span class="code-path"><i>▸</i> manager.py（certify_batch 核心）· 通过后产出的 CertifiedBatch = 「本批允许恰好一次更新」的凭据</span>
+<pre>if not items:
     raise ContractValidationError("certify_batch received an empty batch")
 if len({item.policy_fingerprint for item in items}) != 1:
     raise ContractValidationError("batch mixes behavior policies")      # ① 单一行为策略
@@ -631,25 +594,18 @@ for group_id, members in groups.items():
         raise ContractValidationError(f"group {group_id!r} mixes tasks")  # ④ 任务绑定
     if len({item.reward for item in items if item.group_id == group_id}) < 2:
         raise DegenerateBatchError(                                       # ⑤ 组内方差
-            f"group {group_id!r} has no intra-group reward variance")</code></pre>
+            f"group {group_id!r} has no intra-group reward variance")</pre>
   </div>
-  <div class="card accent-yellow">
-    <h4>规则⑤为什么是 DegenerateBatchError 而不是普通 raise</h4>
-    <p class="desc" style="margin:6px 0">
-      GRPO 的 advantage 是组相对散度：<code>A_i = (r_i − mean(r_group)) / std(r_group)</code>。全同奖励的组减均值后<b>恒为 0</b>，
-      对优化器是纯噪声。这样的批<b>拒绝是正确的，终止整个 run 是错的</b>——什么都没被消耗，诚实的动作是重画一批。
-      所以「无方差」被编码成独立异常类型，成为重采样策略唯一的批级触发器。
-    </p>
+  <div class="decision-explain">
+    <h3>为什么规则⑤是独立的 DegenerateBatchError</h3>
+    <p>GRPO 的 advantage 是组相对散度：<b>A_i = (r_i − mean(r_group)) / std(r_group)</b>。全同奖励的组减均值后<b>恒为 0</b>，对优化器是纯噪声。拒绝这样的批是正确的；<b>终止整个 run 是错的</b>——什么都没被消耗，诚实的动作是重画一批。</p>
+    <p>所以「无方差」被编码成独立异常类型，成为重采样策略唯一的批级触发器。实测 Mbpp/118 解出率约 1/16，n=8 时平批概率不低——重采样是<b>常规路径</b>，不是异常路径（r3 甚至把 max_attempts 设到 20）。</p>
   </div>
 
-  <!-- 2.4 -->
-  <h3 class="sub" id="clean-resample">2.4 重采样策略：只重试「抽签性质」的失败 <span class="fref">src/integrations/verl/resampling.py</span></h3>
-  <p class="desc">
-    重采样策略被刻意放在独立模块、远离 Ray 和 verl——它是框架侧唯一值得脱离 GPU 测试的决策，而它防的失败是<b>沉默的</b>（见 2.6 的坑一）。
-  </p>
+  <div class="sub-kicker">重采样策略 · src/integrations/verl/resampling.py — 只重试「抽签性质」的失败</div>
   <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/resampling.py:61-77</span><span>重试白名单：DegenerateBatchError + RetryableRolloutError</span></div>
-<pre><code>for attempt in range(max_attempts):
+    <span class="code-path"><i>▸</i> resampling.py:61-77 · 重试白名单：DegenerateBatchError + RetryableRolloutError</span>
+<pre>for attempt in range(max_attempts):
     try:
         batch = await generate(attempt)          # 必须先盖 attempt 章 → 写进新 episode 目录
         certificate = certify(batch, attempt)
@@ -662,32 +618,24 @@ for group_id, members in groups.items():
         raise ContractValidationError(f"{run_id}: batch rejected: {exc}") from exc
     return CertifiedAttempt(attempt=attempt, batch=batch, certificate=certificate)
 raise ContractValidationError(
-    f"{run_id}: no attempt produced a certifiable batch after {max_attempts} attempts; …")</code></pre>
+    f"{run_id}: no attempt produced a certifiable batch after {max_attempts} attempts; …")</pre>
   </div>
-  <table>
-    <tr><th style="width:30%">失败类型</th><th>处置</th><th>理由</th></tr>
-    <tr><td>组内零方差（DegenerateBatchError）</td><td>重画，计入 max_attempts</td><td>抽签性质：换一批样本可能就有信号；未消耗任何东西</td></tr>
-    <tr><td>单 episode 瞬态失败（RetryableRolloutError）</td><td>整 attempt 重画</td><td>桥/解析的偶发故障是「这一抽」的属性，不是证据矛盾；attempt 目录独立，失败轮可审计</td></tr>
-    <tr><td>确定性契约违规（其余 ContractValidationError）</td><td><b>第一次就 fail，不重试</b></td><td>重试要花一整轮 rollout 才能复现同一失败，而且把同一个症状报告三遍；确定性问题要的是修代码</td></tr>
-    <tr><td>max_attempts 耗尽</td><td>终止 run，报最后一次错误</td><td>诚实失败优于静默跳过；resume 从同一任务重放，会再暴露一次</td></tr>
-  </table>
-  <div class="card accent-violet">
-    <h4>重画的可审计性设计</h4>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li>attempt 号在生成<b>前</b>盖进批次（<code>_stamp_attempt</code>），所以重画写的是全新 episode 目录，不会与被拒 attempt 撞名（verl_manager.py:253-270）。</li>
-      <li>每次拒绝落盘 <code>rejected-attempt{N}.json</code>（reason + message + manager_version）——「重画过的批次不能伪装成一次过」（verl_manager.py:235-251）。</li>
-      <li>通过后落盘 <code>certified-batch-attempt{N}.json</code>，附 <code>batch_checksum</code>（sha256），lineage 可复查（verl_manager.py:386-395）。</li>
-    </ul>
+  <div class="result-table">
+    <div class="result-head"><span>失败类型</span><span>处置与理由</span><span>语义</span></div>
+    <div class="result-row"><div class="lv">R1<small>variance</small></div><div><h4>组内零方差（DegenerateBatchError）</h4><p>抽签性质：换一批可能就有信号；未消耗任何东西，重画成本 = 一次 rollout</p></div><span class="tone-badge tone-neutral">redraw</span></div>
+    <div class="result-row"><div class="lv">R2<small>transient</small></div><div><h4>单 episode 瞬态失败（RetryableRolloutError）</h4><p>桥/解析偶发是「这一抽」的属性，不是证据矛盾；attempt 目录独立，失败轮可审计</p></div><span class="tone-badge tone-neutral">redraw</span></div>
+    <div class="result-row"><div class="lv">R3<small>deterministic</small></div><div><h4>确定性契约违规（其余 ContractValidationError）</h4><p>重试要花一整轮 rollout 复现同一失败，还把症状报三遍；确定性问题要的是修代码</p></div><span class="tone-badge tone-bad">first raise</span></div>
+    <div class="result-row"><div class="lv">R4<small>exhausted</small></div><div><h4>max_attempts 耗尽</h4><p>诚实失败优于静默跳过；resume 重放同一任务会再暴露一次——这逼你换数据而不是掩盖</p></div><span class="tone-badge tone-bad">run 终止</span></div>
+  </div>
+  <div class="decision-explain">
+    <h3>重画的可审计性设计</h3>
+    <p>attempt 号在生成<b>前</b>盖进批次（_stamp_attempt），重画写全新 episode 目录，不与被拒 attempt 撞名（verl_manager.py:253-270）；每次拒绝落盘 <b>rejected-attempt{N}.json</b>（reason + message + manager_version）——「重画过的批次不能伪装成一次过」（verl_manager.py:235-251）；通过后落盘 <b>certified-batch-attempt{N}.json</b> 附 batch_checksum（sha256），lineage 可复查。</p>
   </div>
 
-  <!-- 2.5 -->
-  <h3 class="sub" id="clean-identity">2.5 权重身份绑定：「这批样本到底是谁生成的」 <span class="fref">verl_manager.py:165-184</span></h3>
-  <p class="desc">
-    on-policy RL 的前提是行为策略 == 目标策略。引擎在 <code>backend=naive</code> 下无法自报步数，所以身份改由<b>框架自己写出的 checkpoint</b> 钉死：
-  </p>
+  <div class="sub-kicker">权重身份绑定 · verl_manager.py:165-184 —「这批样本到底是谁生成的」</div>
   <div class="codecard">
-    <div class="codehead"><span class="path">src/integrations/verl/verl_manager.py:165-184（节选）</span><span>每个 generate_sequences 调用开头</span></div>
-<pre><code>engine_step = int(prompts.meta_info["global_steps"]) - 1   # 本步采样用的上一步权重
+    <span class="code-path"><i>▸</i> verl_manager.py:165-184（节选）· 每个 generate_sequences 调用开头</span>
+<pre>engine_step = int(prompts.meta_info["global_steps"]) - 1   # 本步采样用的上一步权重
 if engine_step < 0:
     raise ContractValidationError("training step must identify the preceding synchronized policy")
 if engine_step:
@@ -702,359 +650,309 @@ if engine_step:
     self.policy = replace(self.initial_policy, adapter_revision=digest.hexdigest(),
                           policy_generation=f"P{engine_step}")
 prompts.non_tensor_batch["pi_policy_fingerprint"] = ...      # 指纹盖进批次，随批下行
-prompts.non_tensor_batch["pi_expected_engine_step"] = ...    # 传输层逐调用校验引擎侧一致性</code></pre>
+prompts.non_tensor_batch["pi_expected_engine_step"] = ...    # 传输层逐调用校验引擎侧一致性</pre>
   </div>
-  <div class="card accent-green">
-    <h4>三层绑定（smoke27 实测生效）</h4>
-    <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-      <li><b>轮级</b>：round-policy.json 落在每个 generation 目录，记录本批使用的策略指纹。</li>
-      <li><b>episode 级</b>：指纹随批次下行进每个 episode 的 identity 与证据。</li>
-      <li><b>批级</b>：门禁校验批内单一指纹且等于本轮策略（manager.py 规则①）。</li>
-    </ul>
-    <p class="note">
-      关键实测：smoke27 的 generation-1 rollout 消费的是 <code>global_step_1/actor</code> 的摘要——即框架更新并同步后的权重。
-      「更新后再采样」由<b>框架自己写的 checkpoint 摘要</b>作证，而不是引擎自报（它自报不了）。
-      已知缺口照实记录：引擎侧步数自证缺失写入 <code>engine-notes/*.step.jsonl</code> 与 extra_fields 的
-      <code>unconfirmed_engine_steps</code>，不许当成已确认。
-    </p>
+  <div class="gate-grid">
+    <article><span>Binding · Level 1</span><h3>轮级 round-policy.json</h3><p>落在每个 generation 目录，记录本批使用的策略指纹。</p></article>
+    <article><span>Binding · Level 2</span><h3>episode 级指纹随批下行</h3><p>指纹进每个 episode 的 identity 与证据，episode 无法声称来自别的策略。</p></article>
+    <article><span>Binding · Level 3</span><h3>批级单一指纹校验</h3><p>门禁规则①校验批内单一指纹且 == 本轮策略（manager.py）。</p></article>
+  </div>
+  <div class="decision-explain">
+    <h3>引擎不自报步数时的处理：记录缺口，不许掩盖</h3>
+    <p><code>checkpoint_engine.backend=naive</code>（出货默认）下引擎永远报 None。身份改由<b>框架自己写出的 checkpoint</b> 钉死：smoke27 实测 generation-1 的 rollout 消费 <code>global_step_1/actor</code> 的目录树摘要——「更新后再采样」由框架 artifact 作证，而不是引擎自报（它自报不了）。缺口逐 episode 写入 engine-notes/*.step.jsonl 与 extra_fields 的 <code>unconfirmed_engine_steps</code>。</p>
   </div>
 
-  <!-- 2.6 -->
-  <h3 class="sub" id="clean-bugs">2.6 两个著名的坑（面试讲这两个最加分）</h3>
-  <div class="two-col">
-    <div class="card accent-red">
-      <h4>坑一：tuple != list，门禁永远不可能通过（smoke24）</h4>
-      <p class="desc" style="margin:4px 0 8px">
-        <code>ProducerArtifact.from_dict</code> 会对 payload <b>深度冻结</b>，存下来的数组是 tuple；重新组装出来的是 list。
-        而 Python 里 <code>tuple == list</code> 恒为 False——直接比较容器，门禁永远拒绝。smoke24 上四个数组逐元素完全一致
-        （同长度、无差异下标、<code>list(stored) == list(rebuilt)</code>），批照样被拒，且事后从 episode 目录完全看不出原因——两边都是持久化的。
-      </p>
-      <div class="codecard" style="margin:8px 0 0">
-        <div class="codehead"><span class="path">sequence.py:98-118（修复后）</span></div>
-<pre><code>def training_sequence_matches(stored, expected):
-    """Container types must not decide this. …
-    Comparing the containers directly therefore made
-    the batch gate unsatisfiable … Compare the elements."""
-    if not isinstance(stored, Mapping) or set(stored) != set(expected):
-        return False
-    for key, value in expected.items():
-        stored_tokens = _as_token_list(stored[key])
-        expected_tokens = _as_token_list(value)
-        if stored_tokens is None or stored_tokens != expected_tokens:
-            return False
-    return True</code></pre>
+  <div class="sub-kicker">两个著名的坑 · 面试讲这两个最加分</div>
+  <div class="attack-list">
+    <div class="attack-row">
+      <div class="attack-q">「tuple != list，门禁永远不可能通过。」<small>smoke24 · 定位难点：两边都持久化，事后无法复现差异</small></div>
+      <div class="attack-a">ProducerArtifact.from_dict 会对 payload <b>深度冻结</b>：存证是 tuple，重建是 list，直接比较容器恒 False——smoke24 上四数组逐元素完全一致，批照样被拒。修复一：training_sequence_matches 逐元素比较，容器类型不参与判定；修复二：describe_sequence_difference 输出每字段长度 + 首个差异下标，「token 相同、容器不同」被如实报成<b>比较 bug</b> 而不是数据问题——修复前那条报错不指 episode 不指字段，代价是一整轮 GPU 猜谜。<span class="evi">证据：sequence.py:98-164 · commit 6ec0ad5。元教训：比较语义要绑定数据的序列化语义。</span></div>
+    </div>
+    <div class="attack-row">
+      <div class="attack-q">「在自己 except 里 re-raise 的重试 = 单发。」<small>smoke26 · 静默失败：不崩溃、无栈，只是让 max_attempts 失效</small></div>
+      <div class="attack-a">旧版 attempt 循环在 except 分支直接再抛——<b>看起来像重试循环，行为是单发</b>：一个零方差批直接终结整个 run。修复：重采样策略抽成独立纯函数 certify_with_resampling（不 import Ray/verl，CPU 可单测），白名单重试 + 拒绝落盘（commit bc06a5f）。沉淀的原则：<b>让值得测的决策住在值得测的地方</b>——它是框架侧管理器里唯一能脱离 GPU 验证的部分。<span class="evi">证据：resampling.py:8-15 注释原话 “looks like a retry loop and behaves like a single shot” · smoke26 → smoke27 同配置对照。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 深挖题 ============ -->
+<section class="white-section" id="qa">
+  <div class="section-heading">
+    <div>
+      <div class="section-kicker">03 · Expect These Questions</div>
+      <h2>面试官会深挖的 16 个问题。</h2>
+    </div>
+    <p>按真实面试节奏组织：设计动机 → 技术选型与对比 → 踩坑与优化 → 异常与边界。每题先给「一句话先答」，再展开；证据都标了出处。<b style="color:var(--ink)">先自测，再展开对照。</b></p>
+  </div>
+
+  <div class="qa-group"><i>A</i>设计动机</div>
+  <div class="glossary-grid">
+    <details>
+      <summary>verl 自带 tool_agent_loop，为什么要自己写一个 AgentLoop？<small>追问：自写的边界在哪，哪些坚决不碰？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>框架的 loop 能跑多轮工具调用，但给不了我们需要的<b>证据平面</b>——逐调用原生 token ids/logprobs、身份绑定、episode 内 verifier 与认证序列；我们换的是 loop 的「策略」，不是 loop 的「机器」。</div>
+        <ul>
+          <li><b>证据需求</b>：训练要的不是 chat 文本，是「策略在某确定权重下逐 token 的真实生成」。Pi 只能经我们的代理访问引擎，token 走 AsyncLLMServerManager.generate(prompt_ids=…) 的 token RPC。</li>
+          <li><b>mask 语义</b>：多轮要区分「模型生成的」与「喂回的观察」，response_mask 是我们的语义——正好利用 _agent_loop_postprocess 不重 tokenize 的事实。</li>
+          <li><b>奖励语义</b>：reward 必须来自 episode 内自己的 verifier（1/0），verl 的 reward manager 被绕过——这一点要如实说（实测 reward timing 4.77e-05s，是空转）。</li>
+          <li><b>边界</b>：训练循环、advantage、PPO-clip、FSDP2、优化器、权重同步、checkpoint、vLLM 引擎——一行不替代（smoke27 实测 update_actor 186.8/188.1s、update_weights 2.90/2.83s）。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>四个官方扩展点（§00 表）；pi_loop.py:1-22 模块注释。</div>
+        <div class="followup"><b>可能追问：</b>「为什么不往 verl 提 PR？」——证据捕获、fail-closed 认证是数据平面的私货不是通用需求；挂扩展点上升级框架零成本。</div>
       </div>
-      <p class="note">配套加了 <code>describe_sequence_difference</code>：报每个字段的长度与首个差异下标；「token 相同、容器不同」会被如实报成<b>比较 bug</b> 而不是数据问题——修复前那条报错既不指 episode 也不指字段，代价是一整轮 GPU 猜谜。</p>
-    </div>
-    <div class="card accent-red">
-      <h4>坑二：在自己 except 里 re-raise 的重试 = 单发（smoke26）</h4>
-      <p class="desc" style="margin:4px 0 8px">
-        旧版 attempt 循环在 <code>except</code> 分支里直接再抛——<b>看起来像重试循环，行为是单发</b>。
-        <code>max_attempts</code> 是一份「无法生效的配置」：一个零方差批直接终结整个 run。
-      </p>
-      <div class="codecard" style="margin:8px 0 0">
-        <div class="codehead"><span class="path">反例 → 修复（bc06a5f）</span></div>
-<pre><code># 修复前（形状）
-for attempt in range(max_attempts):
-    try:
-        ...certify...
-    except DegenerateBatchError:
-        raise          # ← 循环第一次迭代即退出，attempt 永远 = 0
-
-# 修复后：resampling.py 把策略独立成可单测的纯函数，
-# 只 continue 白名单内的两类错误（见 2.4）</code></pre>
+    </details>
+    <details>
+      <summary>认证/清洗为什么放在 manager 层，而不是每个样本的 loop 里？<small>追问：放在 trainer 侧不行吗？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>我们的契约是<b>批级</b>的（单一行为策略、episode 唯一、组规模、任务绑定、组内方差），而 AgentLoopBase.run 是<b>逐样本</b>的——组语义只有凑齐整批才判得了。</div>
+        <ul>
+          <li>放在 manager（generate_sequences 内、返回前），认证落在「生成之后、trainer 消费之前」，<b>失败无法被旁路</b>：raise 让这次生成调用直接失败，trainer 拿不到批。</li>
+          <li>放 trainer 侧（reward/advantage 阶段）太晚：批已进训练数据管线，拒绝意味着 trainer 代码也要改——而我们对训练器零侵入。</li>
+          <li>manager 只做三件事：注入当前轮策略、认证整批、留 lineage 记录。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>verl_manager.py:12-25（模块注释就是标准答案）；manager.py:77-132。</div>
       </div>
-      <p class="note">教训双联：① 静默失败——这段代码不抛栈不崩溃，只是让配置失效，只有跑到第 2 个 attempt 才会暴露；② 把重试策略抽成无 GPU 依赖的独立模块，就是为了让它在单测里被逼出来。</p>
-    </div>
+    </details>
+    <details>
+      <summary>GRPO 下零方差批为什么必须丢弃？丢弃后为什么是「重画」而不是「跳过这一步」？<small>追问：能不能给个小的默认 advantage？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>GRPO 的 advantage 是组相对散度，全同奖励的组减均值后恒为 0，这批数据对优化器是无信号噪声；重画是因为<b>什么都没被消耗</b>，且这是抽签性质的问题——下一批可能有信号。</div>
+        <ul>
+          <li>不能造信号：给默认 advantage 等于把「没有证据的梯度」注入更新，与 fail-closed 哲学直接冲突。</li>
+          <li>重画成本 = 一次 rollout；拒绝成本 = 一个 step。实测解出率约 1/16，重采样是常规路径——r3 把 max_attempts 设到 20。</li>
+          <li>重画必须可审计：attempt 号预盖进批次、rejected-attempt{N}.json 落盘，防止重画的批伪装成一次过。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>resampling.py:1-15 模块注释；r3 筛题规则（base=pass 带 15–65%）正是为了让重采样保持低频。</div>
+        <div class="followup"><b>可能追问：</b>「max_attempts 耗尽怎么办？」——终止 run 报最后一次错误；resume 重放同一任务再暴露一次，逼你换数据。</div>
+      </div>
+    </details>
+    <details>
+      <summary>为什么要做「prompt 即账本」的 append-only 设计？<small>追问：严格契约是什么，为什么最后不需要松弛它？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>多轮对话若每轮从 messages 重新渲染 prompt，历史里的模型 token 就会被重新 tokenize 改写——训练信号不再对应真实生成。账本让 prompt_{i+1} = prompt_i + gen_i + obs_i <b>由构造成立</b>，原定严格契约无需任何松弛。</div>
+        <ul>
+          <li>只有两种编码发生：首轮冻结 prompt、每轮<b>新</b>观察后缀；已生成 token 永远逐字进账本。</li>
+          <li>防御：既有消息全文比对；新 assistant 回合比承重字段（tool_calls 必须一致、content 空不判改写——实测 Pi 回 content: null）；模板边界 after.startswith(before)。</li>
+          <li>终止符问题：vLLM 不返还特殊 stop token，&lt;|im_end|&gt; 缺席分不清「结束」与「截断」——账本记 terminator_stripped，下轮把终止符作为纯上下文补回（mask=0、无 logprob、永不进 loss）。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>token_context.py:1-11、:112-157；实测 smoke16 真实消息通过守卫且仅追加 20 个后缀 token。</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="qa-group"><i>B</i>技术选型与对比</div>
+  <div class="glossary-grid">
+    <details>
+      <summary>rollout 走 token 级 RPC 而不是 OpenAI chat API，为什么？<small>追问：由此多出了哪些必须自己处理的问题？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>chat API 只给文本，训练要的是<b>每轮的原生 token ids 和 logprobs</b>——这是行为策略证据（BEHAVIOR_LOGPROBS）的唯一来源，也绕开任何 decode/re-encode 漂移。</div>
+        <ul>
+          <li>token RPC 直接拿 token_ids + log_probs，逐 token 校验（数量对齐、全部有限），缺失即 raise。</li>
+          <li>代价是自己接管协议层：stop 控制（stop_token_ids=[im_end]）、预算（min(max_tokens, remaining)）、上下文拼接（账本）、工具解析、特殊 token 不返还的处理。</li>
+          <li>采样参数显式进身份：sampling_fingerprint = sha256({temperature, top_p})，与策略指纹一起回答「这批样本是谁、在什么采样配置下生成」。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>native_transport.py:188-208；E 阶段数值证明：rollout 侧与训练侧重算 logprob Pearson 0.99957/0.99959。</div>
+      </div>
+    </details>
+    <details>
+      <summary>工具调用解析为什么不能只信 vLLM 的 tool parser？「不修复」原则是什么？<small>追问：parser 自己抛异常呢？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>smoke16 实测 10/10 的生成里 hermes parser 解析出 0 个调用（模型输出裸 JSON 不带标签）——只信它就没有工具循环；同时解析器只做<b>提取</b>，绝不修复，坏输出交给奖励与批门禁裁决。</div>
+        <ul>
+          <li>三级策略：上游有结果 → 校验标签数与解析数一致（混合状态 raise，防半信半疑）；上游无结果但有标签 → 视为 malformed；全无 → 回落仓库唯一严格提取器 src.capture.tool_calls。</li>
+          <li>不修复：未声明工具名 / 坏 JSON / 空 arguments → 产出空，无猜测。修复会制造「模型没说过的话」，污染行为策略证据。</li>
+          <li>最新兜底：parser 自身抛异常（TypeError: unhashable type: 'dict' 实测出现过）→ 同样回落严格提取器——一个坏抽样不应报废整批。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>native_transport.py:16-50；token_context.py:16-32（工具参数 JSON 校验，坏参即 raise）。</div>
+      </div>
+    </details>
+    <details>
+      <summary>数据集只有几十行时，「加数据」到底改变了什么？为什么筛掉 fail/fail 的题？<small>追问：一行数据为什么不是意外？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>train_batch_size=1 时<b>行数 = 步数</b>（1 行 × 5 epochs = 5 步，且是不同的题）；筛掉 fail/fail 是因为 p≈0 的题永远全错、必然平批死锁——RL 只能从「有时对有时错」的数据里学。</div>
+        <ul>
+          <li>一行 = 一个组（行按 rollout.n 展开成 n 个共享 uid 的样本），加行改变的是<b>任务多样性 × 步数</b>，不是批大小。</li>
+          <li>r3 分带：pass/pass 247、pass/fail 54、fail/fail 76、fail/pass 1；只取 base=pass 带，60 题 × 5 epochs = 300 步。</li>
+          <li>「只有一行」与「每步赌解出」是<b>两种失败同一个根</b>：前者是多样性（加题即解），后者是单批可认证性（1000 行也救不了，每行仍要独立过闸）。</li>
+          <li>当初一行是收尾口径：APPS 出不了方差（0/80），选一个已知解出率的载体题先打通链路——「打通链路优先于做对任务」。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>build_verl_pi_dataset.py:1-22 注释；r3 筛题记录（bands 247/54/76/1）；APPS 80/80 全灭实测。</div>
+      </div>
+    </details>
+    <details>
+      <summary>清洗失败在框架路径里是 raise（fatal），在旧自研路径里是 report（重采样）——为什么接受这种不对称？<small>追问：那框架路径会不会「更脆」？</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>语义没有变——两边都 fail-closed（不合格的数据绝不训练）；变的是<b>失败的表达方式</b>：框架路径里 raise 是唯一能让整批停在训练器之外的机制，再配重采样把「可重试的失败」接住。</div>
+        <ul>
+          <li>旧路径：门禁失败是一份 report（manager_certified: false），轮次重新采样——因为采样和门禁都是我们的代码，可以礼貌地重试。</li>
+          <li>框架路径：raise 是框架 API 内表达「这批不可用」的唯一方式；raise 之后由 manager 的重采样层决定是否重画。</li>
+          <li>看似「更脆」其实暴露了旧路径隐藏的问题：旧路径 1/4 解出率是运气（真实 ~1/16），样本从 4 扩到 16 后暴露的是<b>采样预算墙</b>，不是集成坏了。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>smoke24（漏斗 16→6→2 解出，批被 tuple/list bug 拒）；smoke25/26（1/16、0/16）；legacy 对照 stage_e_assemble.py:162 的 report 语义。</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="qa-group"><i>C</i>踩坑与优化</div>
+  <div class="glossary-grid">
+    <details>
+      <summary>讲一次「门禁永远不可能通过」的 bug。<small>考察点：怎么定位一个两边都持久化、无法复现差异的失败</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>tuple != list。ProducerArtifact.from_dict 深冻结 payload，存证是 tuple，重建是 list，直接比较容器恒 False——smoke24 上四数组逐元素完全一致，批照样被拒。</div>
+        <ul>
+          <li><b>定位难点</b>：两边都是持久化文件，事后无法复现「差异」；报错只说 "does not bind actual inference context"，不指 episode、不指字段——浪费一整轮 GPU 猜谜。</li>
+          <li><b>修复一</b>：training_sequence_matches 逐元素比较（_as_token_list 归一化），容器类型不参与判定。</li>
+          <li><b>修复二</b>：describe_sequence_difference 输出每字段长度 + 首个差异下标；「token 相同、容器不同」被如实报为比较 bug——把「不可诊断的失败」变成「自解释的失败」。</li>
+          <li><b>元教训</b>：比较语义要绑定数据的<b>序列化语义</b>（deep-freeze 是 from_dict 的行为，比较函数必须知道这件事）。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>sequence.py:98-164；commit 6ec0ad5；smoke24 记录。</div>
+      </div>
+    </details>
+    <details>
+      <summary>讲一次「配置存在但从未生效」的 bug。<small>考察点：静默失败的发现与防御</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>重试循环在自己 except 里 re-raise，max_attempts 看起来是重试配置、实际是单发——smoke26 一个零方差批直接终结了 run。</div>
+        <ul>
+          <li><b>为什么难发现</b>：不崩溃、无栈、日志正常——只有第二次 attempt 才会到来的路径从未被执行。</li>
+          <li><b>修复</b>：重采样策略抽成独立纯函数 certify_with_resampling（不 import Ray/verl，CPU 可单测），白名单重试 + 拒绝落盘；commit bc06a5f。</li>
+          <li><b>防御设计</b>：让「值得测的决策」住在值得测的地方——它是框架侧管理器里唯一能脱离 GPU 验证的部分。</li>
+          <li><b>白名单纪律</b>：确定性违规第一次就 raise——重试要花一整轮 rollout 复现同一失败，还把症状报三遍。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>resampling.py:8-15 注释原话；smoke26 → smoke27（同配置跑通两步）对照。</div>
+      </div>
+    </details>
+    <details>
+      <summary>一个「没有工具调用」的回合为什么从 raise 改成了合法样本？<small>考察点：门禁比契约更严时会发生什么</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>无工具回合仍然是样本：有动作（策略自己的 token）、有任务结局、有 reward，PPO 训练需要的全有；raise 把它当故障，代价是把同批正在跑的兄弟样本一起扔掉。</div>
+        <ul>
+          <li><b>实测代价</b>（smoke23）：认证本可给这个 episode 判 ELIGIBLE（score 0.0），但 raise 中止了整个 generate_sequences 的 gather，连带扔掉同批已进入第二次模型请求的 episode——<b>一个弱样本被放大成全批损失</b>。</li>
+          <li><b>裁决权归还</b>：「无学习信号」的裁决本来就在批门禁（零方差检查），不该由样本层越权。这样的批到批门禁依然是平批、依然会被重画——语义收敛。</li>
+          <li><b>留痕</b>：num_tool_rounds 保持事实可见，证据里看得到这是无观察回合。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>pi_loop.py:279-290 注释记录完整决策链；commit 33347d1。</div>
+        <div class="followup"><b>元教训：</b>门禁的严格度必须等于契约本身——更严不是更安全，是把裁决挪到了信息更少的位置。</div>
+      </div>
+    </details>
+    <details>
+      <summary>目录布局上踩过哪些坑？episode 命名为什么长这样？<small>考察点：文件系统即证据库的工程纪律</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>三代防撞 + 两个位置约束，全部来自真实故障：episode 目录 = session/gen-NNN/attempt-N/{run_id}-{slug}-{sample_token}，工作区必须住在整棵树之外。</div>
+        <ul>
+          <li><b>为什么不能只用 sample_token 命名</b>：trainer 会多次调用 generate_sequences（校验 + 每 step），同样的任务、同样的 token 再来一遍会改写上一轮目录——episode writer 对已存在根 fail-closed，全批死。所以每次调用有 gen-NNN，每次 run 有 session_id（run_id + 时间戳 + pid）。</li>
+          <li><b>attempt 维度</b>：重采样重画写新目录，旧 attempt 保持可审计。</li>
+          <li><b>工作区两坑</b>：放 episode 根之下，parents=True 提前建根，每个 episode 死在 orchestrator 的 mkdir(exist_ok=False)；放 attempt 目录旁边，批门禁把每个子目录当 episode。</li>
+          <li><b>dispatch-trace.jsonl</b>：每 episode 派发一行（pid、attempt、sample_token、output_dir 是否已存在），O_APPEND 防并发覆写，诊断失败绝不打断 rollout。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>pi_loop.py:87-106、:122-150；verl_manager.py:140-149。</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="qa-group"><i>D</i>异常与边界</div>
+  <div class="glossary-grid">
+    <details>
+      <summary>verifier 崩了（基础设施失败）为什么不能给 reward=0？<small>考察点：奖励完整性的定义</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>0 奖励是一个训练信号（「做错了」），基础设施失败不是信号（「没测成」）——把后者喂给训练器等于向梯度里注入谎言。</div>
+        <ul>
+          <li>只有终止性判定 PASSED/FAILED 才映射 1/0；其他一切（超时、输出缺失、状态码异常）一律 raise。</li>
+          <li>批门禁同构约束：episode summary 必须有终止性判定，否则该 attempt 直接被拒。</li>
+          <li>奖励一致性被复核：admitted-sequence 的 reward 必须等于 1.0 if PASSED else 0.0，框架返回的 rm_scores 也逐样本核对（L4）。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>pi_loop.py:293-304；verl_manager.py:289-294、:329-333。</div>
+      </div>
+    </details>
+    <details>
+      <summary>一个吃满 token 预算的回合是错误吗？截断、中止、完成怎么区分？<small>考察点：终止符语义 + 用框架语义对齐设计</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>吃满预算 = 截断，是一次<b>合法的截断动作</b>，照常训练——因为 verl 自己的 stock 多轮 loop 从不检查 EOS；中止（请求被取消）才不是回合，直接 raise。</div>
+        <ul>
+          <li><b>解码层三态</b>：模型采样到自己的 EOS / 配置的停止条件 / 预算打满。只有第一种是「完成」，第三种是「截断」——解码层概念，不是 RL 概念；单轮里它不改变任何下游计算，多轮里它决定下一轮上下文。</li>
+          <li><b>决定性证据</b>：verl 的 tool_agent_loop.py:246 把所有生成 token 无条件标 mask=1，:254 只按长度收尾，全文件 grep 不到任何 EOS 检查——对齐框架语义不是妥协。</li>
+          <li><b>实测依据</b>（smoke22）：四个 episode 全部 {tokens: 3584, budget: 3584, terminated: false}——P0 策略从不主动吐终止符；坚持要求终止符 = 零可训练样本。</li>
+          <li><b>留痕</b>：每回合记 terminated/tokens/budget/stop_reason，episode 级汇总 truncated_turns；终止符缺席下一轮补回（mask=0）。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>native_transport.py:240-256；token_context.py:167-198（accept 注释含框架行号）；engine-notes/*.turns.jsonl。</div>
+      </div>
+    </details>
+    <details>
+      <summary>引擎无法自报「我服务的是第几步权重」，身份怎么钉？<small>考察点：如何处理无法消除的证据缺口</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>不让引擎自证，改让<b>框架自己写出的 checkpoint</b> 作证：engine_step = global_steps − 1，把 global_step_N/actor 整棵目录树哈希进 adapter_revision；引擎侧缺口如实落盘，不许当成已确认。</div>
+        <ul>
+          <li><b>缺口根源</b>：checkpoint_engine.backend=naive 走 fsdp_workers.py:1735 的同步路径，update_weights 丢弃 global_steps，引擎侧永远报 None。</li>
+          <li><b>三层兜底</b>：轮级 round-policy.json → episode 级指纹随批下行 → 批级门禁校验单一指纹 == 本轮策略；引擎一旦真报步数，传输层立即校验（episode 内不变、等于期望值）。</li>
+          <li><b>缺口记录</b>：engine-notes/*.step.jsonl 逐调用写明 reason；extra_fields 暴露 unconfirmed_steps、engine_step_confirmed: false。</li>
+          <li><b>反面教材</b>：曾把 numpy 标量塞进 json.dumps → TypeError 逃逸成 502 团灭全批——证据通道自身的健壮性也是要设计的。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>native_transport.py:81-120、:209-219；verl_manager.py:165-184；smoke27 的 gen-001 digest == P1 实测。</div>
+      </div>
+    </details>
+    <details>
+      <summary>清洗都过了，为什么还要再校验框架返回的批？查什么？<small>考察点：信任边界——门禁的对手盘包括框架自身</small></summary>
+      <div class="answer">
+        <div class="oneline"><b>一句话先答：</b>认证的对象是<b>落盘证据</b>，训练器消费的是<b>框架拼好的 tensor 批</b>——两者之间隔着框架的填充/重组代码。L4 校验「框架没有动过我们认证过的任何东西」。</div>
+        <ul>
+          <li>数量：批大小不变；证据目录数 == 批大小（无未消费/缺失 episode）。</li>
+          <li>身份：episode id 合法（非路径）且全局唯一；group_id == uid（框架没改 GRPO 分组）。</li>
+          <li>token：attention mask 内的 prompt/response 逐 token 等于认证序列。</li>
+          <li>训练语义：response_mask 未被篡改、<b>padding 位置 mask 全 0</b>（不许训练填充）、rollout_log_probs 与原生 logprobs torch.equal、reward 逐样本一致。</li>
+        </ul>
+        <div class="evi"><b>证据：</b>verl_manager.py:351-384（_verify_returned_batch 全文）。</div>
+        <div class="followup"><b>一句话总结设计哲学：</b>每条数据的三次「亮相」（落盘证据 → 认证序列 → 框架 tensor）必须逐位一致；任何一次对不上，宁可这一步不训练。</div>
+      </div>
+    </details>
   </div>
 </section>
 
-<!-- ============ 3 问答 ============ -->
-<section id="qa">
-  <div class="sec-head"><span class="sec-no">3</span><h2>面试官视角：深挖题 ×16（先自测，再展开对照）</h2></div>
-  <p class="sec-lead">按四类组织：设计动机 / 技术选型与对比 / 踩坑与优化 / 异常与边界。每题先给「一句话先答」，再展开，证据都标了出处。</p>
+<!-- ============ 04 红线 ============ -->
+<section class="dark-section" id="redline">
+  <div class="section-kicker">04 · Claim Red Lines</div>
+  <h2>什么能说，什么绝对不能说。</h2>
+  <p class="body-dim">面试里最容易翻车的不是技术细节，是口径。下面每一条都有实测证据背书或否定。</p>
 
-  <h3 class="sub">A · 设计动机</h3>
-
-  <details class="qa">
-    <summary><span class="qtag motive">动机</span><span class="qtext">verl 自带 tool_agent_loop，为什么要自己写一个 AgentLoop？<span class="qsub">追问：自写的边界在哪，哪些坚决不碰？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>框架的 loop 能跑多轮工具调用，但给不了我们需要的<b>证据平面</b>——逐调用原生 token ids/logprobs、身份绑定、episode 内 verifier 与认证序列；我们换的是 loop 的「策略」，不是 loop 的「机器」。</div>
-      <ul>
-        <li><b>证据需求</b>：训练要的不是 chat 文本，是「策略在某确定权重下逐 token 的真实生成」。所以 Pi 只能经我们的代理访问引擎（代理记录每轮原生 ids+logprobs 为身份绑定证据），token 走 <code>AsyncLLMServerManager.generate(prompt_ids=…)</code> 的 token RPC。</li>
-        <li><b>mask 语义</b>：多轮工具调用要区分「模型生成的」与「喂回去的观察」，<code>response_mask</code> 是我们的语义，框架信任它——这正好是 <code>_agent_loop_postprocess</code> 不重 tokenize 的原因能被利用的地方。</li>
-        <li><b>奖励语义</b>：reward 必须来自 episode 内我们自己的 verifier（PASSED/FAILED→1/0），verl 的 reward manager 被绕过——这一点要如实说（框架的 reward timing 实测 4.77e-05s，是空转）。</li>
-        <li><b>边界</b>：训练循环、advantage、PPO-clip、FSDP2、优化器、权重同步、checkpoint、vLLM 引擎与调度——一行不替代，全是框架的（smoke27 实测 <code>update_actor</code> 186.8/188.1s、<code>update_weights</code> 2.90/2.83s）。</li>
-      </ul>
-      <div class="evi"><b>证据：</b>四个官方扩展点（§0 表格）；<code>src/integrations/verl/pi_loop.py:1-22</code> 模块注释；归属表见 README §5.4 的 claim 范围。</div>
-      <div class="followup"><b>可能追问：</b>「那为什么不往 verl 提 PR？」——我们的需求（证据捕获、fail-closed 认证）是数据平面的私货，不是通用需求；挂在扩展点上升级框架零成本。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag motive">动机</span><span class="qtext">认证/清洗为什么放在 manager 层，而不是每个样本的 loop 里？<span class="qsub">追问：放在 trainer 侧不行吗？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>我们的契约是<b>批级</b>的（单一行为策略、episode 唯一、组规模、任务绑定、组内方差），而 <code>AgentLoopBase.run</code> 是<b>逐样本</b>的——组语义只有凑齐整批才判得了。</div>
-      <ul>
-        <li>放在 manager（<code>generate_sequences</code> 内、返回前），认证就落在「生成之后、trainer 消费之前」，<b>失败无法被旁路</b>：raise 会让这次生成调用直接失败，trainer 拿不到批。</li>
-        <li>放在 trainer 侧（比如 reward/advantage 阶段）则太晚：批已经进了训练数据管线，拒绝意味着 trainer 代码也要改——而我们对训练器是零侵入的。</li>
-        <li>manager 只做三件事：注入当前轮策略、认证整批、留 lineage 记录；不碰 advantage、不碰权重。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>src/integrations/verl/verl_manager.py:12-25</code>（模块注释就是标准答案）；门禁实现 <code>manager.py:77-132</code>。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag motive">动机</span><span class="qtext">GRPO 下零方差批为什么必须丢弃？丢弃后为什么是「重画」而不是「跳过这一步」？<span class="qsub">追问：能不能给个小的默认 advantage？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>GRPO 的 advantage 是组相对散度，全同奖励的组减均值后恒为 0，这批数据对优化器是无信号噪声；重画是因为<b>什么都没被消耗</b>，且这是抽签性质的问题——下一批可能有信号。</div>
-      <ul>
-        <li>数学：<code>A_i = (r_i − mean) / std</code>，组内全 1 或全 0 → mean=r_i、std=0 → advantage 无定义/全零。</li>
-        <li>不能造信号：给默认 advantage 等于把「没有证据的梯度」注入更新，与 fail-closed 的清洗哲学直接冲突。</li>
-        <li>重画成本 = 一次 rollout；拒绝成本 = 一个 step。实测 Mbpp/118 解出率约 1/16，n=8 时平批概率不低，重采样是<b>常规路径</b>不是异常路径——r3 甚至把 <code>max_attempts</code> 设到 20。</li>
-        <li>重画必须可审计：attempt 号预盖进批次、<code>rejected-attempt{N}.json</code> 落盘，防止重画的批伪装成一次过。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>resampling.py:1-15</code> 模块注释；r3 筛题规则（base=pass 带 15–65% 成功率）正是为了让重采样保持低频。</div>
-      <div class="followup"><b>可能追问：</b>「max_attempts 耗尽怎么办？」——终止 run 并报最后一次错误；resume 会重放同一任务再暴露一次，这逼你换数据而不是掩盖。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag motive">动机</span><span class="qtext">为什么要做「prompt 即账本」的 append-only 设计？<span class="qsub">追问：严格契约是什么，为什么最后不需要松弛它？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>多轮对话若每轮从 messages 重新渲染 prompt，历史里的模型 token 就会被重新 tokenize 改写——训练信号就不再对应真实生成。账本让 <code>prompt_{i+1} = prompt_i + gen_i + obs_i</code> <b>由构造成立</b>，原定的严格契约无需任何松弛。</div>
-      <ul>
-        <li>只有两种编码发生：首轮冻结 prompt、每轮<b>新</b>观察后缀；模型已生成的 token 永远逐字进账本。</li>
-        <li>防御：既有消息全文比对；新 assistant 回合比承重字段（tool_calls 必须一致、content 空不判改写——实测 Pi 回 <code>content: null</code>）；模板边界 <code>after.startswith(before)</code>。</li>
-        <li>终止符问题：vLLM 不返还特殊 stop token，<code>&lt;|im_end|&gt;</code> 缺席分不清「结束」与「截断」——账本记 <code>terminator_stripped</code>，下轮把终止符作为纯上下文补回（mask=0、无 logprob、永不进 loss）。</li>
-        <li>曾经的替代方案（按调用忠实分解再拼接）连同它的三个阻塞点一起被账本路线取代，因为账本让分解恒等成立。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>token_context.py:1-11</code>、<code>:112-157</code>；实测 smoke16 真实消息通过守卫且仅追加 20 个后缀 token。</div>
-    </div>
-  </details>
-
-  <h3 class="sub">B · 技术选型与对比</h3>
-
-  <details class="qa">
-    <summary><span class="qtag choice">选型</span><span class="qtext">rollout 走 token 级 RPC 而不是 OpenAI chat API，为什么？<span class="qsub">追问：由此多出了哪些必须自己处理的问题？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>chat API 只给文本，训练要的是<b>每轮的原生 token ids 和 logprobs</b>——这是行为策略证据（BEHAVIOR_LOGPROBS）的唯一来源，也绕开任何 decode/re-encode 漂移。</div>
-      <ul>
-        <li>token RPC 直接拿到 <code>token_ids + log_probs</code>，且 logprobs 逐 token 校验（数量对齐、全部有限），缺失即 raise。</li>
-        <li>代价是自己接管了协议层：stop 控制（<code>stop_token_ids=[im_end]</code>）、预算（<code>min(max_tokens, remaining)</code>）、上下文拼接（账本）、工具调用解析（上游 parser 不可靠，见下题）、特殊 token 不返还的处理。</li>
-        <li>采样参数显式进身份：<code>sampling_fingerprint = sha256({temperature, top_p})</code>，与策略指纹一起构成「这批样本是谁、在什么采样配置下生成」的完整回答。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>native_transport.py:188-208</code>；E 阶段数值证明：rollout 侧 logprob 与训练侧重算 Pearson 0.99957/0.99959。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag choice">选型</span><span class="qtext">工具调用解析为什么不能只信 vLLM 的 tool parser？「不修复」原则是什么？<span class="qsub">追问：parser 自己抛异常呢？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>smoke16 实测该策略 10/10 的生成里 hermes parser 解析出 0 个调用（模型输出裸 JSON 不带标签）——只信它就没有工具循环；同时解析器只做<b>提取</b>，绝不修复，坏输出交给奖励与批门禁去裁决。</div>
-      <ul>
-        <li>三级策略：上游有结果 → 校验标签数与解析数一致（混合状态 raise，防止半信半疑）；上游无结果但有标签 → 视为 malformed（parser 拒绝过的东西不可信）；全无 → 回落仓库唯一的严格提取器 <code>src.capture.tool_calls</code>（全仓库一种提取策略，不是两套）。</li>
-        <li>不修复：未声明工具名 / 坏 JSON / 空 arguments → 产出空，无猜测。修复会制造「模型没说过的话」，污染行为策略证据。</li>
-        <li>最新兜底：parser 自身抛异常（<code>TypeError: unhashable type: 'dict'</code> 实测出现过）→ 同样回落严格提取器——一个坏抽样不应报废整批，让批门禁按真实 reward 说话。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>native_transport.py:16-50</code>（_tool_calls 及其注释）；<code>token_context.py:16-32</code>（工具参数 JSON 校验，坏参即 raise）。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag choice">选型</span><span class="qtext">数据集只有几十行时，「加数据」到底改变了什么？为什么筛掉 fail/fail 的题？<span class="qsub">追问：一行数据为什么不是意外？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b><code>train_batch_size=1</code> 时<b>行数 = 步数</b>（1 行 × 5 epochs = 5 步，且是不同的题）；筛掉 fail/fail 是因为 p≈0 的题永远全错、必然平批死锁——RL 只能从「有时对有时错」的数据里学。</div>
-      <ul>
-        <li>一行 = 一个组（行按 <code>rollout.n</code> 展开成 n 个共享 uid 的样本），所以加行改变的是<b>任务多样性 × 步数</b>，不是批大小。</li>
-        <li>r3 分带（P0 在 evalplus 贪心状态）：pass/pass 247、pass/fail 54、fail/fail 76、fail/pass 1；只取 base=pass 带（r2 实测 15–65% 成功率），60 题 × 5 epochs = 300 步。</li>
-        <li>「只有一行」与「每步赌解出」是<b>两种失败同一个根</b>：前者是多样性（加题即解），后者是单批可认证性（1000 行也救不了，每行仍要独立过闸）。</li>
-        <li>当初一行是收尾口径：APPS 出不了方差（0/80），选一个已知解出率的载体题先把链路打通——用户授权过「打通链路优先于做对任务」。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>build_verl_pi_dataset.py:1-22</code> 注释；r3 筛题记录（bands 247/54/76/1）；APPS 80/80 全灭实测。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag choice">选型</span><span class="qtext">清洗失败在框架路径里是 raise（fatal），在旧自研路径里是 report（重采样）——为什么接受这种不对称？<span class="qsub">追问：那框架路径会不会「更脆」？</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>语义没有变——两边都 fail-closed（不合格的数据绝不训练）；变的是<b>失败的表达方式</b>：框架路径里 raise 是唯一能让整批停在训练器之外的机制，再配重采样把「可重试的失败」接住。</div>
-      <ul>
-        <li>旧路径：门禁失败是一份 report（<code>manager_certified: false</code>），轮次重新采样——因为旧路径里「采样」和「门禁」都是我们的代码，可以礼貌地重试。</li>
-        <li>框架路径：raise 是框架 API 内表达「这批不可用」的唯一方式；raise 之后由 manager 的重采样层决定是否重画（DegenerateBatchError / RetryableRolloutError）。</li>
-        <li>看似「更脆」的框架路径其实暴露了旧路径隐藏的问题：旧路径 1/4 的解出率是运气（真实 ~1/16），样本从 4 扩到 16 后暴露的是<b>采样预算墙</b>，不是集成坏了。</li>
-      </ul>
-      <div class="evi"><b>证据：</b>smoke24（漏斗 16→6→2 解出，批被 tuple/list bug 拒）；smoke25/26（1/16、0/16）；legacy 对照 <code>stage_e_assemble.py:162</code> 的 report 语义。</div>
-    </div>
-  </details>
-
-  <h3 class="sub">C · 踩坑与优化</h3>
-
-  <details class="qa">
-    <summary><span class="qtag pitfall">踩坑</span><span class="qtext">讲一次「门禁永远不可能通过」的 bug。<span class="qsub">考察点：怎么定位一个两边都持久化、无法复现差异的失败</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>tuple != list。<code>ProducerArtifact.from_dict</code> 深冻结 payload，存证是 tuple，重建是 list，直接比较容器恒 False——smoke24 上四数组逐元素完全一致，批照样被拒。</div>
-      <ul>
-        <li><b>定位难点</b>：两边都是持久化文件，事后无法复现「差异」；报错信息只说 "does not bind actual inference context"，不指 episode、不指字段——浪费了一整轮 GPU 猜谜。</li>
-        <li><b>修复一</b>：<code>training_sequence_matches</code> 逐元素比较（<code>_as_token_list</code> 归一化），容器类型不参与判定。</li>
-        <li><b>修复二</b>：<code>describe_sequence_difference</code> 输出每字段长度 + 首个差异下标；「token 相同、容器不同」被如实报为比较 bug——把「不可诊断的失败」变成「自解释的失败」。</li>
-        <li><b>沉淀的元教训</b>：比较语义要绑定数据的<b>序列化语义</b>（deep-freeze 是 from_dict 的行为，比较函数必须知道这件事）。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>sequence.py:98-164</code>；commit <code>6ec0ad5</code>；smoke24 记录。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag pitfall">踩坑</span><span class="qtext">讲一次「配置存在但从未生效」的 bug。<span class="qsub">考察点：静默失败的发现与防御</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>重试循环在自己 except 里 re-raise，<code>max_attempts</code> 看起来是重试配置、实际是单发——smoke26 一个零方差批直接终结了 run。</div>
-      <ul>
-        <li><b>为什么难发现</b>：不崩溃、无栈、日志正常——只有第二次 attempt 才会到来的路径从未被执行。</li>
-        <li><b>修复</b>：重采样策略抽成独立纯函数 <code>certify_with_resampling</code>（不 import Ray/verl，CPU 可单测），白名单重试 + 拒绝落盘；commit <code>bc06a5f</code>。</li>
-        <li><b>防御设计</b>：让「值得测的决策」住在值得测的地方——它是框架侧管理器里唯一能脱离 GPU 验证的部分。</li>
-        <li>白名单纪律：确定性违规第一次就 raise——重试要花一整轮 rollout 复现同一失败，还把症状报三遍。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>resampling.py:8-15</code> 注释原话（"looks like a retry loop and behaves like a single shot"）；smoke26 → smoke27（同配置跑通两步）对照。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag pitfall">踩坑</span><span class="qtext">一个「没有工具调用」的回合为什么从 raise 改成了合法样本？<span class="qsub">考察点：门禁比契约更严时会发生什么</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>无工具回合仍然是样本：有动作（策略自己的 token）、有任务结局、有 reward，PPO 训练需要的全有；raise 把它当故障，代价是把同批正在跑的兄弟样本一起扔掉。</div>
-      <ul>
-        <li><b>实测代价</b>（smoke23）：ON_POLICY_RL 认证本可给这个 episode 判 ELIGIBLE（score 0.0），但 raise 中止了整个 generate_sequences 的 gather，连带扔掉同批已进入第二次模型请求的 episode——<b>一个弱样本被放大成全批损失</b>。</li>
-        <li><b>裁决权归还</b>：「无学习信号」的裁决本来就在批门禁（零方差检查），不该由样本层越权。这样的批到批门禁依然是平批、依然会被重画——语义收敛。</li>
-        <li><b>留痕</b>：<code>num_tool_rounds</code> 保持事实可见，证据里看得到这是无观察回合。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>pi_loop.py:279-290</code> 注释记录了完整决策链；commit <code>33347d1</code>。</div>
-      <div class="followup"><b>元教训：</b>门禁的严格度必须等于契约本身——更严不是更安全，是把裁决挪到了信息更少的位置。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag pitfall">踩坑</span><span class="qtext">目录布局上踩过哪些坑？episode 命名为什么长这样？<span class="qsub">考察点：文件系统即证据库的工程纪律</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>三代防撞 + 两个位置约束，全部来自真实故障：episode 目录 = <code>session/gen-NNN/attempt-N/{run_id}-{slug}-{sample_token}</code>，工作区必须住在整棵树之外。</div>
-      <ul>
-        <li><b>为什么不能只用 sample_token 命名</b>：trainer 会多次调用 generate_sequences（训练前校验 + 每个 step），同样的任务、同样的 token 再来一遍会把上一轮目录改写——episode writer 对已存在根目录 fail-closed，全批死。所以每次调用有 gen-NNN，每次 run 有 session_id（run_id + 时间戳 + pid）。</li>
-        <li><b>attempt 维度</b>：重采样重画必须写新目录，旧 attempt 保持可审计。</li>
-        <li><b>工作区两坑</b>：放在 episode 根之下，<code>parents=True</code> 会提前把根建出来，每个 episode 死在 orchestrator 的 <code>mkdir(exist_ok=False)</code>；放在 attempt 目录旁边，批门禁会把每个子目录当 episode，读出「缺证据的 episode」。</li>
-        <li><b>dispatch-trace.jsonl</b>：每个 episode 派发一行（pid、attempt、sample_token、output_dir 是否已存在），O_APPEND 防并发覆写，且诊断失败绝不打断 rollout——「重复派发」和「盖错章」从此可分辨。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>pi_loop.py:87-106</code>（episode_workspace 注释）、<code>:122-150</code>（dispatch trace）；<code>verl_manager.py:140-149</code>（generation 目录注释）。</div>
-    </div>
-  </details>
-
-  <h3 class="sub">D · 异常与边界</h3>
-
-  <details class="qa">
-    <summary><span class="qtag edge">边界</span><span class="qtext">verifier 崩了（基础设施失败）为什么不能给 reward=0？<span class="qsub">考察点：奖励完整性的定义</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>0 奖励是一个训练信号（「做错了」），基础设施失败不是信号（「没测成」）——把后者喂给训练器等于向梯度里注入谎言。</div>
-      <ul>
-        <li>只有终止性判定 <code>PASSED/FAILED</code> 才映射 1/0；其他一切（verifier 超时、输出缺失、状态码异常）一律 raise。</li>
-        <li>批门禁侧同构约束：episode summary 必须有终止性 verifier 判定，否则该 attempt 直接被拒（<code>_certify_from_evidence</code> 校验 <code>verifier_status ∈ {PASSED, FAILED}</code>）。</li>
-        <li>奖励一致性也被复核：admitted-sequence 的 reward 必须等于 <code>1.0 if PASSED else 0.0</code>，框架返回的 rm_scores 也逐样本核对（L4）。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>pi_loop.py:293-304</code>；<code>verl_manager.py:289-294</code>、<code>:329-333</code>。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag edge">边界</span><span class="qtext">一个吃满 token 预算的回合是错误吗？截断、中止、完成怎么区分？<span class="qsub">考察点：终止符语义 + 用框架语义对齐设计</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>吃满预算 = 截断，是一次<b>合法的截断动作</b>，照常训练——因为 verl 自己的 stock 多轮 loop 从不检查 EOS；中止（请求被取消）才不是回合，直接 raise。</div>
-      <ul>
-        <li><b>解码层三态</b>：模型采样到自己的 EOS / 配置的停止条件 / 预算打满。只有第一种是「完成」，第三种是「截断」——这是解码层概念，不是 RL 概念，单轮 RLHF 里它不改变任何下游计算，多轮里它决定下一轮上下文。</li>
-        <li><b>决定性证据</b>：verl 的 <code>tool_agent_loop.py:246</code> 把所有生成 token 无条件标 mask=1，<code>:254</code> 只按长度收尾，全文件 grep 不到任何 EOS 检查。对齐框架语义不是妥协。</li>
-        <li><b>实测依据</b>（smoke22）：四个 episode 全部 <code>{tokens: 3584, budget: 3584, terminated: false}</code>——P0 策略从不主动吐终止符；坚持要求终止符 = 零可训练样本。</li>
-        <li><b>留痕</b>：每回合记 <code>terminated/tokens/budget/stop_reason</code>（turns note），episode 级汇总 <code>truncated_turns</code>；终止符缺席用 <code>terminator_stripped</code> 在下一轮上下文里补回（mask=0）。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>native_transport.py:240-256</code>；<code>token_context.py:167-198</code>（accept 的注释含框架行号）；engine-notes/*.turns.jsonl。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag edge">边界</span><span class="qtext">引擎无法自报「我服务的是第几步权重」，身份怎么钉？<span class="qsub">考察点：如何处理无法消除的证据缺口</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>不让引擎自证，改让<b>框架自己写出的 checkpoint</b> 作证：<code>engine_step = global_steps − 1</code>，把 <code>global_step_N/actor</code> 整棵目录树哈希进 <code>adapter_revision</code>；引擎侧的缺口如实落盘记录，不许当成已确认。</div>
-      <ul>
-        <li><b>缺口根源</b>：<code>checkpoint_engine.backend=naive</code>（出货默认）走 <code>fsdp_workers.py:1735</code> 的同步路径，<code>update_weights</code> 丢弃 <code>global_steps</code>，引擎侧永远报 None。</li>
-        <li><b>三层兜底</b>：轮级 round-policy.json → episode 级策略指纹随批下行 → 批级门禁校验单一指纹 == 本轮策略；引擎一旦真的报了步数，传输层立即校验（episode 内不变、等于期望值）。</li>
-        <li><b>缺口记录</b>：<code>engine-notes/*.step.jsonl</code> 逐调用写明 reason；extra_fields 暴露 <code>unconfirmed_steps</code>、<code>engine_step_confirmed: false</code>。</li>
-        <li><b>反面教材</b>：曾把 numpy 标量塞进 json.dumps → TypeError 逃逸成 502 团灭全批——证据通道自身的健壮性也是要设计的。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>native_transport.py:81-120</code>（_note_unconfirmed_step）、<code>:209-219</code>；<code>verl_manager.py:165-184</code>；smoke27 的 gen-001 digest == P1 实测。</div>
-    </div>
-  </details>
-
-  <details class="qa">
-    <summary><span class="qtag edge">边界</span><span class="qtext">清洗都过了，为什么还要再校验框架返回的批？查什么？<span class="qsub">考察点：信任边界——门禁的对手盘包括框架自身</span></span></summary>
-    <div class="answer">
-      <div class="oneline"><b>一句话先答：</b>认证的对象是<b>落盘证据</b>，训练器消费的是<b>框架拼好的 tensor 批</b>——两者之间隔着框架的填充/重组代码。L4 校验「框架没有动过我们认证过的任何东西」。</div>
-      <ul>
-        <li>数量：批大小不变；证据目录数 == 批大小（无未消费/缺失 episode）。</li>
-        <li>身份：episode id 合法（非路径）且全局唯一；<code>group_id == uid</code>（框架没改 GRPO 分组）。</li>
-        <li>token：attention mask 内的 prompt/response 逐 token 等于认证序列。</li>
-        <li>训练语义：response_mask 未被篡改、<b>padding 位置 mask 全 0</b>（框架不许训练填充）、rollout_log_probs 与原生 logprobs <code>torch.equal</code>、reward 逐样本一致。</li>
-      </ul>
-      <div class="evi"><b>证据：</b><code>verl_manager.py:351-384</code>（_verify_returned_batch 全文）。</div>
-      <div class="followup"><b>一句话总结设计哲学：</b>从生成到更新，每一条数据的三次「亮相」（落盘证据 → 认证序列 → 框架 tensor）必须逐位一致；任何一次对不上，宁可这一步不训练。</div>
-    </div>
-  </details>
-</section>
-
-<!-- ============ 4 红线 ============ -->
-<section id="claims">
-  <div class="sec-head"><span class="sec-no">4</span><h2>说法红线：什么能说，什么不能说</h2></div>
-  <p class="sec-lead">面试里最容易翻车的不是技术细节，是口径。这张表每条都有实测证据背书或否定。</p>
-  <div class="two-col">
-    <div class="card accent-green">
-      <h4>✅ 能说（有实测证据）</h4>
-      <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-        <li><b>机制闭环已验证</b>：verl 的 RayPPOTrainer 拥有循环，我们经四个官方扩展点接管 rollout 数据平面；smoke27 用 n=32 / max_attempts=3 跑了两个框架 step（22m34s），step 2 的 rollout 消费了 step 1 同步后的权重（框架 checkpoint 摘要作证）。</li>
-        <li><b>数值证明</b>：训练侧重算 logprob 与 rollout 侧原生 logprob Pearson 0.99957/0.99959；框架 reward 步空转（4.77e-05s），说明奖励确实由我们的 verifier 给出。</li>
-        <li><b>清洗严格性</b>：批级五规则 + 返回批校验 + 白名单重采样，全部 fail-closed 且可审计（rejected-attempt / certified-batch 落盘）。</li>
-        <li><b>规模化执行</b>：formal-r2 从 P12 连续 24 步（磁盘满在 step 18，同命令恢复）；r3 完成任务分带筛题（247/54/76/1）。</li>
-      </ul>
-    </div>
-    <div class="card accent-red">
-      <h4>❌ 不能说（会被证据当场拆穿）</h4>
-      <ul style="color:var(--muted); font-size:13px; margin-left:18px;">
-        <li><b>「训练有效/涨点」</b>：holdout 33.33% vs P0 29.17% / P12 31.25%，Fisher p=0.826/1.000，n=48 不显著；2/32、1/32 是噪声。只能说「实验已按此功率设计」，不能说有效。</li>
-        <li><b>「完整训练系统」</b>：五条件对照（数据供给 ❌、跨 run 接线未实测 ⚠️、可移植 ⚠️、可评价 ❌、自愈 ⚠️）不满足；只验证过同步循环、单机双卡、colocated。</li>
-        <li><b>「任何任务都能训」</b>：APPS 0/80 全灭；只有解出率落在中间带的数据可用——这是数据供给问题，不是接入问题。</li>
-        <li><b>「verl 的 reward/ advantage 是我们的」</b>：正好相反——我们绕过了 reward manager（如实说），advantage/优化器/同步全归框架。</li>
-      </ul>
-    </div>
+  <div class="done-grid">
+    <article><span>Can say · 01</span><h3>机制闭环已验证</h3><p>RayPPOTrainer 拥有循环，我们经四个官方扩展点接管 rollout 数据平面；smoke27 用 n=32 / max_attempts=3 跑两个框架 step（22m34s），step 2 的 rollout 消费 step 1 同步后的权重（框架 checkpoint 摘要作证）。</p></article>
+    <article><span>Can say · 02</span><h3>数值证明在案</h3><p>训练侧重算 logprob 与 rollout 侧原生 logprob Pearson 0.99957/0.99959；框架 reward 步空转（4.77e-05s），说明奖励确实由我们的 verifier 给出。</p></article>
+    <article><span>Can say · 03</span><h3>清洗严格且可审计</h3><p>批级五规则 + 返回批校验 + 白名单重采样，全部 fail-closed；rejected-attempt / certified-batch 落盘，lineage 可复查。</p></article>
+    <article><span>Can say · 04</span><h3>规模化执行过</h3><p>formal-r2 从 P12 连续 24 步（磁盘满在 step 18，同命令恢复）；r3 完成任务分带筛题（247/54/76/1）。</p></article>
   </div>
-  <div class="card accent-yellow">
-    <h4>两个万能收尾句</h4>
-    <ul style="color:var(--muted); font-size:13.5px; margin-left:18px;">
-      <li><b>被问「所以到底接入 verl 了吗？」</b>——「机制上完整跑通并有实测证据；作为日常可用的训练系统还不行。差的不是集成，是数据供给、跨 run 可续性和可评价性。」</li>
-      <li><b>被问「这套清洗/门禁值得吗？重采样不浪费算力吗？」</b>——「GRPO 的 advantage 只能来自组内真实散度，伪造信号等于训练噪声；浪费的那部分算力买的是『进优化器的每个梯度都有证据』，formal-r2 的 24 连步与磁盘满恢复都靠这套纪律兜底。」</li>
-    </ul>
+
+  <div class="never-list">
+    <div class="never-row"><strong>01</strong><p>「训练有效 / 涨点了」<small>holdout 33.33% vs P0 29.17% / P12 31.25%，Fisher p=0.826/1.000，n=48 不显著；2/32、1/32 是噪声。只能说「实验已按此功率设计」。</small></p></div>
+    <div class="never-row"><strong>02</strong><p>「这是一套完整的训练系统」<small>五条件对照不满足：数据供给 ❌、跨 run 接线未实测 ⚠️、可移植 ⚠️、可评价 ❌、自愈 ⚠️；只验证过同步循环、单机双卡、colocated。</small></p></div>
+    <div class="never-row"><strong>03</strong><p>「任何任务都能训」<small>APPS 0/80 全灭；只有解出率落在中间带的数据可用——这是数据供给问题，不是接入问题。</small></p></div>
+    <div class="never-row"><strong>04</strong><p>「verl 的 reward / advantage 是我们的」<small>正好相反——我们绕过了 reward manager（如实说），advantage/优化器/同步全归框架。</small></p></div>
+  </div>
+
+  <div class="claim-card">
+    <span>回到准确表述 · The Accurate Claim</span>
+    <blockquote>机制上完整跑通并有实测证据；作为日常可用的训练系统还不行——差的不是集成，是数据供给、跨 run 可续性和可评价性。</blockquote>
+    <small>两个万能收尾：被问「所以到底接入了吗」用上一句；被问「清洗值得吗、重采样不浪费算力吗」答——「GRPO 的 advantage 只能来自组内真实散度，伪造信号等于训练噪声；浪费的算力买的是『进优化器的每个梯度都有证据』，formal-r2 的 24 连步与磁盘满恢复都靠这套纪律兜底。」</small>
   </div>
 </section>
 
-<div style="margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--dim); font-size:12px;">
-  复习站 · 第一期「RL 接入 verl 完整链路」 · 生成于 2026-09-12 · 代码基线 a267ccf（verl-native-trainer 分支）·
-  所有行号引用以仓库当时状态为准；native_transport.py 的 parser 兜底为未提交改动（工作区 diff）。
-</div>
-
-</main>
+<!-- ============ footer ============ -->
+<footer class="site-footer">
+  <div>
+    <p>RL × verl 面试复习站 · 第一期</p>
+    <small>数据生成 × 数据清洗 · 生成于 2026-09-12</small>
+  </div>
+  <div style="text-align:right">
+    <p>代码基线 a267ccf · verl-native-trainer</p>
+    <small>所有 file:line 以仓库当时状态为准；native_transport.py 的 parser 兜底为工作区未提交改动</small>
+  </div>
+</footer>
 
 <script>
-// ---- Python 语法高亮（自包含，无外部依赖）----
+// ---- Python 语法高亮（自包含）----
 (function () {
   var KW = /^(def|class|return|if|elif|else|for|while|in|not|and|or|import|from|as|raise|try|except|finally|with|await|async|lambda|yield|pass|continue|break|is|assert|global|nonlocal|del)$/;
   var BUILTIN = /^(self|None|True|False|cls)$/;
   var RE = /("""[\s\S]*?"""|'''[\s\S]*?'''|(?:[rbf]{0,2})"(?:\\.|[^"\\\n])*"|(?:[rbf]{0,2})'(?:\\.|[^'\\\n])*'|#[^\n]*|@\w+|\b\d[\d_]*\.?\d*(?:e[+-]?\d+)?\b|\b[A-Za-z_]\w*\b)/gi;
-  function esc(s) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  document.querySelectorAll("pre code").forEach(function (el) {
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  document.querySelectorAll("pre").forEach(function (el) {
     var text = el.textContent;
     var out = "", last = 0, m;
     RE.lastIndex = 0;
@@ -1075,28 +973,23 @@ for attempt in range(max_attempts):
   });
 })();
 
-// ---- 侧栏滚动高亮 ----
+// ---- 顶栏导航高亮 + 滚动进度 ----
 (function () {
-  var links = Array.prototype.slice.call(document.querySelectorAll(".nav a"));
-  var map = {};
-  links.forEach(function (a) {
-    var id = a.getAttribute("href").slice(1);
-    var target = document.getElementById(id);
-    if (target) map[id] = a;
-  });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove("active"); });
-        var link = map[e.target.id];
-        if (link) link.classList.add("active");
-      }
-    });
-  }, { rootMargin: "-15% 0px -70% 0px" });
-  Object.keys(map).forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
+  var links = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
+  var sections = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); }).filter(Boolean);
+  var bar = document.getElementById("progressBar");
+  function onScroll() {
+    var h = document.documentElement;
+    var pct = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    if (bar) bar.style.width = (pct * 100).toFixed(1) + "%";
+    var current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top <= 120) current = sections[i];
+    }
+    links.forEach(function (a) { a.classList.toggle("nav-active", current && a.getAttribute("href") === "#" + current.id); });
+  }
+  document.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 })();
 </script>
 </body>
