@@ -14,11 +14,13 @@ import os
 import secrets
 import shutil
 import subprocess
+import signal
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from collections.abc import Callable
 
 from src.assembly import finalize_local_run
 from src.capture import (
@@ -66,7 +68,7 @@ def _write_json(path: Path, value: Any) -> None:
     temporary.replace(path)
 
 
-def _models_config(*, base_url: str, model: str) -> dict[str, object]:
+def _models_config(*, base_url: str, model: str, max_tokens: int = 8192) -> dict[str, object]:
     return {"providers": {"local-qwen-proxy": {
         "baseUrl": f"{base_url}/v1", "api": "openai-completions",
         "apiKey": "$AGENT_MODEL_PROXY_API_KEY",
@@ -74,7 +76,7 @@ def _models_config(*, base_url: str, model: str) -> dict[str, object]:
                    "supportsUsageInStreaming": True, "supportsStore": False,
                    "maxTokensField": "max_tokens", "supportsStrictMode": False},
                    "models": [{"id": model, "name": "controlled data-plane model", "reasoning": False,
-                    "input": ["text"], "contextWindow": 32768, "maxTokens": 8192,
+                    "input": ["text"], "contextWindow": 32768, "maxTokens": max_tokens,
                     "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}}],
     }}}
 
@@ -99,6 +101,22 @@ class PiHostExecutionSpec:
     experiment_manifest_ref: str
     sampling_config: dict[str, Any]
     require_rl_evidence: bool = True
+    # verl closeout injection points (all optional; defaults preserve behavior).
+    model_bridge_url: str | None = None
+    verified_policy_fingerprint: str | None = None
+    injected_training_sequence: dict[str, Any] | None = None
+    # Upper bound on tokens Pi may ask a single generation for. The caller that
+    # knows the rollout's response budget sets this; None keeps the historical
+    # 8192, which exceeds every training window this project uses.
+    max_tokens_per_generation: int | None = None
+    # Immutable identity of whatever actually served the model calls. Stock
+    # vLLM responses carry no revision field, so the caller that resolved the
+    # engine's served model supplies it; without it the evidence cannot claim
+    # POLICY_VERSION and every episode is rejected.
+    backend_model_revision: str | None = None
+    upstream_transport: Callable[[dict[str, Any]], tuple[int, dict[str, Any]]] | None = None
+    isolate_pi: bool = False
+    training_sequence_builder: Callable[[tuple[ModelCallEvidence, ...]], dict[str, Any]] | None = None
 
 
 class PiHostExecutionOrchestrator:
@@ -115,10 +133,15 @@ class PiHostExecutionOrchestrator:
                                  episode_id=spec.identity.episode_id, trace_id=f"trace-{spec.identity.run_id}")
         environment = EnvironmentCapture(recorder)
         controlled_model = spec.upstream_url is not None
+        # Optional bridge override: route Pi's model traffic through the
+        # verl-managed endpoint while keeping the same evidence capture path.
+        # Default (None) preserves the existing upstream behavior.
+        bridge_url = spec.model_bridge_url or spec.upstream_url
         plan = {"kind": "pi-host", "pi": spec.pi, "workspace": str(Path(spec.workspace).resolve()),
                 "tools": list(spec.tools), "timeout_seconds": spec.timeout_seconds,
                 "model_endpoint": "controlled-proxy" if controlled_model else "provider-managed",
-                "provider": spec.provider, "provider_api": spec.provider_api, "model": spec.model}
+                "provider": spec.provider, "provider_api": spec.provider_api, "model": spec.model,
+                "model_bridge_configured": bridge_url is not None and bridge_url != spec.upstream_url}
         plan_checksum = sha256_json(plan)
         manifest = ExecutionRunManifest(
             identity=spec.identity, harness_manifest=spec.harness_manifest,
@@ -149,26 +172,47 @@ class PiHostExecutionOrchestrator:
                 token = secrets.token_urlsafe(32)
                 server = ModelProxyHttpServer(ModelProxyService(identity=spec.identity,
                     endpoint_kind=ModelEndpointKind.CONTROLLED,
-                    upstream_chat_completions_url=spec.upstream_url,
+                    upstream_chat_completions_url=bridge_url,
                     upstream_authorization=os.environ.get("AGENT_UPSTREAM_AUTHORIZATION"),
                     evidence_writer=ModelEvidenceJsonlWriter(evidence_path), recorder=recorder,
                     access_token=token, timeout_seconds=spec.timeout_seconds,
+                    backend_model_revision=spec.backend_model_revision,
+                    upstream_transport=spec.upstream_transport,
+                    # A budget closeout is not a model call, so it leaves no
+                    # evidence row; without this note an episode cut off by
+                    # budget would be indistinguishable from one the policy
+                    # chose to finish.
+                    closeout_note_path=root / "engine-closeout.jsonl",
                     max_calls=int(os.environ.get("AGENT_MODEL_MAX_CALLS", "128"))), host="127.0.0.1", port=0)
                 server.start_in_thread()
                 pi_home = Path(tempfile.mkdtemp(prefix="pi-certified-"))
                 config_path = pi_home / ".pi" / "agent" / "models.json"
                 config_path.parent.mkdir(parents=True)
                 config_path.write_text(json.dumps(_models_config(
-                    base_url=f"http://127.0.0.1:{server.address[1]}", model=spec.model
+                    base_url=f"http://127.0.0.1:{server.address[1]}", model=spec.model,
+                    max_tokens=spec.max_tokens_per_generation or 8192,
                 )))
+                if spec.isolate_pi:
+                    (config_path.parent / "settings.json").write_text(json.dumps({
+                        "compaction": {"enabled": False}, "retry": {"enabled": False},
+                    }))
                 provider = "local-qwen-proxy"
                 child_env |= {"HOME": str(pi_home), "AGENT_MODEL_PROXY_API_KEY": token}
             command = [spec.pi, "--provider", provider, "--model", spec.model, "--mode", "json", "--print",
                        "--no-session", "--no-context-files", "--no-extensions", "--no-skills", "--tools", ",".join(spec.tools),
                        "--thinking", "minimal", spec.prompt]
-            result = subprocess.run(command, cwd=spec.workspace, env=child_env,
-                stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                timeout=spec.timeout_seconds, check=False)
+            if spec.isolate_pi:
+                if pi_home is None:
+                    raise ContractValidationError("isolated Pi requires an execution-bound proxy")
+                from src.integrations.verl.sandbox import pi_bwrap_command
+                command = pi_bwrap_command(command, workspace=spec.workspace, home=pi_home,
+                                          pi=spec.pi, proxy_token=token)
+                result = _run_owned_process(command, cwd=spec.workspace, env=child_env,
+                                            timeout=spec.timeout_seconds)
+            else:
+                result = subprocess.run(command, cwd=spec.workspace, env=child_env,
+                    stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                    timeout=spec.timeout_seconds, check=False)
         except subprocess.TimeoutExpired as exc:
             result = subprocess.CompletedProcess(command if 'command' in locals() else [spec.pi], 124,
                                                   _subprocess_text(exc.stdout),
@@ -323,18 +367,37 @@ class PiHostExecutionOrchestrator:
             }
         if report_ref:
             policy_capabilities.add(ProducerCapability.VERIFIER_EVIDENCE)
+        training_payload = {}
+        if policy_traces and spec.training_sequence_builder is not None:
+            training_payload["training_sequence"] = spec.training_sequence_builder(evidence)
         policy_artifact = ProducerArtifact(
             identity=spec.identity,
             status=ProducerExecutionStatus.COMPLETED if policy_traces else ProducerExecutionStatus.INFRA_INVALID,
             capabilities=frozenset(policy_capabilities),
             payload={"trajectory": {"traces": policy_traces},
                      "model_evidence_checksums": [item.checksum for item in evidence],
-                     "verifier_report_checksum": report_ref.sha256 if report_ref else None},
+                     "verifier_report_checksum": report_ref.sha256 if report_ref else None,
+                     **training_payload},
             issues=() if policy_traces else ("RL policy evidence is incomplete or lacks a valid verifier reward",),
         )
         refs = (*all_harness_refs, *verifier_refs)
         _write_json(root / "producer-artifact.json", producer.to_dict())
         _write_json(root / "policy-artifact.json", policy_artifact.to_dict())
+        if spec.verified_policy_fingerprint is not None:
+            # Fail closed when the caller pins a round policy: the executed
+            # episode must carry the same behavior fingerprint.
+            if spec.identity.policy_fingerprint != spec.verified_policy_fingerprint:
+                raise ContractValidationError(
+                    "executed episode policy fingerprint does not match "
+                    "the verified round policy"
+                )
+        if spec.injected_training_sequence is not None:
+            # A pre-verified training sequence may be attached for audit; it
+            # never replaces the evidence-derived policy artifact above.
+            _write_json(
+                root / "injected-training-sequence.json",
+                dict(spec.injected_training_sequence),
+            )
         _write_json(artifacts_path, [item.to_dict() for item in refs])
         finalization = finalize_local_run(manifest=manifest, producer_artifact=producer, events_path=events_path,
             policy_artifact=policy_artifact, model_evidence_path=evidence_path, artifacts_path=artifacts_path)
@@ -349,7 +412,10 @@ class PiHostExecutionOrchestrator:
             target_policy_fingerprint=spec.identity.policy_fingerprint,
         )
         _write_json(root / "finalized" / "on-policy-rl-eligibility.json", rl_decision.to_dict())
-        summary = {"run_id": spec.identity.run_id, "task_id": spec.identity.task_id, "pi_returncode": result.returncode,
+        summary = {"run_id": spec.identity.run_id, "task_id": spec.identity.task_id,
+                   "episode_id": spec.identity.episode_id,
+                   "policy_artifact_checksum": policy_artifact.checksum,
+                   "pi_returncode": result.returncode,
                    "model_call_count": len(evidence_rows) if controlled_model else sum(
                        event.event_type is EventType.MODEL_RESPONSE for event in adapted.events
                    ), "verifier_status": verifier_status.value,
@@ -368,3 +434,20 @@ def _subprocess_text(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return value
+
+
+def _run_owned_process(command, *, cwd, env, timeout):
+    """Cancel only this subprocess session, including child tool processes."""
+    with subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                          start_new_session=True) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except BaseException:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate()
+            raise
+        return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)

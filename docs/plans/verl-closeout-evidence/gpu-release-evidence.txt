@@ -1,0 +1,11 @@
+# GPU release evidence (2026-09-10T15:06:59Z)
+BEFORE cleanup:
+  GPU0: 45550 MiB used, 98% util
+  GPU1: 33538 MiB used (this run's infer server, pid 3018747), 0% util
+  compute apps: 3018747 (33516 MiB, mine) + 4x11378 MiB (foreign, server user)
+ACTION: killed pid 3018747 (stage_d_infer_server.py) — only this run's registered process
+AFTER cleanup:
+  GPU0: 45550 MiB used, 87% util  (foreign work, untouched)
+  GPU1: 17 MiB used, 0% util       -> released by this run
+  ps check: no stage_d_infer_server / loop_variance / stage_d_certified / torchrun
+  GPU0 remaining pids 3046787/3046783 = /tmp/run60k_s9.py, /tmp/run60k_s1.py (user `server`, NOT this run)

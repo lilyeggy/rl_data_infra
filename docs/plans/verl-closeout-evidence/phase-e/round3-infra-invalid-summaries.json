@@ -1,0 +1,50 @@
+[
+  {
+    "run_id": "estage-r3",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 4,
+    "verifier_status": "ERROR",
+    "execution_validity": "INFRA_INVALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "REJECTED",
+    "execution_bundle_checksum": "b9d99a464c6f6eadce709f8a73c1cc95ed2efbbaefae5d256e15f695c11894e6"
+  },
+  {
+    "run_id": "estage-r3",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 4,
+    "verifier_status": "ERROR",
+    "execution_validity": "INFRA_INVALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "REJECTED",
+    "execution_bundle_checksum": "c8b0121f57da893fd2ca0eeaf25321e071592c090c153bb97b08fcfb0c0c7bd2"
+  },
+  {
+    "run_id": "estage-r3",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 4,
+    "verifier_status": "ERROR",
+    "execution_validity": "INFRA_INVALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "REJECTED",
+    "execution_bundle_checksum": "6ea577d8dfa041c976586f4487cf70aa6b577742f726627a1cc469235cbb470f"
+  },
+  {
+    "run_id": "estage-r3",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 4,
+    "verifier_status": "ERROR",
+    "execution_validity": "INFRA_INVALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "REJECTED",
+    "execution_bundle_checksum": "6301afd41ec8d006586f5fd04b2abf47e020a0eb4b0ff0a7cf73aeb7348e14ac"
+  }
+]

@@ -1,0 +1,8 @@
+[rank0 +    0.0s] batch: 4 episodes rewards=[0.0, 0.0, 0.0, 1.0]
+[rank0 +    7.9s] fsdp2 world=2 trainable=34.41M frozen=14.77B
+[rank0 +   11.6s] pre-update training-side logprobs computed for the whole batch
+[rank0 +   11.6s] logprob-comparison mean_abs=0.02768 p99=0.16145 within_threshold=True
+[rank0 +   11.6s] grpo advantages ok masked_mean=0.5212 masked_std=0.9999
+[rank0 +   19.9s] pre-step loss=-0.521187 grad_norm=0.495278
+[rank0 +   21.5s] native-update ok changed=1344 drift=0.170049 peak_GB=28.1
+[rank0 +   28.7s] saved P1 sha=e22a1742149b9007 reload-reinfer ok

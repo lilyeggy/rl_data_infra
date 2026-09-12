@@ -1,8 +1,0 @@
-FROM polar-localhost-calculator:latest
-
-COPY . /opt/polar
-
-RUN python -m pip install --quiet fastapi uvicorn httpx pydantic pyyaml
-
-WORKDIR /opt/polar
-ENTRYPOINT ["/bin/sh"]

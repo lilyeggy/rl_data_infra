@@ -1,0 +1,82 @@
+{
+  "benchmark_suite": "Official Qwen2.5-Coder Tri-Benchmark (HumanEval, MBPP, BigCodeBench)",
+  "models": {
+    "base": "Qwen2.5-Coder-14B-Instruct (Zero-Shot Base)",
+    "sft-v0": "APPS Clean-v2 SFT Epoch 2",
+    "rl-v2": "On-Policy APPS GRPO Candidate Policy Adapter (apps-rl-cycle-002)",
+    "rl-v3": "On-Policy APPS GRPO Candidate Policy Adapter (apps-rl-cycle-003)"
+  },
+  "humaneval": {
+    "base": {
+      "total": 164,
+      "base_passed": 143,
+      "base_pass@1": 0.872,
+      "plus_passed": 138,
+      "plus_pass@1": 0.8415
+    },
+    "sft-v0": {
+      "total": 164,
+      "base_passed": 146,
+      "base_pass@1": 0.8902,
+      "plus_passed": 136,
+      "plus_pass@1": 0.8293
+    },
+    "rl-v2": {
+      "total": 164,
+      "base_passed": 142,
+      "base_pass@1": 0.8659,
+      "plus_passed": 133,
+      "plus_pass@1": 0.811
+    },
+    "rl-v3": {
+      "total": 164,
+      "base_passed": 143,
+      "base_pass@1": 0.872,
+      "plus_passed": 133,
+      "plus_pass@1": 0.811
+    }
+  },
+  "mbpp": {
+    "base": {
+      "total": 378,
+      "base_passed": 320,
+      "base_pass@1": 0.8466,
+      "plus_passed": 274,
+      "plus_pass@1": 0.7249
+    },
+    "sft-v0": {
+      "total": 378,
+      "base_passed": 317,
+      "base_pass@1": 0.8386,
+      "plus_passed": 277,
+      "plus_pass@1": 0.7328
+    },
+    "rl-v2": {
+      "total": 378,
+      "base_passed": 314,
+      "base_pass@1": 0.8307,
+      "plus_passed": 271,
+      "plus_pass@1": 0.7169
+    }
+  },
+  "bigcodebench_hard": {
+    "base": {
+      "total": 148,
+      "passed": 37,
+      "pass@1": 0.25,
+      "pass@1_percent": 25.0
+    },
+    "sft-v0": {
+      "total": 148,
+      "passed": 34,
+      "pass@1": 0.2297,
+      "pass@1_percent": 22.97
+    },
+    "rl-v2": {
+      "total": 148,
+      "passed": 31,
+      "pass@1": 0.2095,
+      "pass@1_percent": 20.95
+    }
+  }
+}

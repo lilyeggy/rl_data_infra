@@ -1,0 +1,21 @@
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s0 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s1 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s10 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s11 calls=2 tool_rounds=1 seq_len=2301 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s12 calls=3 tool_rounds=2 seq_len=3445 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s13 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s14 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s15 calls=2 tool_rounds=1 seq_len=2550 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s2 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s3 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s4 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s5 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s6 calls=5 tool_rounds=4 seq_len=5593 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s7 calls=2 tool_rounds=1 seq_len=2200 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s8 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+[pi-manager] certify verlpi-smoke26-Mbpp-118-a0s9 calls=1 tool_rounds=0 seq_len=1024 verifier=FAILED
+---GATE---
+batch rejected without resampling: group 'd3fa719d-8b26-4ff0-8a8a-acf19c22c020' has no intra-group reward variance
+ContractValidationError: group 'd3fa719d-8b26-4ff0-8a8a-acf19c22c020' has no intra-group reward variance
+---TOTALS---
+Total training steps: 2

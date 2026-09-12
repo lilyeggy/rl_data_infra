@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import logging
 import os
 import threading
 import time
@@ -12,9 +13,11 @@ import urllib.request
 import uuid
 from collections.abc import Callable, Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 from src.capture.harness_http import HarnessEventIngress
+from src.capture.tool_calls import extract_tool_calls
 from src.capture.model_proxy import (
     ModelBackendResponse,
     ModelCallEvidence,
@@ -30,6 +33,67 @@ from src.errors import ContractValidationError
 
 MODEL_PROXY_HTTP_VERSION = "model-proxy-http/v1"
 _EVIDENCE_EXTENSION = "agent_data_plane_evidence"
+# What Pi is told when the episode cannot afford another turn. Pi answers every
+# request it makes, so a closeout reply is the difference between an episode cut
+# off by budget and an episode with no usable evidence at all: the orchestrator
+# requires *every* recorded call to carry token ids, logprobs and a status below
+# 400, so a single failed call invalidates the whole episode.
+_CLOSEOUT_MESSAGE = "Execution budget exhausted; stop and report the current result."
+logger = logging.getLogger(__name__)
+
+
+def _closeout_response(model_id: str, reason: str) -> dict[str, Any]:
+    """The answer Pi gets when it may not have another model turn.
+
+    Nothing here is recorded as model evidence, so this turn can never reach a
+    training sequence: it claims no model output at all -- empty content, no tool
+    calls, no token ids -- and exists only to let the harness conclude. The
+    reason travels in the closeout note file instead of the wire shape, so it is
+    auditable without changing what Pi parses.
+    """
+    return {
+        "id": f"budget-{uuid.uuid4().hex}",
+        "object": "chat.completion",
+        "model": model_id,
+        "choices": [{
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {"role": "assistant", "content": _CLOSEOUT_MESSAGE},
+        }],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
+
+
+def _recover_tool_calls(response: Any, tools: Any) -> int:
+    """Fill in tool calls the backend did not parse, and report how many.
+
+    The trained policy emits bare tool-call JSON, which stock vLLM parsers do
+    not match (they require ``<tool_call>`` tags), so a request that declared
+    tools comes back with content but no ``tool_calls``. The stage D/E servers
+    always extracted them here; the framework's engine has to be given the same
+    tolerance, and this proxy is where the protocol conversion already happens.
+    An engine-provided parse always wins.
+
+    Only the OpenAI-shaped view Pi consumes is affected -- the recorded token
+    ids and logprobs still come from the engine's own response.
+    """
+    if not isinstance(response, Mapping):
+        return 0
+    choices = response.get("choices")
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], Mapping):
+        return 0
+    choice = choices[0]
+    message = choice.get("message")
+    if not isinstance(message, dict) or message.get("tool_calls"):
+        return 0
+    recovered = extract_tool_calls(message.get("content") or "", tools)
+    if not recovered:
+        return 0
+    message["tool_calls"] = recovered
+    # Pi only acts on a tool-call turn, and the engine reported "length" or
+    # "stop" because it saw no call.
+    choice["finish_reason"] = "tool_calls"
+    return len(recovered)
 
 
 class ModelProxyService:
@@ -51,6 +115,8 @@ class ModelProxyService:
         capture_response_logprobs: bool = True,
         default_sampling_seed: int | None = None,
         on_first_model_request: Callable[[], None] | None = None,
+        upstream_transport: Callable[[dict[str, Any]], tuple[int, dict[str, Any]]] | None = None,
+        closeout_note_path: str | Path | None = None,
     ) -> None:
         if not isinstance(identity, ExecutionIdentity):
             raise TypeError("identity must be ExecutionIdentity")
@@ -89,6 +155,8 @@ class ModelProxyService:
         if on_first_model_request is not None and not callable(on_first_model_request):
             raise TypeError("on_first_model_request must be callable or null")
         self.on_first_model_request = on_first_model_request
+        self.upstream_transport = upstream_transport
+        self.closeout_note_path = Path(closeout_note_path) if closeout_note_path else None
         if self.max_calls < 1:
             raise ContractValidationError("max_calls must be positive")
         self._call_count = 0
@@ -118,21 +186,10 @@ class ModelProxyService:
             raise ContractValidationError("tools must be an array")
         notify_first_model_request = False
         with self._record_lock:
-            if self._call_count >= self.max_calls:
-                return 200, {
-                    "id": f"budget-{uuid.uuid4().hex}",
-                    "object": "chat.completion",
-                    "model": model_id,
-                    "choices": [{
-                        "index": 0,
-                        "finish_reason": "stop",
-                        "message": {
-                            "role": "assistant",
-                            "content": "Execution budget exhausted; stop and report the current result.",
-                        },
-                    }],
-                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-                }
+            reason = self._closeout_reason(payload)
+            if reason is not None:
+                self._note_closeout(reason)
+                return 200, _closeout_response(model_id, reason)
             self._call_count += 1
             if not self._observed_first_model_request:
                 self._observed_first_model_request = True
@@ -178,6 +235,14 @@ class ModelProxyService:
         ):
             upstream_payload.setdefault("logprobs", True)
             upstream_payload.setdefault("top_logprobs", 0)
+            # A framework-managed vLLM (verl's vLLMHttpServer) serves a stock
+            # OpenAI surface with no bespoke evidence extension, so ask for
+            # native ids explicitly: `return_token_ids` yields choices[].token_ids
+            # and prompt_token_ids, `return_tokens_as_token_ids` renders each
+            # logprob entry's token as "token_id:<n>". Both are ignored by
+            # servers that do not implement them.
+            upstream_payload.setdefault("return_token_ids", True)
+            upstream_payload.setdefault("return_tokens_as_token_ids", True)
         # Pi uses SSE.  We intentionally execute a non-streaming upstream call
         # so the controlled backend can return complete token/logprob evidence,
         # then replay its finalized OpenAI response as standards-compatible SSE.
@@ -190,6 +255,15 @@ class ModelProxyService:
             upstream_payload.pop("stream_options", None)
         status_code, response_payload = self._send_upstream(upstream_payload)
         latency_ms = (time.monotonic() - started) * 1000
+        if 200 <= status_code < 300 and self.upstream_transport is None:
+            recovered = _recover_tool_calls(response_payload, request_evidence.tools)
+            if recovered:
+                logger.info(
+                    "%s: recovered %d tool call(s) from generated text; the "
+                    "backend parsed none",
+                    request_id,
+                    recovered,
+                )
         backend, extension_issue = _backend_response(
             response_payload,
             status_code=status_code,
@@ -229,6 +303,53 @@ class ModelProxyService:
                 attempt=self.identity.attempt_id,
             )
         return status_code, response_payload
+
+    def _closeout_reason(self, payload: Mapping[str, Any]) -> str | None:
+        """Why this request may not be served, or ``None`` if it may.
+
+        Two budgets bound an episode: this proxy's call count, and whatever the
+        `upstream_transport` reports through its own ``can_serve`` hook -- the
+        native token transport knows how much context the episode has left and
+        refuses a turn that cannot fit. Both are decided here, before the
+        upstream call, so neither can produce a recorded model call.
+
+        The caller holds `_record_lock`.
+        """
+        if self._call_count >= self.max_calls:
+            return "model_request_budget"
+        can_serve = getattr(self.upstream_transport, "can_serve", None)
+        if callable(can_serve):
+            return can_serve(payload)
+        return None
+
+    def _note_closeout(self, reason: str) -> None:
+        """Record that a budget, not the policy, ended the episode's turns.
+
+        Not model evidence -- no model call happened -- but the episode must not
+        read as if the policy stopped of its own accord. The caller holds
+        `_record_lock`.
+        """
+        logger.warning(
+            "%s: episode %s cannot afford another model turn (%s); closing out",
+            self.identity.run_id,
+            self.identity.episode_id,
+            reason,
+        )
+        if self.closeout_note_path is None:
+            return
+        record = {
+            "episode_id": self.identity.episode_id,
+            "request": self._call_count + 1,
+            "reason": reason,
+            "max_calls": self.max_calls,
+        }
+        try:
+            self.closeout_note_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.closeout_note_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record) + "\n")
+        except (OSError, TypeError, ValueError):
+            # Diagnostics must never be the reason an episode fails.
+            pass
 
     @staticmethod
     def sse_body(response: Mapping[str, Any]) -> bytes:
@@ -308,6 +429,8 @@ class ModelProxyService:
         return "".join(frames).encode()
 
     def _send_upstream(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        if self.upstream_transport is not None:
+            return self.upstream_transport(payload)
         headers = {
             "Content-Type": "application/json",
             # OpenCode's edge rejects urllib's default Python user agent with
@@ -396,6 +519,15 @@ def _standard_logprob_items(response: Mapping[str, Any]) -> list[Mapping[str, An
 
 
 def _standard_response_token_ids(response: Mapping[str, Any]) -> tuple[int, ...] | None:
+    # Preferred: `return_token_ids` gives the native ids directly.
+    choices = response.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], Mapping):
+        raw_ids = choices[0].get("token_ids")
+        if isinstance(raw_ids, list) and raw_ids:
+            if all(isinstance(value, int) and not isinstance(value, bool) for value in raw_ids):
+                return tuple(raw_ids)
+            return None
+    # Fallback: ids recovered from the "token_id:<n>" logprob key form.
     values = []
     for item in _standard_logprob_items(response):
         token = item.get("token")
@@ -416,6 +548,12 @@ def _standard_response_logprobs(response: Mapping[str, Any]) -> tuple[float, ...
 
 
 def _standard_prompt_token_ids(response: Mapping[str, Any]) -> tuple[int, ...] | None:
+    # Preferred: `return_token_ids` gives the prompt ids directly.
+    raw_ids = response.get("prompt_token_ids")
+    if isinstance(raw_ids, list) and raw_ids:
+        if all(isinstance(value, int) and not isinstance(value, bool) for value in raw_ids):
+            return tuple(raw_ids)
+        return None
     raw = response.get("prompt_logprobs")
     if not isinstance(raw, list):
         return None

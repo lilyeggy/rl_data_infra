@@ -1,0 +1,50 @@
+[
+  {
+    "run_id": "estage-r1",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 1,
+    "verifier_status": "FAILED",
+    "execution_validity": "VALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "ELIGIBLE",
+    "execution_bundle_checksum": "c550016c729af93aee2f23ed43853d791d3ac8eb65a878b9f26bb8538e4adb98"
+  },
+  {
+    "run_id": "estage-r1",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 1,
+    "verifier_status": "FAILED",
+    "execution_validity": "VALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "ELIGIBLE",
+    "execution_bundle_checksum": "c43265368272d7996e727c4d6632e6f2695dcb94ae6bbf564aafdb71c18c0e88"
+  },
+  {
+    "run_id": "estage-r1",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 4,
+    "verifier_status": "PASSED",
+    "execution_validity": "VALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "ELIGIBLE",
+    "on_policy_rl_verdict": "ELIGIBLE",
+    "execution_bundle_checksum": "7a90160ee14a2e2d9842d66511d9718416bd045ed7fc5c71fd57d391b1613d51"
+  },
+  {
+    "run_id": "estage-r1",
+    "task_id": "Mbpp/118",
+    "pi_returncode": 0,
+    "model_call_count": 1,
+    "verifier_status": "FAILED",
+    "execution_validity": "VALID",
+    "integrity": "COMPLETE",
+    "sft_verdict": "REJECTED",
+    "on_policy_rl_verdict": "ELIGIBLE",
+    "execution_bundle_checksum": "937ccf68bce0e2bbe0c2096ff6ac52c0b52d83b072ad639ea3ec9ea835b2dfa9"
+  }
+]

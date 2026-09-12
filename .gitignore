@@ -63,3 +63,14 @@ dist/
 # SWE-bench local data (contains gold patches; redacted manifest committed instead)
 experiments/swebench/*.parquet
 experiments/swebench/selected_instances.json
+
+# Downloaded wheels and dataset caches (hundreds of MB, reproducible, never sources)
+*.whl
+caches/
+
+# Per-agent scratch state, not project content
+.workbuddy/
+.zcode/
+
+# Shell backups
+*.bak

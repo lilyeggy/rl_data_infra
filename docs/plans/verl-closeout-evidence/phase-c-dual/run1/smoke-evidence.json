@@ -1,0 +1,20 @@
+{
+  "tag": "framework-smoke",
+  "placement": "dual-GPU FSDP2 sharded, torchrun world=2",
+  "verl_version": "0.7.1",
+  "vllm_probe": {
+    "importable": false,
+    "error": "ModuleNotFoundError: No module named 'vllm'"
+  },
+  "trainable_params": 34406400,
+  "frozen_params": 14770033664,
+  "loss": 2.5329654216766357,
+  "grad_norm": 5.178337574005127,
+  "peak_memory_GB_rank0": 22.364470784,
+  "changed_tensors_all_ranks": 1344,
+  "drift_sum_all_ranks": 0.16611003875732422,
+  "p0_adapter_sha256": "6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae",
+  "p1_adapter_sha256": "59b71fc0a3ec6fa94939908807302ac02c663d32cb50f80abea1a0d5d29ca824",
+  "reinfer_head": "def fibonacci(n):\n    if n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n",
+  "elapsed_s": 23.866801738739014
+}

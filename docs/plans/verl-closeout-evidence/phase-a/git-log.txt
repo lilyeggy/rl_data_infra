@@ -1,0 +1,5 @@
+50adf1a feat: sync codex/v1-observability into main
+5d6e525 feat(rl-cycle): add APPS SFT v2, GRPO training loop, and automated cycle orchestration
+8765301 Add APPS SFT package builder
+311ad69 speed up APPS collection with bounded workers
+90fe690 feat: harden training evidence and benchmark pipelines

@@ -1,0 +1,42 @@
+{
+  "rule": "at most 2 tasks with intra-group reward variance (True and False present)",
+  "by_task": {
+    "apps-train-002203": {
+      "n": 4,
+      "resolved": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "apps-train-002397": {
+      "n": 4,
+      "resolved": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "apps-train-002445": {
+      "n": 4,
+      "resolved": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    "apps-train-002422": {
+      "n": 4,
+      "resolved": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "selected": []
+}

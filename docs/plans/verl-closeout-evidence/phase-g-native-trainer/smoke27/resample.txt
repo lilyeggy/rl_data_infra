@@ -1,0 +1,9 @@
+[pi-manager] verlpi-smoke27 attempt 0 carries no learning signal, redrawing: group '53ca36e3-e7c3-44b6-b6fe-986766f9b301' has no intra-group reward variance
+
+{
+  "run_id": "verlpi-smoke27",
+  "attempt": 0,
+  "reason": "DegenerateBatchError",
+  "message": "group '53ca36e3-e7c3-44b6-b6fe-986766f9b301' has no intra-group reward variance",
+  "manager_version": "verl-pi-manager/v1"
+}

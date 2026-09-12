@@ -1,0 +1,86 @@
+{
+  "tag": "stage-e-grpo-update",
+  "round_index": 2,
+  "policy_generation_from": "P1",
+  "policy_generation_to": "P2",
+  "policy_checksum_from": "34c4f4e743d960b540305af11ffcad7e1c1e0befb081fa4e3b662b367978ea5d",
+  "learning_rate": 1e-06,
+  "clip_ratio": 0.2,
+  "loss_agg_mode": "token-mean",
+  "episodes": [
+    "estage-r2b-Mbpp-118-a0",
+    "estage-r2b-Mbpp-118-a1",
+    "estage-r2b-Mbpp-118-a2",
+    "estage-r2b-Mbpp-118-a3"
+  ],
+  "rewards": {
+    "estage-r2b-Mbpp-118-a0": 1.0,
+    "estage-r2b-Mbpp-118-a1": 0.0,
+    "estage-r2b-Mbpp-118-a2": 0.0,
+    "estage-r2b-Mbpp-118-a3": 0.0
+  },
+  "advantage_stats": {
+    "masked_mean": 0.35714203119277954,
+    "masked_std": 0.9898104071617126,
+    "shape": [
+      4,
+      3460
+    ]
+  },
+  "logprob_comparison": {
+    "masked_tokens": 7168,
+    "mean_abs_nat": 0.026186151430010796,
+    "p99_abs_nat": 0.17426671087741852,
+    "quantiles_abs_nat": {
+      "0.5": 0.006804991513490677,
+      "0.9": 0.08393844962120056,
+      "0.95": 0.10932150483131409,
+      "0.99": 0.17426671087741852
+    },
+    "threshold_mean_nat": 0.05,
+    "threshold_p99_nat": 0.5,
+    "within_threshold": true,
+    "per_episode": [
+      {
+        "episode_id": "estage-r2b-Mbpp-118-a0",
+        "masked_tokens": 3072,
+        "mean_abs_nat": 0.02419016696512699,
+        "max_abs_nat": 0.5966935157775879
+      },
+      {
+        "episode_id": "estage-r2b-Mbpp-118-a1",
+        "masked_tokens": 2048,
+        "mean_abs_nat": 0.029018307104706764,
+        "max_abs_nat": 0.27897292375564575
+      },
+      {
+        "episode_id": "estage-r2b-Mbpp-118-a2",
+        "masked_tokens": 1024,
+        "mean_abs_nat": 0.024060795083642006,
+        "max_abs_nat": 0.3963510990142822
+      },
+      {
+        "episode_id": "estage-r2b-Mbpp-118-a3",
+        "masked_tokens": 1024,
+        "mean_abs_nat": 0.028635140508413315,
+        "max_abs_nat": 0.22807025909423828
+      }
+    ]
+  },
+  "world_size": 2,
+  "device": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "trainable_params": 34406400,
+  "frozen_params": 14770033664,
+  "loss": -0.3571421589170184,
+  "grad_norm_local": 0.38427814841270447,
+  "changed_tensors_all_ranks": 1344,
+  "drift_sum_all_ranks": 0.17716681957244873,
+  "peak_memory_GB_rank0": 27.054582784,
+  "clipfrac_mean": 0.0,
+  "ppo_kl_mean": 0.0,
+  "previous_adapter_sha256": "e22a1742149b9007ed94875c857048c034a5feb38ea0fbb0cd53874505061e2a",
+  "next_adapter_sha256": "ac4e0e45230d8a8c7ab500c7a096f072f9d66500e12688b22a851e3c0a2f59b0",
+  "next_adapter_dir": "/home/cxr/verl-closeout/stage-e/update-r2/adapter-p2",
+  "reload_reinfer_head": "def add(a, b):\n    return a + b\n\ndef subtract(a, b):\n    return a",
+  "elapsed_s": 28.78366494178772
+}

@@ -1,0 +1,7 @@
+[rank0 +    0.0s] device=NVIDIA RTX PRO 6000 Blackwell Server Edition world=2
+[rank0 +    3.7s] verl HFModelConfig ok rank=8 alpha=16
+[rank0 +    3.7s] vllm probe: {'importable': False, 'error': "ModuleNotFoundError: No module named 'vllm'"}
+[rank0 +   11.4s] fsdp2-sharded params: trainable=34406400 (34.41M) frozen=14770033664
+[rank0 +   15.6s] native-update ok: loss=2.5330 grad_norm=5.1783 peak_GB=22.4
+[rank0 +   15.6s] numeric-change(all-ranks): changed_sum=1344 drift_sum=0.166110
+[rank0 +   23.8s] reload-reinfer ok: 'def fibonacci(n):\n    if n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n      '

@@ -22,7 +22,8 @@ Task + Environment + Harness + Policy
 Harness analysis         Learning datasets
 compare / gate           SFT / pref / RL
                               │
-                         Slime trainer
+                    verl trainer (integrated)
+                    Slime trainer (planned)
 ```
 
 ## 当前状态
@@ -50,19 +51,26 @@ compare / gate           SFT / pref / RL
 - Slime admission envelope：重新核验 manifest/decision/bundle/artifact 后才输出 token-faithful traces；
 - 单 GPU 原子状态存储、checksum CAS、断点恢复和不执行命令的 dry-run plan。
 - A6000 上的真实 Pi → Model Proxy → 14B LoRA → Verifier → ExecutionBundle live 闭环；
-- base 与 SFT candidate 的固定 unseen DEV 对照，以及读取报告结论的 fail-closed supervisor Gate。
+- base 与 SFT candidate 的固定 unseen DEV 对照，以及读取报告结论的 fail-closed supervisor Gate；
+- APPS clean-v2 训练包（含数据质量复盘后的 fail-closed 清洗）与 14B LoRA SFT；
+- 单卡 on-policy GRPO LoRA trainer（`grpo-lora-trainer/v1`）与 apps-rl-cycle-001/002/003 三轮 policy 更新；
+- **verl 自带 trainer 的接入**：`verl.trainer.main_ppo` / `RayPPOTrainer` 拥有训练循环、参数更新与权重同步，
+  本项目只通过框架的官方扩展点提供 agent loop 与批认证；双卡 RTX PRO 6000 上跑通两轮 GRPO LoRA 更新
+  （P0→P1→P2），**第二次 rollout 运行在框架同步出去的新权重上**；证据见
+  `docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/`，验收结论见 `docs/plans/verl-closeout/acceptance.md`；
+- 官方 EvalPlus/BigCodeBench 三基准对比报告与固定 APPS holdout 50 题评测。
 
 正在建设：
 
 - 在真实 Polar 服务上验证可选 live rollout，而不只依赖 transport unit test；
 - 在真实 live session 上验证 Harness capture 与 Polar artifact 的 bundle join；
 - 将单 GPU phase contract 接到真实进程启停与 artifact 持久化；
-- 把已 admission 的 envelope 交给官方 Polar–Slime bridge 并完成正式训练验证。
+- 接入 Slime（`verl` 已接入，Slime 尚未）。
 
 当前没有完成、不得宣称完成：
 
 - Slime 端到端模型更新；
-- 通过固定 unseen DEV Gate 的 policy-v1；当前 canonical-v2 SFT candidate 为 `REJECT / NO_IMPROVEMENT`；
+- 通过固定 unseen DEV Gate 的 policy-v1；当前 canonical-v2 SFT candidate 为 `REJECT / NO_IMPROVEMENT`，apps-rl-cycle-001/002/003 candidate 在固定 APPS holdout 上未超过 SFT-v0（50% vs 50%），HumanEval 与 base 持平；
 - 大规模 Agentic RL；
 - benchmark 泛化提升。
 
@@ -114,5 +122,6 @@ python3 -m src.cli execute-local \
 - Local Docker Launcher：默认运行真实 Harness 和隔离 workspace；
 - Polar：可选地运行批量 Harness rollout、重建 token-faithful trajectory；
 - 本项目：不可变证据、验证、认证、数据集、Harness/模型双闭环；
-- Slime：正式 GRPO/PPO 训练、Megatron、SGLang 和权重同步；
-- 自定义旧 GRPO/SFT：已归档，不是生产训练路径。
+- verl：**已接入**的正式 GRPO/PPO 训练与权重同步（`RayPPOTrainer`，见 `src/integrations/verl/`）；
+- Slime：另一条可选训练链路，尚未接入；
+- 旧自定义 GRPO/SFT：已归档；当前单卡 RL 更新使用独立极简 GRPO LoRA trainer（`scripts/train_grpo_lora.py`）。

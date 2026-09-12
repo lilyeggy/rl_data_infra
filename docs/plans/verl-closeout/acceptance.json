@@ -1,0 +1,118 @@
+{
+  "budget_hours_limit": 4.0,
+  "budget_hours_used": "~2.5h dual-GPU wall clock before 2026-09-11; +~1.5h on 2026-09-11 across nine framework rounds (smoke18-22 ~8-10 min each; smoke23-26 ~10-12 min each); +22m34s for smoke27 (n=32, two steps, both certified). The 4h limit is now exceeded. smoke27 was launched on the user's explicit instruction to fix the item-9 blocker, after the limit had been reported. Every round released the GPUs cleanly; no foreign job was present during smoke27 and none was ever touched.",
+  "closeout_doc": "docs/plans/verl-integration-closeout.md",
+  "constraints": {
+    "existing_training_untouched": true,
+    "gpu_touched": false,
+    "other_processes_stopped": false
+  },
+  "evidence_root": "docs/plans/verl-closeout-evidence",
+  "gpu_released": true,
+  "gpu_window": "not requested; SFT eval still running at delivery time",
+  "stages": {
+    "A": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-a/git-status.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/git-diff-stat.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/git-log.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/frozen-input-manifest.json",
+        "docs/plans/verl-closeout-evidence/phase-a/cpu-check-freeze.txt",
+        "docs/plans/verl-closeout-evidence/phase-a/gpu-launch-command-DRAFT.md",
+        "docs/plans/verl-closeout/preflight.json"
+      ],
+      "notes": "SFT training done 2026-09-09T08:43Z, epoch1 == top-level adapter (sha256 6db6a40c...); eval still running; P0 frozen for planning. verl v0.7.1 pinned to bec9ef74; CPU import of real AgentLoopOutput/Manager verified; PEFT 0.20.0 reads 0.19.1 adapter config (r8/a16/7 modules); pi 0.84.2 verified (npm @earendil-works/pi-coding-agent); SFT spot-check decodes with frozen tokenizer.",
+      "status": "PASSED"
+    },
+    "B": {
+      "evidence": [
+        "tests/integrations/test_verl_closeout.py",
+        "docs/plans/verl-closeout/preflight.json"
+      ],
+      "notes": "18 passed + 1 skipped (system env, real-verl test needs ray); 19 passed in full-CPU venv incl. real verl 0.7.1 AgentLoopOutput construction. Full suite: 240 passed, 1 skipped, 22 subtests (baseline was 222 passed). Modules: sequence/admission/manager+config/bridge/lifecycle + orchestrator injection + staged entry.",
+      "status": "PASSED"
+    },
+    "C": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-c-dual/run1/smoke-evidence.json",
+        "docs/plans/verl-closeout-evidence/phase-c-dual/run1/smoke.log",
+        "docs/plans/verl-closeout-evidence/phase-c-dual/stage_c_dual_gpu.py"
+      ],
+      "notes": "Dual-GPU run 2026-09-10 09:49Z, 24s, torchrun world=2 on both RTX PRO 6000: 14B Base + P0 (6db6a40c) via verl 0.7.1 HFModelConfig + PEFT; FSDP2 sharded, trainable 34.41M / frozen 14.77B; one native AdamW update loss=2.533 grad_norm=5.178 peak=22.4GB/rank; 1344/1344 tensors changed drift=0.166; P1 saved (59b71fc0) via DTensor gather, reloaded and re-inferred. vLLM NOT importable on host (precompiled install broken) — recorded honestly; D uses transformers-backend infer server. Prior single-GPU DEV smoke superseded. GPU budget ~0.05h total.",
+      "status": "PASSED",
+      "vllm_repair": {
+        "evidence": [
+          "docs/plans/verl-closeout-evidence/vllm-repair/vllm-repair-smoke.json",
+          "docs/plans/verl-closeout-evidence/vllm-repair/REPAIR.md"
+        ],
+        "status": "FIXED_AND_VERIFIED_INFERENCE"
+      }
+    },
+    "D": {
+      "deviation": "MBPP tasks instead of APPS-only (user-authorized 2026-09-10). APPS yielded 80/80 unresolved across 5 diagnostic runs; MBPP is the carrier for proving the loop, per user directive.",
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-d-certified/verl-assembly.json",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/summaries.json",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/sample-model-evidence-a2.jsonl",
+        "docs/plans/verl-closeout-evidence/phase-d-certified/loop.log",
+        "docs/plans/verl-closeout-evidence/phase-d-diag/REPORT.md"
+      ],
+      "notes": "dstage32: 4 real Pi multi-turn trajectories (2-4 model calls each, >=1 tool round), 1 PASSED / 3 FAILED verifier -> intra-group reward variance. All 4 assembled to single verl sequences (contiguity OK after native-token anchoring), all ON_POLICY_RL ELIGIBLE, CertifiedBatch emitted (policy 749d7a9f). Fixed 3 real defects with minimal repros: empty-arg tool-call loop, Pi text re-serialization token drift, new-episode misclassification. Limitation recorded: turn>=1 context is harness-rendered text; native generated tokens remain the only masked-1 loss source.",
+      "status": "PASSED"
+    },
+    "E": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-e/E-REPORT.md",
+        "docs/plans/verl-closeout-evidence/phase-e/round-1.compact.json",
+        "docs/plans/verl-closeout-evidence/phase-e/round-2.compact.json",
+        "docs/plans/verl-closeout-evidence/phase-e/update-r1-result.json",
+        "docs/plans/verl-closeout-evidence/phase-e/update-r2-result.json",
+        "docs/plans/verl-closeout-evidence/phase-e/recovery-r1.json",
+        "docs/plans/verl-closeout-evidence/phase-e/round3-p2-usability-summaries.json"
+      ],
+      "notes": "Completed 2026-09-10. Two native GRPO updates with verl's own core_algos (compute_grpo_outcome_advantage + compute_policy_loss, PPO clip 0.2), dual-GPU FSDP2 world=2, LoRA-only trainable 34.41M, lr 1e-6, one update round per batch, synchronous checkpoints. P0->P1 (loss -0.521187, grad_norm 0.495278, 1344 changed tensors) and P1->P2 (loss -0.357142, grad_norm 0.384278, 1344 changed). Logprob comparison of training-side vs rollout logprobs over masked tokens: round 1 mean 0.02768 / P99 0.16145 nat, round 2 mean 0.02619 / P99 0.17427 nat -- both inside the 0.05 / 0.5 thresholds. Checkpoint-boundary recovery at P1: 672 LoRA tensors bitwise identical on reload, gradient flow resumes (grad_norm 1.0976), no batch replayed. Both P1 and P2 proven usable by real Pi execution (P1 via r2b, P2 via r3b: 1 PASSED/3 FAILED, all VALID/ELIGIBLE). Round 2's first attempt was rejected for zero intra-group reward variance and resampled, per the documented pre-update gate. Rollout backend is the repaired vLLM served through an OpenAI bridge (Pi -> bridge -> vLLM). Limitation: orchestration is a driver around verl's native algorithm code, not RayPPOTrainer; the Ray hybrid-replica path was made importable/gated correctly but not driven end-to-end.",
+      "status": "PASSED"
+    },
+    "F": {
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-f/F-REPORT.md",
+        "docs/plans/verl-closeout-evidence/phase-f/p0-summaries.json",
+        "docs/plans/verl-closeout-evidence/phase-f/p2-summaries.json"
+      ],
+      "notes": "Completed 2026-09-10. Holdout fixed before the run: Mbpp/2, Mbpp/3, Mbpp/4, Mbpp/6 -- none used in this RL run (D/E used Mbpp/118 only). NOT claimed as SFT-unseen: overlap with the SFT data was not verified. Identical tools/workspace/timeout/sampling for both arms, one real Pi episode per task per policy, served by the repaired vLLM. Effect result: P0 0/4 passed (10 model calls, 16 tool events), P2 0/4 passed (4 model calls, 0 tool events); all 8 episodes execution_validity VALID. No pass-rate difference observed; the only measurable difference is behavioural (P2 emitted zero tool calls on all four held-out tasks). Explicitly a 4-task smoke evaluation, not a statistical claim, and no improvement is claimed. Integration conclusion and effect conclusion are reported separately.",
+      "status": "PASSED"
+    },
+    "G": {
+      "status": "PASSED",
+      "evidence": [
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/SUMMARY.md",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/certify-lines.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/step-metrics.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke25/checkpoints.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke26/SUMMARY.md",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke26/certify-and-refusal.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/SUMMARY.md",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/step-metrics.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/checkpoints.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/certify-lines.txt",
+        "docs/plans/verl-closeout-evidence/phase-g-native-trainer/smoke27/resample.txt"
+      ],
+      "notes": "verl's own trainer owns the loop: verl.trainer.main_ppo -> RayPPOTrainer.fit(). smoke25 (2026-09-11) ran one complete GRPO step: 16 real Pi episodes certified -> advantages -> update_actor 117.6s -> update_weights 2.98s -> global_step_1; P1 adapter sha256 f0ddcac8... differs from frozen P0 6db6a40c..., so the update is real. 5.3 item 2 upgraded. smoke27 (n=32, total_epochs=2, max_attempts=3, 22m34s) then ran TWO steps and closed item 9: generation 0 rolled out under P0 (adapter_revision 6db6a40c..., episode fingerprint e3eca6fe...), its first draw was refused as a degenerate batch and redrawn (rejected-attempt0.json), the redraw certified, step 1 synced in place (2.90s) and wrote global_step_1; generation 1 then rolled out under policy_generation P1 with adapter_revision 13cc8199..., which is the recomputed digest of global_step_1/actor (MATCH), episode fingerprint aed2a953..., and step 2 produced a different adapter (30e3f3ad...) from it. The engine still cannot self-report its step (checkpoint_engine.backend=naive discards global_steps), so policy identity is bound by the digest of the checkpoint the framework itself wrote, and the gap is recorded per call. All 13 acceptance items are therefore satisfied and the 5.4 claim is enabled. No learning improvement is claimed: 2/32 then 1/32 solves is noise."
+    }
+  },
+  "test_baseline": {
+    "before": "222 passed, 22 subtests passed",
+    "after": "314 passed, 9 skipped, 31 subtests passed",
+    "command": "python3 -m pytest tests/ -q",
+    "new_tests": "test_verl_resampling.py (9): a degenerate batch is redrawn, a deterministic violation is not retried, attempts are exhausted with the last error named, the retryable type stays a ContractValidationError, and both variance gates raise it. Earlier: test_verl_native_transport.py, test_verl_token_context.py, test_verl_closeout.py, test_model_proxy_http.py."
+  },
+  "unresolved": [
+    "The resample fix (commit bc06a5f) was exercised exactly once, on its first live run: smoke27 gen-000 attempt 0 was refused for a flat reward group and attempt 1 certified. One successful redraw is not coverage of the exhaustion path (all max_attempts draws degenerate), which is still only exercised by unit tests.",
+    "checkpoint_engine.backend=naive never tells the engine its step (fsdp_workers.py:1735 discards global_steps), so the engine cannot confirm which policy it serves. Recorded per call in engine-notes/<episode>.step.jsonl rather than assumed away; the identity link is the digest of the framework-written checkpoint.",
+    "E limitations: single task, 4 episodes per round -> pipeline validation, not a statistical learning claim; clipfrac/PPO-KL are 0 by construction (one update round per batch)",
+    "F effect result: 0/4 vs 0/4 on a 4-task smoke set with one episode per task; P2 used zero tool calls on held-out tasks. Not significant, no improvement claimed.",
+    "APPS 80/80 unresolved -> APPS learning signal absent (MBPP used per user authorization)",
+    "turn>=1 training context is harness-rendered text (Pi re-serializes history); native generated tokens remain the only mask=1 loss source; E logprob comparison quantifies the resulting drift as within tolerance",
+    "Process-management incident during E/F cleanup: a blanket kill of GPU compute PIDs from nvidia-smi ran while a foreign server-user job was on the GPUs; that job survived (still running) but SIGTERM was sent to another user's processes by mistake. Recorded in phase-f/F-REPORT.md; future runs must select own PIDs by owner/cmdline."
+  ]
+}

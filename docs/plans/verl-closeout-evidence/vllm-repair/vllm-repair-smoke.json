@@ -1,0 +1,24 @@
+{
+  "tag": "vllm-repair-smoke",
+  "vllm_version": "0.1.dev17320+geac9e008a",
+  "vllm_path": "/home/cxr/ds4-deploy/vllm/vllm/__init__.py",
+  "import_ok": true,
+  "engine_ok": true,
+  "engine_start_s": 88.37365674972534,
+  "lora_ok": true,
+  "generated_tokens": 32,
+  "logprob_steps": 32,
+  "logprobs_aligned": true,
+  "first_token_ids": [
+    198,
+    262,
+    421,
+    308,
+    2651,
+    220,
+    16,
+    25
+  ],
+  "text_head": "\n    if n <= 1:\n        return n\n    else:\n        c= fibonacci(n - 1) + fibonacci(n - 2)",
+  "total_s": 198.85125064849854
+}

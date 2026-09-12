@@ -1,0 +1,1293 @@
+{
+  "summary": {
+    "total": 148,
+    "passed": 31,
+    "pass@1": 0.2095,
+    "pass@1_percent": 20.95,
+    "calibrated": true,
+    "evaluation_time_seconds": 146.0
+  },
+  "results": [
+    {
+      "task_id": "BigCodeBench/100",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_value": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_value\nAssertionError: Lists differ: [81, 14, 3, 94, 35, 31, 28, 17, 94, 13, 86[69 chars], 69] != [63.942679845788376, 2.5010755222666936, 2[531 chars]8911]\n\nFirst differing element 0:\n81\n63.942679845788376\n\nDiff is 874 characters long. Set self.maxDiff to None to see it. : DataFrame contents should match the expected output\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1003",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_different_structure_xml": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 92, in test_different_structure_xml\n  File \"__test__.py\", line 36, in task_func\n  File \"src/lxml/etree.pyx\", line 3433, in lxml.etree.fromstring\n  File \"src/lxml/parser.pxi\", line 2079, in lxml.etree._parseMemoryDocument\n  File \"src/lxml/parser.pxi\", line 1926, in lxml.etree._parseDoc\n  File \"src/lxml/parser.pxi\", line 1951, in lxml.etree._parseDoc_charbuffer\nTypeError: memoryview: a bytes-like object is required, not 'MagicMock'\n",
+        "test_empty_xml": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 79, in test_empty_xml\n  File \"__test__.py\", line 36, in task_func\n  File \"src/lxml/etree.pyx\", line 3433, in lxml.etree.fromstring\n  File \"src/lxml/parser.pxi\", line 2079, in lxml.etree._parseMemoryDocument\n  File \"src/lxml/parser.pxi\", line 1926, in lxml.etree._parseDoc\n  File \"src/lxml/parser.pxi\", line 1951, in lxml.etree._parseDoc_charbuffer\nTypeError: memoryview: a bytes-like object is required, not 'MagicMock'\n",
+        "test_non_xml_data": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 111, in test_non_xml_data\n  File \"__test__.py\", line 36, in task_func\n  File \"src/lxml/etree.pyx\", line 3433, in lxml.etree.fromstring\n  File \"src/lxml/parser.pxi\", line 2079, in lxml.etree._parseMemoryDocument\n  File \"src/lxml/parser.pxi\", line 1926, in lxml.etree._parseDoc\n  File \"src/lxml/parser.pxi\", line 1951, in lxml.etree._parseDoc_charbuffer\nTypeError: memoryview: a bytes-like object is required, not 'MagicMock'\n",
+        "test_valid_xml": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 67, in test_valid_xml\n  File \"__test__.py\", line 36, in task_func\n  File \"src/lxml/etree.pyx\", line 3433, in lxml.etree.fromstring\n  File \"src/lxml/parser.pxi\", line 2079, in lxml.etree._parseMemoryDocument\n  File \"src/lxml/parser.pxi\", line 1926, in lxml.etree._parseDoc\n  File \"src/lxml/parser.pxi\", line 1951, in lxml.etree._parseDoc_charbuffer\nTypeError: memoryview: a bytes-like object is required, not 'MagicMock'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1004",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_file": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 68, in test_empty_file\n  File \"__test__.py\", line 30, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/re/__init__.py\", line 216, in findall\n    return _compile(pattern, flags).findall(string)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_large_input": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 97, in test_large_input\n  File \"__test__.py\", line 30, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/re/__init__.py\", line 216, in findall\n    return _compile(pattern, flags).findall(string)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_special_characters": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 85, in test_special_characters\n  File \"__test__.py\", line 30, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/re/__init__.py\", line 216, in findall\n    return _compile(pattern, flags).findall(string)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_word_frequencies": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 59, in test_word_frequencies\n  File \"__test__.py\", line 30, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/re/__init__.py\", line 216, in findall\n    return _compile(pattern, flags).findall(string)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1006",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_valid_zip_url": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_valid_zip_url\nAssertionError: False is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1008",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_table": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 117, in test_empty_table\n  File \"__test__.py\", line 21, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_successful_scrape": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 72, in test_successful_scrape\n  File \"__test__.py\", line 21, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_table_not_found": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 86, in test_table_not_found\n  File \"__test__.py\", line 21, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/101",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_basic_functionality": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1348, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1323, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1369, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1318, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1078, in _send_output\n    self.send(msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1016, in send\n    self.connect()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1495, in connect\n    self.sock = self._context.wrap_socket(self.sock,\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 517, in wrap_socket\n    return self.sslsocket_class._create(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1104, in _create\n    self.do_handshake()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1382, in do_handshake\n    self._sslobj.do_handshake()\nssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 65, in test_basic_functionality\n  File \"__test__.py\", line 29, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 873, in read_csv\n    return _read(filepath_or_buffer, kwds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 300, in _read\n    parser = TextFileReader(filepath_or_buffer, **kwds)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1645, in __init__\n    self._engine = self._make_engine(f, self.engine)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1904, in _make_engine\n    self.handles = get_handle(\n                   ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 772, in get_handle\n    ioargs = _get_filepath_or_buffer(\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 404, in _get_filepath_or_buffer\n    with urlopen(req_info) as req:\n         ^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 281, in urlopen\n    return urllib.request.urlopen(*args, **kwargs)  # noqa: TID251\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 525, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 634, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 557, in error\n    result = self._call_chain(*args)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 749, in http_error_302\n    return self.parent.open(new, timeout=req.timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 519, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 536, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1391, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1351, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>\n",
+        "test_heatmap_features": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1348, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1323, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1369, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1318, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1078, in _send_output\n    self.send(msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1016, in send\n    self.connect()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1495, in connect\n    self.sock = self._context.wrap_socket(self.sock,\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 517, in wrap_socket\n    return self.sslsocket_class._create(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1104, in _create\n    self.do_handshake()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1382, in do_handshake\n    self._sslobj.do_handshake()\nssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 68, in test_heatmap_features\n  File \"__test__.py\", line 29, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 873, in read_csv\n    return _read(filepath_or_buffer, kwds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 300, in _read\n    parser = TextFileReader(filepath_or_buffer, **kwds)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1645, in __init__\n    self._engine = self._make_engine(f, self.engine)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1904, in _make_engine\n    self.handles = get_handle(\n                   ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 772, in get_handle\n    ioargs = _get_filepath_or_buffer(\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 404, in _get_filepath_or_buffer\n    with urlopen(req_info) as req:\n         ^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 281, in urlopen\n    return urllib.request.urlopen(*args, **kwargs)  # noqa: TID251\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 525, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 634, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 557, in error\n    result = self._call_chain(*args)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 749, in http_error_302\n    return self.parent.open(new, timeout=req.timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 519, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 536, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1391, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1351, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>\n",
+        "test_heatmap_values": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1348, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1323, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1369, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1318, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1078, in _send_output\n    self.send(msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1016, in send\n    self.connect()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1495, in connect\n    self.sock = self._context.wrap_socket(self.sock,\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 517, in wrap_socket\n    return self.sslsocket_class._create(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1104, in _create\n    self.do_handshake()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1382, in do_handshake\n    self._sslobj.do_handshake()\nssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 73, in test_heatmap_values\n  File \"__test__.py\", line 29, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 873, in read_csv\n    return _read(filepath_or_buffer, kwds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 300, in _read\n    parser = TextFileReader(filepath_or_buffer, **kwds)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1645, in __init__\n    self._engine = self._make_engine(f, self.engine)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1904, in _make_engine\n    self.handles = get_handle(\n                   ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 772, in get_handle\n    ioargs = _get_filepath_or_buffer(\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 404, in _get_filepath_or_buffer\n    with urlopen(req_info) as req:\n         ^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 281, in urlopen\n    return urllib.request.urlopen(*args, **kwargs)  # noqa: TID251\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 525, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 634, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 557, in error\n    result = self._call_chain(*args)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 749, in http_error_302\n    return self.parent.open(new, timeout=req.timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 519, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 536, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1391, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1351, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>\n",
+        "test_plot_appearance": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1348, in do_open\n    h.request(req.get_method(), req.selector, req.data, headers,\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1323, in request\n    self._send_request(method, url, body, headers, encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1369, in _send_request\n    self.endheaders(body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1318, in endheaders\n    self._send_output(message_body, encode_chunked=encode_chunked)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1078, in _send_output\n    self.send(msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1016, in send\n    self.connect()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/client.py\", line 1495, in connect\n    self.sock = self._context.wrap_socket(self.sock,\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 517, in wrap_socket\n    return self.sslsocket_class._create(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1104, in _create\n    self.do_handshake()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/ssl.py\", line 1382, in do_handshake\n    self._sslobj.do_handshake()\nssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 79, in test_plot_appearance\n  File \"__test__.py\", line 29, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 873, in read_csv\n    return _read(filepath_or_buffer, kwds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 300, in _read\n    parser = TextFileReader(filepath_or_buffer, **kwds)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1645, in __init__\n    self._engine = self._make_engine(f, self.engine)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/parsers/readers.py\", line 1904, in _make_engine\n    self.handles = get_handle(\n                   ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 772, in get_handle\n    ioargs = _get_filepath_or_buffer(\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 404, in _get_filepath_or_buffer\n    with urlopen(req_info) as req:\n         ^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/common.py\", line 281, in urlopen\n    return urllib.request.urlopen(*args, **kwargs)  # noqa: TID251\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 525, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 634, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 557, in error\n    result = self._call_chain(*args)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 749, in http_error_302\n    return self.parent.open(new, timeout=req.timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 519, in open\n    response = self._open(req, data)\n               ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 536, in _open\n    result = self._call_chain(self.handle_open, protocol, protocol +\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1391, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/urllib/request.py\", line 1351, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1012",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_successful_download_and_extraction": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in test_successful_download_and_extraction\nAssertionError: 'Download and extraction successful' not found in \"Error: HTTPSConnectionPool(host='drive.google.com', port=443): Max retries exceeded with url: /uc?export=download&id=1MRyf-bpPYb7hT3Oj4ZK35O-fzM2_HZ7A (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1016)')))\"\n",
+        "test_invalid_url": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 71, in test_invalid_url\n  File \"__test__.py\", line 41, in task_func\nTypeError: a bytes-like object is required, not 'MagicMock'\n",
+        "test_non_200_http_response": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 78, in test_non_200_http_response\n  File \"__test__.py\", line 41, in task_func\nTypeError: a bytes-like object is required, not 'MagicMock'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1013",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_external_links": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 109, in test_external_links\nAssertionError: 0 != 1\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1015",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "/lib/x86_64-linux-gnu/libstdc++.so.6: version `CXXABI_1.3.15' not found (required by /home/cxr/miniconda3/envs/vllm/lib/python3.11/lib-dynload/../.././libicui18n.so.78)"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1019",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'pytesseract'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1020",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'chardet'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1022",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/1039",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_exception_handling": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 137, in test_exception_handling\nAssertionError: False is not true\n",
+        "test_file_found": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 91, in test_file_found\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 908, in assert_called\n    raise AssertionError(msg)\nAssertionError: Expected 'send' to have been called.\n",
+        "test_file_not_found": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 116, in test_file_not_found\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 930, in assert_called_with\n    raise AssertionError(error_message)\nAssertionError: expected call not found.\nExpected: send(b'File not found')\n  Actual: not called.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1040",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_multiple_connections": "Traceback (most recent call last):\n  File \"__test__.py\", line 143, in test_multiple_connections\nConnectionResetError: [Errno 104] Connection reset by peer\n",
+        "test_queue_empty_condition": "Traceback (most recent call last):\n  File \"__test__.py\", line 124, in test_queue_empty_condition\nConnectionRefusedError: [Errno 111] Connection refused\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1042",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_email_with_empty_message": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 116, in test_email_with_empty_message\n  File \"__test__.py\", line 52, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bigcodebench/eval/utils.py\", line 263, in readline\n    raise IOError\nOSError\n",
+        "test_smtp_server_connection_error": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 138, in test_smtp_server_connection_error\n  File \"__test__.py\", line 52, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bigcodebench/eval/utils.py\", line 263, in readline\n    raise IOError\nOSError\n",
+        "test_socket_closes_after_operation": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 154, in test_socket_closes_after_operation\n  File \"__test__.py\", line 52, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bigcodebench/eval/utils.py\", line 263, in readline\n    raise IOError\nOSError\n",
+        "test_successful_email_dispatch": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 173, in test_successful_email_dispatch\n  File \"__test__.py\", line 52, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bigcodebench/eval/utils.py\", line 263, in readline\n    raise IOError\nOSError\n",
+        "test_successful_email_send": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 94, in test_successful_email_send\n  File \"__test__.py\", line 52, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bigcodebench/eval/utils.py\", line 263, in readline\n    raise IOError\nOSError\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1053",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/1057",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_input": "Traceback (most recent call last):\n  File \"__test__.py\", line 85, in test_empty_input\nAssertionError: Tuples differ: (10, 7) != (0, 0)\n\nFirst differing element 0:\n10\n0\n\n- (10, 7)\n?  -   ^\n\n+ (0, 0)\n?     ^\n : The shape of the DataFrame with empty inputs is not as expected.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1077",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'pytz'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/108",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'statsmodels'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1085",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_text": "Traceback (most recent call last):\n  File \"__test__.py\", line 51, in test_empty_text\n  File \"__test__.py\", line 33, in task_func\nValueError: not enough values to unpack (expected 2, got 0)\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1124",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/1129",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_download_to_default_directory": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 101, in test_download_to_default_directory\n  File \"__test__.py\", line 38, in task_func\nAttributeError: 'MockResponse' object has no attribute 'raise_for_status'\n",
+        "test_download_with_direct_key": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 76, in test_download_with_direct_key\n  File \"__test__.py\", line 38, in task_func\nAttributeError: 'MockResponse' object has no attribute 'raise_for_status'\n",
+        "test_download_with_incorrect_key": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 86, in test_download_with_incorrect_key\n  File \"__test__.py\", line 34, in task_func\nValueError: Key 'nonexistent' not found in JSON data\n",
+        "test_download_with_specified_directory": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 92, in test_download_with_specified_directory\n  File \"__test__.py\", line 38, in task_func\nAttributeError: 'MockResponse' object has no attribute 'raise_for_status'\n",
+        "test_multiple_downloads": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 112, in test_multiple_downloads\n  File \"__test__.py\", line 38, in task_func\nAttributeError: 'MockResponse' object has no attribute 'raise_for_status'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/1137",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/120",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_reproducibility_with_seed": "Traceback (most recent call last):\n  File \"__test__.py\", line 38, in test_reproducibility_with_seed\nAssertionError: Lists differ: ['202[5056 chars]11-26', '2020-06-02', '2020-08-22', '2020-06-10', '2020-02-07'] != ['202[5056 chars]11-26', '2020-06-02', '2020-08-22', '2020-06-10']\n\nFirst list contains 1 additional elements.\nFirst extra element 365:\n'2020-02-07'\n\nDiff is 6275 characters long. Set self.maxDiff to None to see it. : DataFrame contents should match the expected output\n",
+        "test_series_length": "Traceback (most recent call last):\n  File \"__test__.py\", line 44, in test_series_length\nAssertionError: 10 != 9\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/123",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/124",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_output_types": "Traceback (most recent call last):\n  File \"__test__.py\", line 45, in test_output_types\nAssertionError: Lists differ: [np.float64(0.0), np.float64(0.0), np.floa[1653 chars]0.0)] != [2.0, 2.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0[53 chars] 2.0]\n\nFirst differing element 0:\nnp.float64(0.0)\n2.0\n\nFirst list contains 80 additional elements.\nFirst extra element 20:\nnp.float64(0.0)\n\nDiff is 2160 characters long. Set self.maxDiff to None to see it. : DataFrame contents should match the expected output\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/129",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_page": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 71, in test_empty_page\n  File \"__test__.py\", line 20, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_http_error": "Traceback (most recent call last):\n  File \"__test__.py\", line 16, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1124, in __call__\n    return self._mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1128, in _mock_call\n    return self._execute_mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1183, in _execute_mock_call\n    raise effect\nrequests.exceptions.HTTPError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 86, in test_http_error\n  File \"__test__.py\", line 18, in task_func\nConnectionError: Failed to connect to http://example.com/error: \n",
+        "test_non_html_content": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 78, in test_non_html_content\n  File \"__test__.py\", line 20, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_return_type": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 57, in test_return_type\n  File \"__test__.py\", line 20, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n",
+        "test_return_type_with_complex_data": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 105, in test_return_type_with_complex_data\n  File \"__test__.py\", line 20, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/__init__.py\", line 465, in __init__\n    for (\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/builder/_htmlparser.py\", line 462, in prepare_markup\n    dammit = UnicodeDammit(\n             ^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 820, in __init__\n    for encoding in self.detector.encodings:\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 632, in encodings\n    self.declared_encoding = self.find_declared_encoding(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/bs4/dammit.py\", line 731, in find_declared_encoding\n    declared_encoding_match = xml_re.search(markup, endpos=xml_endpos)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: expected string or bytes-like object, got 'MagicMock'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/13",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 94, in test_case_1\nAssertionError: 0 != 2\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/139",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/147",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_all_ips_checked": "Traceback (most recent call last):\n  File \"__test__.py\", line 69, in test_all_ips_checked\nAssertionError: Items in the second set but not the first:\n'192.168.0.3'\n'192.168.0.0' : All IPs in the range should be checked.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/15",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_command_failure_with_specific_exit_code": "Traceback (most recent call last):\n  File \"__test__.py\", line 114, in test_command_failure_with_specific_exit_code\nAssertionError: 'Error executing command' not found in '\\nERROR: exit code 1\\n'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/161",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_log_to_csv_content": "Traceback (most recent call last):\n  File \"__test__.py\", line 67, in test_log_to_csv_content\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 220, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1302, in assert_frame_equal\n    assert_index_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 353, in assert_index_equal\n    _testing.assert_almost_equal(\n  File \"pandas/_libs/testing.pyx\", line 53, in pandas._libs.testing.assert_almost_equal\n  File \"pandas/_libs/testing.pyx\", line 171, in pandas._libs.testing.assert_almost_equal\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 619, in raise_assert_detail\n    raise AssertionError(msg)\nAssertionError: DataFrame.columns are different\n\nDataFrame.columns values are different (100.0 %)\n[left]:  Index(['Type', 'Timestamp', 'Message'], dtype='str')\n[right]: Index(['type', 'timestamp', 'message'], dtype='str')\nAt positional index 0, first diff: Type != type\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/162",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/17",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_process_found_restarts_process": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 46, in test_process_found_restarts_process\nAssertionError: 'Process not found. Starting notepad.' != 'Process found. Restarting notepad.'\n- Process not found. Starting notepad.\n?         ----       ^\n+ Process found. Restarting notepad.\n?                ^^^\n\n",
+        "test_process_not_found_starts_process": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 37, in test_process_not_found_starts_process\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 951, in assert_called_once_with\n    return self.assert_called_with(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: Popen('random_non_existent_process')\n  Actual: Popen(['random_non_existent_process'])\n",
+        "test_process_terminates_and_restarts_multiple_instances": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 60, in test_process_terminates_and_restarts_multiple_instances\nAssertionError: 'Process not found. Starting multi_instance.' != 'Process found. Restarting multi_instance.'\n- Process not found. Starting multi_instance.\n?         ----       ^\n+ Process found. Restarting multi_instance.\n?                ^^^\n\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/177",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'nltk'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/184",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/187",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'geopandas'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/19",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/199",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'pytz'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/208",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 79, in test_case_1\nAssertionError: np.float64(3.9280529527998986) != 3.94784 within 5 places (np.float64(0.01978704720010116) difference)\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/211",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_2": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 101, in test_2\n  File \"__test__.py\", line 29, in task_func\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 225, in makedirs\nPermissionError: [Errno 13] Permission denied: '/path'\n",
+        "test_3": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 125, in test_3\n  File \"__test__.py\", line 29, in task_func\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 225, in makedirs\nPermissionError: [Errno 13] Permission denied: '/path'\n",
+        "test_4": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 149, in test_4\n  File \"__test__.py\", line 29, in task_func\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 225, in makedirs\nPermissionError: [Errno 13] Permission denied: '/path'\n",
+        "test_5": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 173, in test_5\n  File \"__test__.py\", line 29, in task_func\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 225, in makedirs\nPermissionError: [Errno 13] Permission denied: '/path'\n",
+        "test_download_and_extract": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 77, in test_download_and_extract\n  File \"__test__.py\", line 29, in task_func\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 215, in makedirs\n  File \"<frozen os>\", line 225, in makedirs\nPermissionError: [Errno 13] Permission denied: '/path'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/214",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_image_size_and_type": "Traceback (most recent call last):\n  File \"__test__.py\", line 60, in test_image_size_and_type\nAssertionError: Lists differ: [[[102, 220, 225], [95, 179, 61], [234, 203,[6229 chars]32]]] != [[[57, 12, 140], [125, 114, 71], [52, 44, 21[6305 chars]45]]]\n\nFirst differing element 0:\n[[102, 220, 225], [95, 179, 61], [234, 203,[269 chars]221]]\n[[57, 12, 140], [125, 114, 71], [52, 44, 21[266 chars] 36]]\n\nDiff is 17110 characters long. Set self.maxDiff to None to see it. : DataFrame contents should match the expected output\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/227",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'soundfile'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/239",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 46, in test_case_1\nAssertionError: {'mean': np.float64(2.5), 'std': np.float64(1.2909[49 chars]4(4)} != {'mean': 2.5, 'std': 1.118033988749895, 'min': 1, 'max': 4}\n+ {'max': 4, 'mean': 2.5, 'min': 1, 'std': 1.118033988749895}\n- {'max': np.int64(4),\n-  'mean': np.float64(2.5),\n-  'min': np.int64(1),\n-  'std': np.float64(1.2909944487358056)}\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_case_2\nAssertionError: {'mean': np.float64(15.0), 'std': np.float64(7.071[52 chars](20)} != {'mean': 15.0, 'std': 5.0, 'min': 10, 'max': 20}\n+ {'max': 20, 'mean': 15.0, 'min': 10, 'std': 5.0}\n- {'max': np.int64(20),\n-  'mean': np.float64(15.0),\n-  'min': np.int64(10),\n-  'std': np.float64(7.0710678118654755)}\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 60, in test_case_3\nAssertionError: {'mean': np.float64(-10.0), 'std': np.float64(5.0)[39 chars](-5)} != {'mean': -10.0, 'std': 4.08248290463863, 'min': -15, 'max': -5}\n+ {'max': -5, 'mean': -10.0, 'min': -15, 'std': 4.08248290463863}\n- {'max': np.int64(-5),\n-  'mean': np.float64(-10.0),\n-  'min': np.int64(-15),\n-  'std': np.float64(5.0)}\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_case_4\nAssertionError: '' is not true : Histogram with PDF\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 74, in test_case_5\nAssertionError: {'mean': np.float64(6.5), 'std': np.float64(1.0), [42 chars]7.5)} != {'mean': 6.5, 'std': 0.816496580927726, 'min': 5.5, 'max': 7.5}\n+ {'max': 7.5, 'mean': 6.5, 'min': 5.5, 'std': 0.816496580927726}\n- {'max': np.float64(7.5),\n-  'mean': np.float64(6.5),\n-  'min': np.float64(5.5),\n-  'std': np.float64(1.0)}\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/241",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 52, in test_case_1\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 1711, in assert_allclose\n    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 919, in assert_array_compare\n    raise AssertionError(msg)\nAssertionError: \nNot equal to tolerance rtol=1e-07, atol=0\n\nMismatched elements: 4 / 4 (100%)\nMax absolute difference among violations: 0.26970326\nMax relative difference among violations: 1.\n ACTUAL: array([0.      , 0.333333, 0.666667, 1.      ])\n DESIRED: array([0.182574, 0.365148, 0.547723, 0.730297])\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_case_2\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 1711, in assert_allclose\n    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 919, in assert_array_compare\n    raise AssertionError(msg)\nAssertionError: \nNot equal to tolerance rtol=1e-07, atol=0\n\nMismatched elements: 3 / 3 (100%)\nMax absolute difference among violations: 0.31622777\nMax relative difference among violations: 1.\n ACTUAL: array([0.  , 0.25, 1.  ])\n DESIRED: array([-0.316228,  0.      ,  0.948683])\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_case_3\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 1711, in assert_allclose\n    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 919, in assert_array_compare\n    raise AssertionError(msg)\nAssertionError: \nNot equal to tolerance rtol=1e-07, atol=0\n\nMismatched elements: 1 / 1 (100%)\nMax absolute difference among violations: 1.\nMax relative difference among violations: 1.\n ACTUAL: array([0.])\n DESIRED: array([1.])\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 97, in test_case_4\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 1711, in assert_allclose\n    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 919, in assert_array_compare\n    raise AssertionError(msg)\nAssertionError: \nNot equal to tolerance rtol=1e-07, atol=0\n\nMismatched elements: 4 / 4 (100%)\nMax absolute difference among violations: 0.5\nMax relative difference among violations: 1.\n ACTUAL: array([0., 0., 0., 0.])\n DESIRED: array([0.5, 0.5, 0.5, 0.5])\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 107, in test_case_5\n  File \"__test__.py\", line 25, in task_func\nValueError: not enough values to unpack (expected 2, got 0)\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/267",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 60, in test_case_1\nAssertionError: 'FFT of generated signal' != 'FFT of the Signal'\n- FFT of generated signal\n+ FFT of the Signal\n\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 74, in test_case_2\nAssertionError: 'FFT of generated signal' != 'FFT of the Signal'\n- FFT of generated signal\n+ FFT of the Signal\n\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 88, in test_case_3\nAssertionError: 'FFT of generated signal' != 'FFT of the Signal'\n- FFT of generated signal\n+ FFT of the Signal\n\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 103, in test_case_4\nAssertionError: 'FFT of generated signal' != 'FFT of the Signal'\n- FFT of generated signal\n+ FFT of the Signal\n\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 118, in test_case_5\nAssertionError: 'FFT of generated signal' != 'FFT of the Signal'\n- FFT of generated signal\n+ FFT of the Signal\n\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/273",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_invalid_content_type": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 71, in test_invalid_content_type\n  File \"__test__.py\", line 26, in do_POST\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 505, in send_response\n    self.log_request(code)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 558, in log_request\n    self.requestline, str(code), str(size))\n    ^^^^^^^^^^^^^^^^\nAttributeError: 'JsonPostHandler' object has no attribute 'requestline'\n",
+        "test_invalid_json": "Traceback (most recent call last):\n  File \"__test__.py\", line 34, in do_POST\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 23 (char 22)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 104, in test_invalid_json\n  File \"__test__.py\", line 36, in do_POST\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 505, in send_response\n    self.log_request(code)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 558, in log_request\n    self.requestline, str(code), str(size))\n    ^^^^^^^^^^^^^^^^\nAttributeError: 'JsonPostHandler' object has no attribute 'requestline'\n",
+        "test_missing_data_key": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 115, in test_missing_data_key\n  File \"__test__.py\", line 42, in do_POST\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 505, in send_response\n    self.log_request(code)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/http/server.py\", line 558, in log_request\n    self.requestline, str(code), str(size))\n    ^^^^^^^^^^^^^^^^\nAttributeError: 'JsonPostHandler' object has no attribute 'requestline'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/274",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_invalid_content_type": "Traceback (most recent call last):\n  File \"__test__.py\", line 87, in test_invalid_content_type\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: mock(400)\n  Actual: mock(415)\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/287",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'faker'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/302",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/308",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_additional_fields": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_additional_fields\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n",
+        "test_average_grade": "Traceback (most recent call last):\n  File \"__test__.py\", line 70, in test_average_grade\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n",
+        "test_dataframe_structure": "Traceback (most recent call last):\n  File \"__test__.py\", line 46, in test_dataframe_structure\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n",
+        "test_grades_range": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in test_grades_range\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n",
+        "test_non_negative_grades": "Traceback (most recent call last):\n  File \"__test__.py\", line 84, in test_non_negative_grades\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n",
+        "test_subject_average": "Traceback (most recent call last):\n  File \"__test__.py\", line 77, in test_subject_average\n  File \"__test__.py\", line 36, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'append'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/310",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_averages_calculation": "Traceback (most recent call last):\n  File \"__test__.py\", line 86, in test_averages_calculation\nAssertionError: Lists differ: [46.3, 174.8, 79.8] != [46.28, 174.837, 79.81400000000001]\n\nFirst differing element 0:\n46.3\n46.28\n\n- [46.3, 174.8, 79.8]\n+ [46.28, 174.837, 79.81400000000001]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/313",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'faker'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/324",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_multiple_processes_with_different_exit_codes": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 85, in test_multiple_processes_with_different_exit_codes\nAssertionError: Lists differ: [-1, -1, -1] != [0, 1, None]\n\nFirst differing element 0:\n-1\n0\n\n- [-1, -1, -1]\n+ [0, 1, None]\n",
+        "test_process_still_running": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 79, in test_process_still_running\nAssertionError: Lists differ: [-1] != [None]\n\nFirst differing element 0:\n-1\nNone\n\n- [-1]\n+ [None]\n",
+        "test_valid_directory_and_files": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 72, in test_valid_directory_and_files\nAssertionError: Lists differ: [-1, -1] != [0, 0]\n\nFirst differing element 0:\n-1\n0\n\n- [-1, -1]\n+ [0, 0]\n",
+        "test_valid_files": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 64, in test_valid_files\nAssertionError: Lists differ: [-1, -1] != [0, 0]\n\nFirst differing element 0:\n-1\n0\n\n- [-1, -1]\n+ [0, 0]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/326",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_multiple_bat_files_mixed_results": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 81, in test_multiple_bat_files_mixed_results\nAssertionError: Lists differ: [('file1.bat', None), ('file2.bat', None), ('file3.bat', None)] != [('file1.bat', 0), ('file2.bat', 1), ('file3.bat', None)]\n\nFirst differing element 0:\n('file1.bat', None)\n('file1.bat', 0)\n\n- [('file1.bat', None), ('file2.bat', None), ('file3.bat', None)]\n?                ^^^^                 ^^^^\n\n+ [('file1.bat', 0), ('file2.bat', 1), ('file3.bat', None)]\n?                ^                 ^\n\n",
+        "test_single_bat_file_failure": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 68, in test_single_bat_file_failure\nAssertionError: Lists differ: [('file1.bat', None)] != [('file1.bat', 1)]\n\nFirst differing element 0:\n('file1.bat', None)\n('file1.bat', 1)\n\n- [('file1.bat', None)]\n?                ^^^^\n\n+ [('file1.bat', 1)]\n?                ^\n\n",
+        "test_single_bat_file_success": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 59, in test_single_bat_file_success\nAssertionError: Lists differ: [('file1.bat', None)] != [('file1.bat', 0)]\n\nFirst differing element 0:\n('file1.bat', None)\n('file1.bat', 0)\n\n- [('file1.bat', None)]\n?                ^^^^\n\n+ [('file1.bat', 0)]\n?                ^\n\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/34",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'wordcloud'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/341",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_categorical_data": "Traceback (most recent call last):\n  File \"__test__.py\", line 75, in test_categorical_data\nAssertionError: False is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/346",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 94, in test_case_2\n  File \"__test__.py\", line 48, in task_func\nsubprocess.CalledProcessError: Command '['/home/cxr/miniconda3/envs/vllm/bin/python', '/tmp/tmp4il91z1d/test/script2.py']' returned non-zero exit status 1.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/360",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_bar_chart_labels": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_correct_mean_and_std_values": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_invalid_sheet_name": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_non_existent_file": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_normal_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_value": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in setUp\n  File \"__test__.py\", line 68, in create_dummy_excel\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/367",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/368",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 88, in test_case_3\n  File \"__test__.py\", line 28, in task_func\nValueError: Source directory contains no files\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/37",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/374",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'openpyxl'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/399",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 51, in test_case_1\nAssertionError: False is not true\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_case_2\n  File \"__test__.py\", line 32, in task_func\nZeroDivisionError: float division by zero\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/401",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'flask'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/409",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_excel_file": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in setUp\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_file_with_different_data_types": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in setUp\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_invalid_column_name": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in setUp\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_non_existent_file": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in setUp\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_normal_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in setUp\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/417",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'keras'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/418",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'tensorflow'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/424",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_normal_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 75, in test_normal_functionality\nAssertionError: False is not true : The arrays should be equal\n",
+        "test_single_cluster_returns_original_image": "Traceback (most recent call last):\n  File \"__test__.py\", line 100, in test_single_cluster_returns_original_image\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 1054, in assert_array_equal\n    assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/testing/_private/utils.py\", line 919, in assert_array_compare\n    raise AssertionError(msg)\nAssertionError: \nArrays are not equal\nThe original and segmented images should be identical when n_clusters is set to 1.\nMismatched elements: 296 / 300 (98.7%)\nMax absolute difference among violations: 220\nMax relative difference among violations: 0.89068826\n ACTUAL: array([[[255, 252, 253],\n        [251, 246, 243],\n        [255, 254, 248],...\n DESIRED: array([[[247, 247, 244],\n        [247, 247, 244],\n        [247, 247, 244],...\n",
+        "test_n_clusters_as_non_integer": "Traceback (most recent call last):\n  File \"__test__.py\", line 90, in test_n_clusters_as_non_integer\n  File \"__test__.py\", line 20, in task_func\nTypeError: '<' not supported between instances of 'str' and 'int'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/443",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 107, in test_case_3\nAssertionError: 4 != 12\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 95, in test_case_2\nValueError: operands could not be broadcast together with shapes (4,) (12,) \n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 111, in test_case_4\n  File \"__test__.py\", line 50, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/sklearn/cluster/_kmeans.py\", line 1070, in fit_predict\n    return self.fit(X, sample_weight=sample_weight).labels_\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/sklearn/base.py\", line 1336, in wrapper\n    return fit_method(estimator, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/sklearn/cluster/_kmeans.py\", line 1470, in fit\n    self._check_params_vs_input(X)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/sklearn/cluster/_kmeans.py\", line 1410, in _check_params_vs_input\n    super()._check_params_vs_input(X, default_n_init=10)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/sklearn/cluster/_kmeans.py\", line 877, in _check_params_vs_input\n    raise ValueError(\nValueError: n_samples=4 should be >= n_clusters=5.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/445",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/454",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/458",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in test_case_1\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 220, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1347, in assert_frame_equal\n    assert_series_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 193, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1051, in assert_series_equal\n    assert_numpy_array_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 695, in assert_numpy_array_equal\n    _raise(left, right, err_msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 689, in _raise\n    raise_assert_detail(obj, msg, left, right, index_values=index_values)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 619, in raise_assert_detail\n    raise AssertionError(msg)\nAssertionError: DataFrame.iloc[:, 2] (column name=\"c\") are different\n\nDataFrame.iloc[:, 2] (column name=\"c\") values are different (100.0 %)\n[index]: [0, 1, 2]\n[left]:  [10.0, 10.0, 10.0]\n[right]: [10, 10, 10]\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_case_3\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 220, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1347, in assert_frame_equal\n    assert_series_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 193, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1051, in assert_series_equal\n    assert_numpy_array_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 695, in assert_numpy_array_equal\n    _raise(left, right, err_msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 689, in _raise\n    raise_assert_detail(obj, msg, left, right, index_values=index_values)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 619, in raise_assert_detail\n    raise AssertionError(msg)\nAssertionError: DataFrame.iloc[:, 2] (column name=\"c\") are different\n\nDataFrame.iloc[:, 2] (column name=\"c\") values are different (100.0 %)\n[index]: [0, 1, 2]\n[left]:  [10.0, 10.0, 10.0]\n[right]: [10, 10, 10]\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 84, in test_case_4\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 220, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1347, in assert_frame_equal\n    assert_series_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/util/_decorators.py\", line 193, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 1051, in assert_series_equal\n    assert_numpy_array_equal(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 695, in assert_numpy_array_equal\n    _raise(left, right, err_msg)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 689, in _raise\n    raise_assert_detail(obj, msg, left, right, index_values=index_values)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/_testing/asserters.py\", line 619, in raise_assert_detail\n    raise AssertionError(msg)\nAssertionError: DataFrame.iloc[:, 0] (column name=\"a\") are different\n\nDataFrame.iloc[:, 0] (column name=\"a\") values are different (100.0 %)\n[index]: [0]\n[left]:  [2.0]\n[right]: [2]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/461",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 95, in test_case_4\nAssertionError: 0.0 not greater than 0\n",
+        "test_case_7": "Traceback (most recent call last):\n  File \"__test__.py\", line 106, in test_case_7\n  File \"__test__.py\", line 36, in task_func\nTimeoutError: Script execution exceeded 0 seconds\n",
+        "test_case_8": "Traceback (most recent call last):\n  File \"__test__.py\", line 114, in test_case_8\n  File \"__test__.py\", line 36, in task_func\nTimeoutError: Script execution exceeded 5 seconds\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/477",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 84, in test_case_3\n  File \"__test__.py\", line 34, in task_func\nIndexError: index 0 is out of bounds for axis 0 with size 0\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/486",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_8": "Traceback (most recent call last):\n  File \"__test__.py\", line 127, in test_case_8\nAssertionError: False is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/492",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 64, in test_case_2\n  File \"__test__.py\", line 24, in task_func\nValueError: epoch_milliseconds must be a positive integer\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 76, in test_case_3\n  File \"__test__.py\", line 24, in task_func\nValueError: epoch_milliseconds must be a positive integer\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/501",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'xlwt'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/502",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/503",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in test_case_1\nAssertionError: datetime.date(2026, 9, 2) != datetime.date(2026, 9, 8) : Last date should be today's date.\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 95, in test_case_3\nAssertionError: datetime.date(2026, 8, 30) != datetime.date(2026, 9, 8) : Last date should be today's date.\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 116, in test_case_5\nAssertionError: ValueError not raised\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 85, in test_case_2\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 6206, in __getattr__\n    return object.__getattribute__(self, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'DataFrame' object has no attribute 'applymap'\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 111, in test_case_4\n  File \"__test__.py\", line 38, in task_func\nTypeError: 'float' object cannot be interpreted as an integer\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/509",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_difference_report": "Traceback (most recent call last):\n  File \"__test__.py\", line 102, in test_difference_report\nAssertionError: Lists differ: ['1, ,name,age', '2,-,Alice,30', '3,+,Alic[15 chars],25'] != [\"1, ,('name', 'age')\", \"2,-,('Alice', '30[43 chars]5')\"]\n\nFirst differing element 0:\n'1, ,name,age'\n\"1, ,('name', 'age')\"\n\n- ['1, ,name,age', '2,-,Alice,30', '3,+,Alice,31', '4, ,Bob,25']\n+ [\"1, ,('name', 'age')\",\n+  \"2,-,('Alice', '30')\",\n+  \"3,+,('Alice', '31')\",\n+  \"4, ,('Bob', '25')\"]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/511",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/513",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/526",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 69, in test_case_3\nAssertionError: Lists differ: ['a'] != ['a', 'b']\n\nSecond list contains 1 additional elements.\nFirst extra element 1:\n'b'\n\n- ['a']\n+ ['a', 'b']\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_case_5\nAssertionError: Lists differ: ['a', 'c'] != ['a', 'b', 'c']\n\nFirst differing element 1:\n'c'\n'b'\n\nSecond list contains 1 additional elements.\nFirst extra element 2:\n'c'\n\n- ['a', 'c']\n+ ['a', 'b', 'c']\n?       +++++\n\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 76, in test_case_4\n  File \"__test__.py\", line 32, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 6977, in set_index\n    raise KeyError(f\"None of {missing} are in the columns\")\nKeyError: \"None of ['variable'] are in the columns\"\n",
+        "test_case_8": "Traceback (most recent call last):\n  File \"__test__.py\", line 119, in test_case_8\n  File \"__test__.py\", line 32, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 6977, in set_index\n    raise KeyError(f\"None of {missing} are in the columns\")\nKeyError: \"None of ['variable'] are in the columns\"\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/528",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 83, in test_case_1\n  File \"__test__.py\", line 52, in task_func\nAttributeError: '_csv.reader' object has no attribute 'fieldnames'\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 92, in test_case_2\n  File \"__test__.py\", line 52, in task_func\nAttributeError: '_csv.reader' object has no attribute 'fieldnames'\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 102, in test_case_3\n  File \"__test__.py\", line 52, in task_func\nAttributeError: '_csv.reader' object has no attribute 'fieldnames'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/530",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/532",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/553",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_both_lists_empty": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in test_both_lists_empty\n  File \"__test__.py\", line 40, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_core.py\", line 1185, in __call__\n    return plot_backend.plot(data, kind=kind, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/__init__.py\", line 71, in plot\n    plot_obj.generate()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 516, in generate\n    self._compute_plot_data()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 716, in _compute_plot_data\n    raise TypeError(\"no numeric data to plot\")\nTypeError: no numeric data to plot\n",
+        "test_empty_a_list": "Traceback (most recent call last):\n  File \"__test__.py\", line 57, in test_empty_a_list\n  File \"__test__.py\", line 40, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_core.py\", line 1185, in __call__\n    return plot_backend.plot(data, kind=kind, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/__init__.py\", line 71, in plot\n    plot_obj.generate()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 525, in generate\n    self._post_plot_logic(ax, self.data)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 2049, in _post_plot_logic\n    s_edge = self.ax_pos[0] - 0.25 + self.lim_offset\n             ~~~~~~~~~~~^^^\nIndexError: index 0 is out of bounds for axis 0 with size 0\n",
+        "test_empty_b_list": "Traceback (most recent call last):\n  File \"__test__.py\", line 61, in test_empty_b_list\n  File \"__test__.py\", line 40, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_core.py\", line 1185, in __call__\n    return plot_backend.plot(data, kind=kind, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/__init__.py\", line 71, in plot\n    plot_obj.generate()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 516, in generate\n    self._compute_plot_data()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 716, in _compute_plot_data\n    raise TypeError(\"no numeric data to plot\")\nTypeError: no numeric data to plot\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/560",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_incorrect_data_format": "Traceback (most recent call last):\n  File \"__test__.py\", line 74, in test_incorrect_data_format\nAssertionError: ValueError not raised : Function should raise ValueError for data from multiple years.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/567",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 60, in test_case_1\nAssertionError: Lists differ: [np.float64(0.0), np.float64(1.0), np.floa[72 chars]6.0)] != [1, 2, 3, 4, 5]\n\nFirst differing element 0:\nnp.float64(0.0)\n1\n\nFirst list contains 2 additional elements.\nFirst extra element 5:\nnp.float64(5.0)\n\n+ [1, 2, 3, 4, 5]\n- [np.float64(0.0),\n-  np.float64(1.0),\n-  np.float64(2.0),\n-  np.float64(3.0),\n-  np.float64(4.0),\n-  np.float64(5.0),\n-  np.float64(6.0)]\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 67, in test_case_2\nAssertionError: Lists differ: [np.float64(4.4), np.float64(4.60000000000[116 chars]005)] != [5]\n\nFirst differing element 0:\nnp.float64(4.4)\n5\n\nFirst list contains 6 additional elements.\nFirst extra element 1:\nnp.float64(4.6000000000000005)\n\n+ [5]\n- [np.float64(4.4),\n-  np.float64(4.6000000000000005),\n-  np.float64(4.800000000000001),\n-  np.float64(5.0),\n-  np.float64(5.2),\n-  np.float64(5.4),\n-  np.float64(5.6000000000000005)]\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 74, in test_case_3\nAssertionError: Lists differ: [np.float64(6.4), np.float64(6.60000000000[116 chars]005)] != [7]\n\nFirst differing element 0:\nnp.float64(6.4)\n7\n\nFirst list contains 6 additional elements.\nFirst extra element 1:\nnp.float64(6.6000000000000005)\n\n+ [7]\n- [np.float64(6.4),\n-  np.float64(6.6000000000000005),\n-  np.float64(6.800000000000001),\n-  np.float64(7.0),\n-  np.float64(7.2),\n-  np.float64(7.4),\n-  np.float64(7.6000000000000005)]\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_case_4\nAssertionError: Lists differ: [np.float64(0.0), np.float64(2.0), np.floa[74 chars]2.0)] != [1, 2, 4, 8, 10]\n\nFirst differing element 0:\nnp.float64(0.0)\n1\n\nFirst list contains 2 additional elements.\nFirst extra element 5:\nnp.float64(10.0)\n\n+ [1, 2, 4, 8, 10]\n- [np.float64(0.0),\n-  np.float64(2.0),\n-  np.float64(4.0),\n-  np.float64(6.0),\n-  np.float64(8.0),\n-  np.float64(10.0),\n-  np.float64(12.0)]\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 88, in test_case_5\nAssertionError: Lists differ: [np.float64(-20.0), np.float64(0.0), np.fl[137 chars]0.0)] != [1, 50, 100, 150]\n\nFirst differing element 0:\nnp.float64(-20.0)\n1\n\nFirst list contains 6 additional elements.\nFirst extra element 4:\nnp.float64(60.0)\n\n+ [1, 50, 100, 150]\n- [np.float64(-20.0),\n-  np.float64(0.0),\n-  np.float64(20.0),\n-  np.float64(40.0),\n-  np.float64(60.0),\n-  np.float64(80.0),\n-  np.float64(100.0),\n-  np.float64(120.0),\n-  np.float64(140.0),\n-  np.float64(160.0)]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/574",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_case_5\nAssertionError: np.False_ is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/579",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_normalized_text": "Traceback (most recent call last):\n  File \"__test__.py\", line 92, in test_normalized_text\nAssertionError: ('Cafe', 2) not found in [('cafe', 2), ('nino', 2)]\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/582",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_histogram_pdf_overlay": "Traceback (most recent call last):\n  File \"__test__.py\", line 73, in test_histogram_pdf_overlay\nAssertionError: 30 != 28 : Number of histogram bins does not match expected\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/583",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'rsa'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/587",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'rsa'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/590",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'pyquery'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/592",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_csv_file_rows": "Traceback (most recent call last):\n  File \"__test__.py\", line 66, in test_csv_file_rows\nAssertionError: 1441 != 25\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/593",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_dataframe_content": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 96, in test_dataframe_content\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: read_csv('./output/traffic_data.csv')\n  Actual: read_csv('./output/traffic_data.csv', parse_dates=['Time'])\n",
+        "test_plot_generation": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 115, in test_plot_generation\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 908, in assert_called\n    raise AssertionError(msg)\nAssertionError: Expected 'show' to have been called.\n",
+        "test_empty_dataframe_on_zero_hours": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 101, in test_empty_dataframe_on_zero_hours\n  File \"__test__.py\", line 55, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_core.py\", line 1185, in __call__\n    return plot_backend.plot(data, kind=kind, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/__init__.py\", line 71, in plot\n    plot_obj.generate()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 516, in generate\n    self._compute_plot_data()\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/plotting/_matplotlib/core.py\", line 716, in _compute_plot_data\n    raise TypeError(\"no numeric data to plot\")\nTypeError: no numeric data to plot\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/594",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_backup_file_creation": "Traceback (most recent call last):\n  File \"__test__.py\", line 116, in test_backup_file_creation\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 950, in assert_called_once_with\n    raise AssertionError(msg)\nAssertionError: Expected 'copy' to be called once. Called 0 times.\n",
+        "test_task_func_checks_backup_directory_exists": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 86, in test_task_func_checks_backup_directory_exists\nAssertionError: 'output/backup' != '.'\n- output/backup\n+ .\n : Expected output/backup, got .\n",
+        "test_task_func_copies_to_backup_directory": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 94, in test_task_func_copies_to_backup_directory\nTypeError: 'NoneType' object is not subscriptable\n",
+        "test_task_func_writes_correct_header": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/shutil.py\", line 144, in _fastcopy_sendfile\n    sent = os.sendfile(outfd, infd, offset, blocksize)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nOSError: [Errno 9] Bad file descriptor: <MagicMock name='open().name' id='130435249165776'> -> <MagicMock name='open().name' id='130435249165776'>\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 105, in test_task_func_writes_correct_header\n  File \"__test__.py\", line 53, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/shutil.py\", line 448, in copy2\n    copyfile(src, dst, follow_symlinks=follow_symlinks)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/shutil.py\", line 269, in copyfile\n    _fastcopy_sendfile(fsrc, fdst)\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/shutil.py\", line 161, in _fastcopy_sendfile\n    if offset == 0 and os.lseek(outfd, 0, os.SEEK_CUR) == 0:\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nOSError: [Errno 29] Illegal seek\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/618",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/636",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 44, in test_case_1\nAssertionError: 5 != 0\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 57, in test_case_4\n  File \"__test__.py\", line 26, in task_func\n  File \"numpy/random/mtrand.pyx\", line 796, in numpy.random.mtrand.RandomState.randint\n  File \"numpy/random/_bounded_integers.pyx\", line 1343, in numpy.random._bounded_integers._rand_int64\nValueError: negative dimensions are not allowed\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/637",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 71, in test_case_1\nAssertionError: Tuples differ: (40, 3) != (10, 5)\n\nFirst differing element 0:\n40\n10\n\n- (40, 3)\n+ (10, 5)\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_case_2\nAssertionError: Tuples differ: (200, 3) != (50, 5)\n\nFirst differing element 0:\n200\n50\n\n- (200, 3)\n+ (50, 5)\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 91, in test_case_3\nAssertionError: Tuples differ: (400, 3) != (100, 5)\n\nFirst differing element 0:\n400\n100\n\n- (400, 3)\n?  ^    ^\n\n+ (100, 5)\n?  ^    ^\n\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 101, in test_case_4\nAssertionError: Tuples differ: (4, 3) != (1, 5)\n\nFirst differing element 0:\n4\n1\n\n- (4, 3)\n+ (1, 5)\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 111, in test_case_5\nAssertionError: Tuples differ: (20, 3) != (5, 5)\n\nFirst differing element 0:\n20\n5\n\n- (20, 3)\n+ (5, 5)\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/654",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_functionality\n  File \"__test__.py\", line 35, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/_core/_methods.py\", line 43, in _amax\n    return umr_maximum(a, axis, None, out, keepdims, initial, where)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnumpy._core._exceptions._UFuncNoLoopError: ufunc 'maximum' did not contain a loop with signature matching types (dtype('<U3'), dtype('<U3')) -> None\n",
+        "test_not_enough_points": "Traceback (most recent call last):\n  File \"__test__.py\", line 77, in test_not_enough_points\n  File \"__test__.py\", line 28, in task_func\nIndexError: index 1 is out of bounds for axis 1 with size 1\n",
+        "test_return_types": "Traceback (most recent call last):\n  File \"__test__.py\", line 62, in test_return_types\n  File \"__test__.py\", line 35, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/_core/_methods.py\", line 43, in _amax\n    return umr_maximum(a, axis, None, out, keepdims, initial, where)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnumpy._core._exceptions._UFuncNoLoopError: ufunc 'maximum' did not contain a loop with signature matching types (dtype('<U3'), dtype('<U3')) -> None\n",
+        "test_target_value_found": "Traceback (most recent call last):\n  File \"__test__.py\", line 67, in test_target_value_found\n  File \"__test__.py\", line 35, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/numpy/_core/_methods.py\", line 43, in _amax\n    return umr_maximum(a, axis, None, out, keepdims, initial, where)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nnumpy._core._exceptions._UFuncNoLoopError: ufunc 'maximum' did not contain a loop with signature matching types (dtype('<U3'), dtype('<U3')) -> None\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/655",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'nltk'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/657",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'nltk'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/678",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_directory": "Traceback (most recent call last):\n  File \"__test__.py\", line 72, in test_empty_directory\n  File \"__test__.py\", line 41, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/reshape/concat.py\", line 407, in concat\n    objs, keys, ndims = _clean_keys_and_objs(objs, keys)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/reshape/concat.py\", line 808, in _clean_keys_and_objs\n    raise ValueError(\"No objects to concatenate\")\nValueError: No objects to concatenate\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/720",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_file_existence": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in tearDown\nFileNotFoundError: [Errno 2] No such file or directory: 'task_func_data/Output.txt'\n",
+        "test_data_appending": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in tearDown\nFileNotFoundError: [Errno 2] No such file or directory: 'task_func_data/Output.txt'\n",
+        "test_file_content": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in tearDown\nFileNotFoundError: [Errno 2] No such file or directory: 'task_func_data/Output.txt'\n",
+        "test_headers_only_once": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in tearDown\nFileNotFoundError: [Errno 2] No such file or directory: 'task_func_data/Output.txt'\n",
+        "test_return_value": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in tearDown\nFileNotFoundError: [Errno 2] No such file or directory: 'task_func_data/Output.txt'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/723",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_invalid_url": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 72, in test_invalid_url\nAssertionError: Exception not raised\n",
+        "test_no_table": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 88, in test_no_table\nAssertionError: Exception not raised\n",
+        "test_overwrite_existing_csv": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 103, in test_overwrite_existing_csv\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 951, in assert_called_once_with\n    return self.assert_called_with(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: open('scraped_data.csv', 'w')\n  Actual: open('scraped_data.csv', mode='w', newline='', encoding='utf-8')\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/752",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_test_size": "Traceback (most recent call last):\n  File \"__test__.py\", line 62, in test_case_test_size\nAssertionError: Exception not raised by task_func\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/760",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_custom_parameters": "Traceback (most recent call last):\n  File \"__test__.py\", line 88, in test_custom_parameters\nAssertionError: False is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/763",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 109, in test_case_1\n  File \"__test__.py\", line 103, in validate_data\nKeyError: 'key'\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 112, in test_case_2\n  File \"__test__.py\", line 103, in validate_data\nKeyError: 'key'\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 115, in test_case_3\n  File \"__test__.py\", line 103, in validate_data\nKeyError: 'key'\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 118, in test_case_4\n  File \"__test__.py\", line 103, in validate_data\nKeyError: 'key'\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 121, in test_case_5\n  File \"__test__.py\", line 103, in validate_data\nKeyError: 'key'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/765",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/771",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_empty_directory": "Traceback (most recent call last):\n  File \"__test__.py\", line 71, in test_empty_directory\n  File \"__test__.py\", line 26, in task_func\nValueError: Directory /mnt/data/test_data does not exist\n",
+        "test_exception_handling": "Traceback (most recent call last):\n  File \"__test__.py\", line 91, in test_exception_handling\n  File \"__test__.py\", line 26, in task_func\nValueError: Directory /mnt/data/test_data does not exist\n",
+        "test_file_creation_and_content": "Traceback (most recent call last):\n  File \"__test__.py\", line 57, in test_file_creation_and_content\n  File \"__test__.py\", line 26, in task_func\nValueError: Directory /mnt/data/test_data does not exist\n",
+        "test_mixed_file_types": "Traceback (most recent call last):\n  File \"__test__.py\", line 81, in test_mixed_file_types\n  File \"__test__.py\", line 26, in task_func\nValueError: Directory /mnt/data/test_data does not exist\n",
+        "test_non_matching_files": "Traceback (most recent call last):\n  File \"__test__.py\", line 75, in test_non_matching_files\n  File \"__test__.py\", line 26, in task_func\nValueError: Directory /mnt/data/test_data does not exist\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/777",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 59, in test_case_1\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 992, in assert_has_calls\n    raise AssertionError(\nAssertionError: 'makedirs' does not contain all of (call('/fake/test_zip_dir/sample', exist_ok=True), call('/fake/test_zip_dir/test_data', exist_ok=True), call('/fake/test_zip_dir/data_test', exist_ok=True)) in its call list, found [call('/fake/test_zip_dir/sample'), call('/fake/test_zip_dir/test_data'), call('/fake/test_zip_dir/data_test')] instead\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 77, in test_case_2\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 951, in assert_called_once_with\n    return self.assert_called_with(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: makedirs('/fake/test_zip_dir/test_data', exist_ok=True)\n  Actual: makedirs('/fake/test_zip_dir/test_data')\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 87, in test_case_3\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 951, in assert_called_once_with\n    return self.assert_called_with(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: makedirs('/fake/test_zip_dir/data_test', exist_ok=True)\n  Actual: makedirs('/fake/test_zip_dir/data_test')\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 114, in test_case_5\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 951, in assert_called_once_with\n    return self.assert_called_with(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 939, in assert_called_with\n    raise AssertionError(_error_message()) from cause\nAssertionError: expected call not found.\nExpected: makedirs('/fake/test_zip_dir/test', exist_ok=True)\n  Actual: makedirs('/fake/test_zip_dir/test')\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/785",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_archiving_in_nonexistent_directory": "Traceback (most recent call last):\n  File \"__test__.py\", line 104, in test_archiving_in_nonexistent_directory\n  File \"__test__.py\", line 30, in task_func\nValueError: No files found matching pattern: /tmp/archive/*.txt\n",
+        "test_multiple_archiving_unique_naming": "Traceback (most recent call last):\n  File \"__test__.py\", line 97, in test_multiple_archiving_unique_naming\n  File \"__test__.py\", line 30, in task_func\nValueError: No files found matching pattern: ./test_files/*.txt\n",
+        "test_no_matching_files": "Traceback (most recent call last):\n  File \"__test__.py\", line 92, in test_no_matching_files\n  File \"__test__.py\", line 30, in task_func\nValueError: No files found matching pattern: ./test_files/*.pdf\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/800",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 99, in test_case_3\nAssertionError: Counter({'goals': 5, 'penalties': 3}) != Counter({'goals': 0, 'penalties': 0}) : Test Case 3 Failed\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 110, in test_case_4\nAssertionError: Counter({'goals': 10, 'penalties': 6}) != {'goals': 5, 'penalties': 3} : Test Case 4 Failed\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 120, in test_case_5\nAssertionError: Counter({'goals': 11, 'penalties': 5}) != Counter({'goals': 1, 'penalties': -1}) : Test Case 5 Failed\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/82",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'flask'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/826",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'faker'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/845",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'Levenshtein'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/854",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/857",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_all_extensions": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 100, in test_all_extensions\nAssertionError: Lists differ: ['fil[42 chars].jpg', 'file1.txt', 'file2.csv', 'file3.xlsx',[114 chars]jpg'] != ['fil[42 chars].jpg']\n\nFirst list contains 12 additional elements.\nFirst extra element 4:\n'file1.txt'\n\n+ ['file1.txt', 'file2.csv', 'file3.xlsx', 'file4.jpg']\n- ['file1.txt',\n-  'file2.csv',\n-  'file3.xlsx',\n-  'file4.jpg',\n-  'file1.txt',\n-  'file2.csv',\n-  'file3.xlsx',\n-  'file4.jpg',\n-  'file1.txt',\n-  'file2.csv',\n-  'file3.xlsx',\n-  'file4.jpg',\n-  'file1.txt',\n-  'file2.csv',\n-  'file3.xlsx',\n-  'file4.jpg']\n",
+        "test_exception_handling": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 93, in test_exception_handling\nAssertionError: Lists differ: ['invalid file name.jpg'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'invalid file name.jpg'\n\n- ['invalid file name.jpg']\n+ []\n",
+        "test_successful_transfer": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 72, in test_successful_transfer\nAssertionError: Lists differ: ['file1.txt', 'file2.csv', 'file1.txt', 'file2.csv'] != ['file1.txt', 'file2.csv']\n\nFirst list contains 2 additional elements.\nFirst extra element 2:\n'file1.txt'\n\n- ['file1.txt', 'file2.csv', 'file1.txt', 'file2.csv']\n+ ['file1.txt', 'file2.csv']\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/865",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'faker'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/870",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/879",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_edge_case_non_categorical": "Traceback (most recent call last):\n  File \"__test__.py\", line 92, in test_edge_case_non_categorical\n  File \"__test__.py\", line 51, in task_func\nValueError: Some categories have less than 5 observations; chi-square assumptions violated.\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/89",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_data_without_outliers": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_data_without_outliers\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n",
+        "test_no_change_in_data_dimension": "Traceback (most recent call last):\n  File \"__test__.py\", line 84, in test_no_change_in_data_dimension\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n",
+        "test_no_plotting": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 80, in test_no_plotting\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n",
+        "test_original_data_unchanged": "Traceback (most recent call last):\n  File \"__test__.py\", line 64, in test_original_data_unchanged\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n",
+        "test_plot_titles": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/unittest/mock.py\", line 1378, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"__test__.py\", line 89, in test_plot_titles\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n",
+        "test_return_type": "Traceback (most recent call last):\n  File \"__test__.py\", line 72, in test_return_type\n  File \"__test__.py\", line 38, in task_func\nTypeError: only integer scalar arrays can be converted to a scalar index\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/897",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/906",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 96, in test_case_2\n  File \"__test__.py\", line 40, in task_func\nFileNotFoundError: No processed files found with '_processed' suffix\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 104, in test_case_3\n  File \"__test__.py\", line 40, in task_func\nFileNotFoundError: No processed files found with '_processed' suffix\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 125, in test_case_5\n  File \"__test__.py\", line 40, in task_func\nFileNotFoundError: No processed files found with '_processed' suffix\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/914",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/915",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_2": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3641, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"pandas/_libs/index.pyx\", line 168, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/index.pyx\", line 197, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Z_score'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 61, in test_case_2\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 4378, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3648, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Z_score'\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3641, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"pandas/_libs/index.pyx\", line 168, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/index.pyx\", line 197, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Z_score'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 69, in test_case_3\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 4378, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3648, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Z_score'\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3641, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"pandas/_libs/index.pyx\", line 168, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/index.pyx\", line 197, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Z_score'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 76, in test_case_4\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 4378, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3648, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Z_score'\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3641, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"pandas/_libs/index.pyx\", line 168, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/index.pyx\", line 197, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Z_score'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 84, in test_case_5\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/frame.py\", line 4378, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/base.py\", line 3648, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Z_score'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/916",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 50, in test_case_1\nAssertionError: 'Closing Price' != 'closing_price'\n- Closing Price\n? ^      ^^\n+ closing_price\n? ^      ^^\n\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/917",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "ALL": "No module named 'statsmodels'"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/92",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/928",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 37, in test_case_1\nKeyError: 'zz'\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 41, in test_case_2\nKeyError: 'aa'\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_case_3\nKeyError: 'zz'\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 60, in test_case_4\nKeyError: 'zz'\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 64, in test_case_5\nKeyError: 'zz'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/93",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_values": "Traceback (most recent call last):\n  File \"__test__.py\", line 93, in test_values\nAssertionError: -0.28519826068134874 != -0.36270132751314693 within 7 places (0.0775030668317982 difference) : DataFrame contents should match the expected output\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 96, in test_values\nAssertionError: -0.28519826068134874 != 0.36270132751314693 within 7 places (0.6478995881944957 difference) : DataFrame contents should match the expected output\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/942",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_case_1\nAssertionError: 'Sales Report by Category' != 'Category-wise Sales Trends'\n- Sales Report by Category\n+ Category-wise Sales Trends\n\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/945",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_forecasted_values_increasing": "Traceback (most recent call last):\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6313, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6180, in pandas._libs.tslibs.offsets._validate_to_offset_alias\nValueError: 'M' is no longer supported for offsets. Please use 'ME' instead.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 59, in test_forecasted_values_increasing\n  File \"__test__.py\", line 15, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/datetimes.py\", line 1442, in date_range\n    freq = to_offset(freq)\n           ^^^^^^^^^^^^^^^\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6229, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6352, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6137, in pandas._libs.tslibs.offsets.raise_invalid_freq\nValueError: Invalid frequency: M. Failed to parse with error message: ValueError(\"'M' is no longer supported for offsets. Please use 'ME' instead.\")\n",
+        "test_with_custom_parameters": "Traceback (most recent call last):\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6313, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6180, in pandas._libs.tslibs.offsets._validate_to_offset_alias\nValueError: 'M' is no longer supported for offsets. Please use 'ME' instead.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 46, in test_with_custom_parameters\n  File \"__test__.py\", line 15, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/datetimes.py\", line 1442, in date_range\n    freq = to_offset(freq)\n           ^^^^^^^^^^^^^^^\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6229, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6352, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6137, in pandas._libs.tslibs.offsets.raise_invalid_freq\nValueError: Invalid frequency: M. Failed to parse with error message: ValueError(\"'M' is no longer supported for offsets. Please use 'ME' instead.\")\n",
+        "test_with_specific_sales_data": "Traceback (most recent call last):\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6313, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6180, in pandas._libs.tslibs.offsets._validate_to_offset_alias\nValueError: 'Q' is no longer supported for offsets. Please use 'QE' instead.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 65, in test_with_specific_sales_data\n  File \"__test__.py\", line 15, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/indexes/datetimes.py\", line 1442, in date_range\n    freq = to_offset(freq)\n           ^^^^^^^^^^^^^^^\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6229, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6352, in pandas._libs.tslibs.offsets.to_offset\n  File \"pandas/_libs/tslibs/offsets.pyx\", line 6137, in pandas._libs.tslibs.offsets.raise_invalid_freq\nValueError: Invalid frequency: Q. Failed to parse with error message: ValueError(\"'Q' is no longer supported for offsets. Please use 'QE' instead.\")\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/952",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_6": "Traceback (most recent call last):\n  File \"__test__.py\", line 89, in test_case_6\n  File \"__test__.py\", line 37, in task_func\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/random.py\", line 373, in choice\n    raise IndexError('Cannot choose from an empty sequence')\nIndexError: Cannot choose from an empty sequence\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/955",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_case_1\nAssertionError: False is not true\n",
+        "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 86, in test_case_2\nAssertionError: 'hello' != 'hello_world!'\n- hello\n+ hello_world!\n\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 93, in test_case_3\nAssertionError: False is not true\n",
+        "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 102, in test_case_4\nAssertionError: False is not true\n",
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 107, in test_case_5\nAssertionError: 'hello_world!' not found in ['hello', 'world']\n",
+        "test_case_6": "Traceback (most recent call last):\n  File \"__test__.py\", line 114, in test_case_6\nAssertionError: 'Hello_World!' not found in ['hello', 'world']\n",
+        "test_case_9": "Traceback (most recent call last):\n  File \"__test__.py\", line 131, in test_case_9\nAssertionError: 'test_123' not found in ['test', '123', 'is', 'fun']\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/963",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 145, in test_case_5\nAssertionError: 0 != 2\n",
+        "test_case_7": "Traceback (most recent call last):\n  File \"__test__.py\", line 161, in test_case_7\nAssertionError: 0 != 4\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/964",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_9": "Traceback (most recent call last):\n  File \"__test__.py\", line 162, in test_case_9\nAssertionError: 0 != 1\n",
+        "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 123, in test_case_3\n  File \"__test__.py\", line 107, in create_test_data\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n",
+        "test_case_8": "Traceback (most recent call last):\n  File \"__test__.py\", line 151, in test_case_8\n  File \"__test__.py\", line 107, in create_test_data\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/core/generic.py\", line 2312, in to_excel\n    formatter.write(\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/formats/excel.py\", line 1003, in write\n    writer = ExcelWriter(\n             ^^^^^^^^^^^^\n  File \"/home/cxr/miniconda3/envs/vllm/lib/python3.11/site-packages/pandas/io/excel/_openpyxl.py\", line 58, in __init__\n    from openpyxl.workbook import Workbook\nModuleNotFoundError: No module named 'openpyxl'\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/969",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/971",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/985",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_case_6": "Traceback (most recent call last):\n  File \"__test__.py\", line 114, in test_case_6\n  File \"__test__.py\", line 63, in check_df_format\nAssertionError: False is not true\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/988",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/99",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "task_id": "BigCodeBench/990",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_hex_string_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 68, in test_hex_string_1\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+        "test_hex_string_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_hex_string_2\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+        "test_hex_string_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 92, in test_hex_string_3\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+        "test_hex_string_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 104, in test_hex_string_4\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+        "test_hex_string_non_ascii": "Traceback (most recent call last):\n  File \"__test__.py\", line 116, in test_hex_string_non_ascii\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+        "test_hex_string_sample": "Traceback (most recent call last):\n  File \"__test__.py\", line 56, in test_hex_string_sample\n  File \"__test__.py\", line 44, in task_func\n  File \"__test__.py\", line 23, in encode_utf16\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/998",
+      "status": "fail",
+      "passed": false,
+      "details": {
+        "test_valid_file": "Traceback (most recent call last):\n  File \"__test__.py\", line 79, in test_valid_file\nAssertionError: True is not false\n"
+      }
+    },
+    {
+      "task_id": "BigCodeBench/999",
+      "status": "pass",
+      "passed": true,
+      "details": {}
+    }
+  ]
+}

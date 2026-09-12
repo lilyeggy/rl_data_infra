@@ -1,0 +1,27 @@
+=== batch dstage11 start 2026-09-10T05:13:28Z ===
+=== batch dstage11 exit 0 2026-09-10T05:20:54Z ===
+batch dstage11: PASSED=0 FAILED=4
+=== batch dstage12 start 2026-09-10T05:20:54Z ===
+=== batch dstage12 exit 0 2026-09-10T05:25:38Z ===
+batch dstage12: PASSED=0 FAILED=4
+=== batch dstage13 start 2026-09-10T05:25:38Z ===
+=== batch dstage13 exit 0 2026-09-10T05:30:54Z ===
+batch dstage13: PASSED=1 FAILED=3
+=== batch dstage22 start 2026-09-10T06:36:06Z ===
+=== batch dstage22 start 2026-09-10T06:39:12Z ===
+=== batch dstage22 exit 1 2026-09-10T06:39:13Z ===
+batch dstage22: PASSED=0 FAILED=0
+=== batch dstage23 start 2026-09-10T06:39:13Z ===
+=== batch dstage22 exit 143 2026-09-10T06:41:28Z ===
+batch dstage22: PASSED=0 FAILED=1
+=== batch dstage23 start 2026-09-10T06:41:28Z ===
+=== batch dstage23 exit 1 2026-09-10T06:41:29Z ===
+batch dstage23: PASSED=0 FAILED=0
+=== batch dstage24 start 2026-09-10T06:41:29Z ===
+=== batch dstage31 start 2026-09-10T06:41:39Z ===
+=== batch dstage31 start 2026-09-10T06:51:33Z ===
+=== batch dstage31 exit 0 2026-09-10T06:56:49Z ===
+batch dstage31: PASSED=0 FAILED=4
+=== batch dstage32 start 2026-09-10T06:56:49Z ===
+=== batch dstage32 exit 0 2026-09-10T07:02:30Z ===
+batch dstage32: PASSED=1 FAILED=3

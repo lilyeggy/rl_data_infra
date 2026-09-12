@@ -1,0 +1,28 @@
+checkpoint files written by the framework's own FSDP2 workers:
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/extra_state_world_size_2_rank_0.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/extra_state_world_size_2_rank_1.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/fsdp_config.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/huggingface/chat_template.jinja
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/huggingface/config.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/huggingface/generation_config.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/huggingface/tokenizer_config.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/huggingface/tokenizer.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/lora_adapter/adapter_config.json
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/lora_adapter/adapter_model.safetensors
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/model_world_size_2_rank_0.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/model_world_size_2_rank_1.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/optim_world_size_2_rank_0.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/optim_world_size_2_rank_1.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/data.pt
+/home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/latest_checkpointed_iteration.txt
+
+adapter hashes (P1 written by RayPPOTrainer vs the frozen P0):
+f0ddcac8321b38712eb9b75c57ef375e0aa133e740fbfe12e5a928a1501776af  /home/cxr/verl-closeout/verl-pi/verlpi-smoke25/checkpoints/global_step_1/actor/lora_adapter/adapter_model.safetensors
+6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae  /home/cxr/agentic/checkpoints/sft-runs/qwen14b-base-apps-clean-v2/epoch1/adapter_model.safetensors
+
+step timings (verl's own metrics):
+timing_s/gen:328.83831701101735
+timing_s/update_actor:117.56510581402108
+timing_s/save_checkpoint:20.287048013997264
+timing_s/update_weights:2.982117315987125
+timing_s/step:500.9389714029385

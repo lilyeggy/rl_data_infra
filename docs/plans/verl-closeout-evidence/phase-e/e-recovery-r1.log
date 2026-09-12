@@ -1,0 +1,53 @@
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/579 [00:00<?, ?it/s]Loading weights: 100%|██████████| 579/579 [00:00<00:00, 9002.62it/s]
+{
+  "tag": "stage-e-recovery-check",
+  "adapter_dir": "/home/cxr/verl-closeout/stage-e/update-r1/adapter-p1",
+  "adapter_sha256": "e22a1742149b9007ed94875c857048c034a5feb38ea0fbb0cd53874505061e2a",
+  "loaded_ok": true,
+  "tensors_compared": 672,
+  "bitwise_mismatches": [],
+  "bitwise_identical": true,
+  "rescored_episodes": [
+    {
+      "episode_id": "estage-r1-Mbpp-118-a0",
+      "masked_tokens": 1024,
+      "finite_logprobs": true,
+      "mean_p1_minus_rollout_nat": -0.0012326280120760202,
+      "mean_abs_p1_minus_rollout_nat": 0.029680874198675156
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a1",
+      "masked_tokens": 1024,
+      "finite_logprobs": true,
+      "mean_p1_minus_rollout_nat": -0.001828583306632936,
+      "mean_abs_p1_minus_rollout_nat": 0.025788770988583565
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a2",
+      "masked_tokens": 3205,
+      "finite_logprobs": true,
+      "mean_p1_minus_rollout_nat": 0.00024230527924373746,
+      "mean_abs_p1_minus_rollout_nat": 0.02729923091828823
+    },
+    {
+      "episode_id": "estage-r1-Mbpp-118-a3",
+      "masked_tokens": 1024,
+      "finite_logprobs": true,
+      "mean_p1_minus_rollout_nat": 0.00040336576057597995,
+      "mean_abs_p1_minus_rollout_nat": 0.028572913259267807
+    }
+  ],
+  "all_logprobs_finite": true,
+  "continuation": {
+    "loss": 1.7468940019607544,
+    "grad_norm": 1.0976496934890747,
+    "grad_tensors": 672,
+    "grad_finite": true,
+    "step_taken": false,
+    "note": "no optimizer step: the consumed batch is not re-consumed"
+  },
+  "elapsed_s": 10.394657850265503,
+  "pass": true
+}
+STAGE-E-RECOVERY-PASS

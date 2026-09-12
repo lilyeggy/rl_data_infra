@@ -88,6 +88,7 @@ def make_events_for_rollout(
     passed: bool,
     input_tokens: int,
     output_tokens: int,
+    reward: float = 0.0,
 ) -> tuple[TraceEvent, ...]:
     return (
         TraceEvent(
@@ -174,7 +175,7 @@ def make_events_for_rollout(
                 "task_status": "SUCCESS" if passed else "FAILURE",
                 "execution_validity": "VALID",
                 "verifier_status": "PASSED" if passed else "FAILED",
-                "score": 1.0 if passed else 0.0,
+                "score": float(reward),
                 "termination_reason": "VERIFIER_PASSED" if passed else "VERIFIER_FAILED",
                 "evidence_event_ids": [f"evt-{episode_id}-verif-end"],
             },
@@ -194,7 +195,7 @@ def run_apps_rollouts(
     device: str = "cuda:0",
     temperature: float = 0.8,
     top_p: float = 0.95,
-    max_new_tokens: int = 1536,
+    max_new_tokens: int = 768,
     python_bin: str = sys.executable,
 ) -> dict[str, Any]:
     sys.set_int_max_str_digits(0)
@@ -245,6 +246,9 @@ def run_apps_rollouts(
 
     rollout_records: list[dict[str, Any]] = []
 
+    stop_token_ids = [tok.eos_token_id, 151643, 151645]
+    stop_token_ids = list(set(tid for tid in stop_token_ids if tid is not None))
+
     for task_idx, task_id in enumerate(task_ids):
         if task_id not in tasks:
             print(f"[warn] task_id {task_id} not in manifest, skipping", flush=True)
@@ -276,7 +280,8 @@ def run_apps_rollouts(
                 do_sample=True,
                 temperature=temperature,
                 top_p=top_p,
-                pad_token_id=tok.eos_token_id,
+                pad_token_id=tok.pad_token_id or tok.eos_token_id,
+                eos_token_id=stop_token_ids,
                 return_dict_in_generate=True,
                 output_scores=True,
             )
@@ -333,7 +338,17 @@ def run_apps_rollouts(
                 except Exception as exc:
                     print(f"    [error] reading verifier output: {exc}")
 
-            reward = 1.0 if passed else 0.0
+            if passed:
+                reward = 1.0
+            else:
+                passed_cases = verifier_report.get("passed_cases", 0)
+                tested_cases = max(1, verifier_report.get("tested_cases", 1))
+                if passed_cases > 0:
+                    pass_ratio = passed_cases / tested_cases
+                    reward = round(0.2 + 0.6 * pass_ratio, 4)
+                else:
+                    reward = 0.0
+
             print(
                 f"  -> Attempt {attempt}/{group_size}: "
                 f"tokens={len(resp_ids)} ({gen_time:.1f}s), "
@@ -400,6 +415,7 @@ def run_apps_rollouts(
                 passed=passed,
                 input_tokens=prompt_len,
                 output_tokens=len(resp_ids),
+                reward=reward,
             )
 
             assembled_batch = assembler.assemble(events, contexts={episode_id: context})
@@ -524,21 +540,37 @@ def run_apps_rollouts(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path)
-    parser.add_argument("--tasks", nargs="+", required=True)
+    parser.add_argument("--tasks", nargs="*", default=None)
+    parser.add_argument("--tasks-file", default=None, type=Path, help="File containing task IDs (one per line or JSON list)")
     parser.add_argument("--model", required=True)
     parser.add_argument("--adapter", default=None)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--group-size", type=int, default=4)
+    parser.add_argument("--max-new-tokens", type=int, default=768)
     parser.add_argument("--device", default="cuda:0")
     args = parser.parse_args()
 
+    task_ids = []
+    if args.tasks:
+        task_ids.extend(args.tasks)
+    if args.tasks_file and args.tasks_file.exists():
+        content = args.tasks_file.read_text(encoding="utf-8").strip()
+        if content.startswith("["):
+            task_ids.extend(json.loads(content))
+        else:
+            task_ids.extend([line.strip() for line in content.splitlines() if line.strip()])
+
+    if not task_ids:
+        raise ValueError("Must provide at least one task ID via --tasks or --tasks-file")
+
     run_apps_rollouts(
         manifest_path=args.manifest,
-        task_ids=args.tasks,
+        task_ids=task_ids,
         model_path=args.model,
         adapter_path=args.adapter,
         output_dir=args.output_dir,
         group_size=args.group_size,
+        max_new_tokens=args.max_new_tokens,
         device=args.device,
     )
 

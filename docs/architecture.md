@@ -142,6 +142,6 @@ Artifact 缺失不会被静默忽略；Assembler 会把 Episode 标成 `PARTIAL`
 
 轻量 `EventWriter` 只保证单进程内幂等和落盘 `fsync`；`PartitionedEventStore` 已提供多进程锁、冲突 quarantine 与 manifest recovery，但仍不是跨主机分布式事务。多机 writer 部署需要 Kafka partition、数据库 unique constraint 或等价机制。
 
-当前 metric 是 per-Episode deterministic derivation，没有统计置信区间。当前 attribution 是小型规则引擎，没有使用 LLM Judge，也不声称单因果真相。Local Launcher、Model Proxy、Harness event ingress、Verifier 和 finalizer 已通过真实 Docker + fake controlled model 的无 GPU 全链路验证；Pi + A6000 14B 受控模型也已完成 native token/logprob/policy revision、Verifier 与 ExecutionBundle 的 live 验证。canonical-v2 SFT candidate 在固定 unseen DEV 上未优于 base，Gate 正确输出 `REJECT / NO_IMPROVEMENT`。Polar live adapter 已通过 schema/transport 单测，Slime 训练尚未验证。当前演示是机制证据，不是 benchmark 泛化证据。
+当前 metric 是 per-Episode deterministic derivation，没有统计置信区间。当前 attribution 是小型规则引擎，没有使用 LLM Judge，也不声称单因果真相。Local Launcher、Model Proxy、Harness event ingress、Verifier 和 finalizer 已通过真实 Docker + fake controlled model 的无 GPU 全链路验证；Pi + A6000 14B 受控模型也已完成 native token/logprob/policy revision、Verifier 与 ExecutionBundle 的 live 验证。canonical-v2 SFT candidate 在固定 unseen DEV 上未优于 base，Gate 正确输出 `REJECT / NO_IMPROVEMENT`。apps-rl-cycle-001/002/003 已用独立极简 GRPO LoRA trainer 完成单卡 policy 更新闭环，但固定 APPS holdout 与官方三基准显示 candidate 未取得稳定提升。Polar live adapter 已通过 schema/transport 单测，Slime 训练尚未验证。当前演示是机制证据，不是 benchmark 泛化证据。
 
 这些限制会直接进入 V2 的 Gate 和 release artifact，而不是只写在口头说明中。

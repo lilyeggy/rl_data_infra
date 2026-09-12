@@ -1,0 +1,24 @@
+===DATE===
+2026年 09月 09日 星期三 20:53:03 CST
+===MBPP-PS===
+    PID     ELAPSED CMD
+===MBPP-FINISH===
+All benchmark evaluations complete! Summary written to /home/cxr/agentic/rl-runs/official-qwen-base-evalplus/official-qwen-report-summary.json
+===MBPP-SCORES===
+      "stdout": "Load from ground-truth from /home/cxr/.cache/evalplus/ee43ecabebf20deef4bb776a405ac5b1.pkl\nReading samples...\nmbpp (base tests)\npass@1:\t0.796\nmbpp+ (base + extra tests)\npass@1:\t0.653\n",
+===BCB-SCORES===
+  Total:  148
+  Passed: 0
+  Pass@1: 0.00% (0/148)
+===SMI===
+index, uuid, utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0, GPU-4288d6c9-0384-25dc-1071-9bea701b9374, 93 %, 42400 MiB, 97887 MiB
+1, GPU-52776180-5d8e-460e-a121-86a1a23c05c5, 0 %, 19 MiB, 97887 MiB
+pid, used_gpu_memory [MiB]
+826215, 27456 MiB
+2275218, 14916 MiB
+===OCCUPANTS===
+ 826215    08:39:30 python3 experiments/generate_scaling_trajectories.py --topup-ops --images 1200 1550 --shard-size 40 --batch-size 16 --noise-seeds 101 --device cuda:0 --out-dir results/wcnc_c3_data_scaling_20260908/02_trajectories/raw
+2275218  1-21:23:02 /home/server/anaconda3/bin/python3 run_pipeline.py
+===P0===
+6db6a40c881b1896a061a0a51c36112a482f7dd8a659294c2471c248eb2458ae  /home/cxr/agentic/checkpoints/sft-runs/qwen14b-base-apps-clean-v2/epoch1/adapter_model.safetensors
