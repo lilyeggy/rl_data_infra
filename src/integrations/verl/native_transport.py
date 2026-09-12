@@ -217,9 +217,20 @@ class NativeTokenTransport:
                     "engine has not synchronized the expected checkpoint step"
                 )
             self.global_steps = step
-        content, upstream_calls = await self.parser.extract_tool_calls(ids)
         text = self.tokenizer.decode(ids)
-        calls = _tool_calls(upstream_calls, text, payload.get("tools", []))
+        try:
+            content, upstream_calls = await self.parser.extract_tool_calls(ids)
+        except Exception:  # noqa: BLE001 - upstream parser is not the authority
+            # vLLM's parser has raised on edge generations (for example
+            # ``TypeError: unhashable type: 'dict'``). A malformed draw must
+            # not invalidate an otherwise usable batch; fall back to the
+            # repository's strict extractor and let the batch gate judge the
+            # sample by its actual reward.
+            content, upstream_calls = text, []
+        try:
+            calls = _tool_calls(upstream_calls, text, payload.get("tools", []))
+        except ContractValidationError:
+            calls = extract_tool_calls(text, payload.get("tools", []))
         # The template EOS is protocol framing; its native token remains in
         # the ledger and loss. Pi receives only assistant content.
         content = content.removesuffix("<|im_end|>")

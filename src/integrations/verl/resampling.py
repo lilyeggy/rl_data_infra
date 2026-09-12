@@ -20,7 +20,11 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from src.errors import ContractValidationError, DegenerateBatchError
+from src.errors import (
+    ContractValidationError,
+    DegenerateBatchError,
+    RetryableRolloutError,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,19 +51,19 @@ async def certify_with_resampling(
     the refused attempt's; the attempt index is also what makes the redraw
     auditable after the fact.
 
-    Only :class:`DegenerateBatchError` is retried. A deterministic violation
+    Only :class:`DegenerateBatchError` and :class:`RetryableRolloutError` are retried. A deterministic violation
     raises on its first occurrence, because retrying it would spend a full
     rollout to reproduce the same failure and would report the symptom three
     times instead of once.
     """
     if max_attempts < 1:
         raise ContractValidationError("max_attempts must be at least 1")
-    last_error: DegenerateBatchError | None = None
+    last_error: ContractValidationError | None = None
     for attempt in range(max_attempts):
-        batch = await generate(attempt)
         try:
+            batch = await generate(attempt)
             certificate = certify(batch, attempt)
-        except DegenerateBatchError as exc:
+        except (DegenerateBatchError, RetryableRolloutError) as exc:
             last_error = exc
             if on_retry is not None:
                 on_retry(attempt, exc)

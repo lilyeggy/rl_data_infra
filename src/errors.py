@@ -39,6 +39,16 @@ class DegenerateBatchError(ContractValidationError):
     """
 
 
+class RetryableRolloutError(ContractValidationError):
+    """A rollout attempt failed in a way a fresh draw can plausibly fix.
+
+    Examples are a transient bridge/parser error inside one episode, or one
+    malformed generation. Those are properties of the draw, not contradictions
+    in persisted evidence, so the batch gate may redraw the attempt instead of
+    terminating the whole training run.
+    """
+
+
 class CapabilityMissingError(PipelineError):
     """A consumer requested capabilities that the input does not provide."""
 

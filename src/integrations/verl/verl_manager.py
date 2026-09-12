@@ -46,7 +46,7 @@ from verl.experimental.agent_loop.agent_loop import (
 from verl.utils.ray_utils import auto_await
 
 from src.contracts._json import sha256_json
-from src.errors import ContractValidationError
+from src.errors import ContractValidationError, RetryableRolloutError
 from src.integrations.verl.admission import AdmittedVerlSequence
 from src.integrations.verl.sequence import (
     describe_sequence_difference,
@@ -208,9 +208,21 @@ class CertifiedVerlAgentLoopManager(AgentLoopManager):
         return result.batch
 
     async def _generate_attempt(self, prompts: Any, call_root: Path, attempt: int) -> Any:
-        """Stamp the attempt, then let the framework roll the batch out."""
+        """Stamp the attempt, then let the framework roll the batch out.
+
+        A single episode's transient bridge/parser failure must not terminate a
+        run that has already certified earlier steps. The episode directory is
+        attempt-scoped, so a redraw writes fresh evidence under a new attempt
+        and leaves the failed one auditable.
+        """
         self._stamp_attempt(prompts, attempt, call_root)
-        return await super().generate_sequences(prompts)
+        try:
+            return await super().generate_sequences(prompts)
+        except Exception as exc:  # noqa: BLE001 - redraw instead of aborting the run
+            raise RetryableRolloutError(
+                f"rollout attempt {attempt} failed before certification: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
 
     def _gate_attempt(
         self, batch: Any, prompts: Any, call_root: Path, attempt: int
